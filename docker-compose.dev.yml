@@ -1,0 +1,6 @@
+services:
+
+networks:
+    dnsnet:
+        external: true
+        name: dnsnet
