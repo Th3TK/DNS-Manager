@@ -1,5 +1,17 @@
 services:
-
+    api:
+        build:
+            context: ./backend
+            dockerfile: ./docker/Dockerfile.dev
+        volumes:
+            - ./backend/app:/backend/app
+        env_file:
+            - .env
+        ports:
+            - "9000:9000"
+        command: uv run uvicorn app.main:app --host 0.0.0.0 --port 9000 --reload
+        networks:
+            - dnsnet
 networks:
     dnsnet:
         external: true
