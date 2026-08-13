@@ -1,15 +1,11 @@
-from .action_log import ActionLog
-from .dns_record import DNSRecord
-from .dns_zone import DNSZone
-from .dns_record_trash import DNSRecordTrash
-from .dns_zone_trash import DNSZoneTrash
-from .user import User
+from .action_log import ActionLogInDB
+from .dns_record_metadata import DNSRecordMetadataInDB
+from .dns_zone_metadata import DNSZoneMetadataInDB
+from .user import UserInDB
 
 __all__ = [
-    "ActionLog",
-    "DNSZone",
-    "DNSRecord",
-    "DNSRecordTrash",
-    "DNSZoneTrash",
-    "User",
+    "ActionLogInDB",
+    "DNSRecordMetadataInDB",
+    "DNSZoneMetadataInDB",
+    "UserInDB"
 ]

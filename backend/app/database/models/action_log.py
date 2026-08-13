@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Enum, Text, func
+from sqlalchemy import DateTime, Enum, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,7 +10,7 @@ from app.database.database import Base
 from app.database.models.enums import ActorType, ChangeAction
 
 
-class ActionLog(Base):
+class ActionLogInDB(Base):
     __tablename__ = "action_log"
 
     entry_uuid: Mapped[uuid.UUID] = mapped_column(

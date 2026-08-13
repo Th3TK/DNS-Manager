@@ -1,14 +1,14 @@
-from logging.config import fileConfig
-
 import os
+from logging.config import fileConfig
 from pathlib import Path
+
+from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-from alembic import context
-
+# ! keep import models 
+from app.database import models  # noqa
 from app.database.database import Base
-from app.database import models # !!! KEEP
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -31,6 +31,9 @@ database_url = os.getenv("DATABASE_URL")
 
 if not database_url:
     raise RuntimeError("DATABASE_URL is not set")
+
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
 
 config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))

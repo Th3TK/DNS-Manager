@@ -1,5 +1,5 @@
 import os
-from typing import Optional, TypeVar
+
 
 def get_env(name: str, default: str | None = None, accept_empty: bool = False) -> str:
     value = os.getenv(name, default)

@@ -1,6 +1,10 @@
 from enum import StrEnum
 
 
+class InternalRecordOrigin(StrEnum):
+    MANUAL = "manual"
+    AUTOMATIC = "automatic => traefik"
+
 class RecordOrigin(StrEnum):
     MANUAL = "manual"
     AUTOMATIC = "automatic => traefik"

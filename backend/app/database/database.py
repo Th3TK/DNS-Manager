@@ -1,15 +1,14 @@
+from collections.abc import Generator
 
-from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
+
+from app.database.connection import session_factory
 
 
 class Base(DeclarativeBase):
     pass
 
 
-async def get_db(
-    session_factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncSession, None]:
-    async with session_factory() as session:
+def get_db() -> Generator[Session, None, None]:
+    with session_factory() as session:
         yield session
