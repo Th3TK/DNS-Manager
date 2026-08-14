@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
@@ -25,6 +26,16 @@ async def sqlalchemy_connection_error_handler(request: Request, exc: Operational
                 "database is running and that the database connection settings "
                 "in the environment variables are correctly configured."
             )
+        },
+    )
+ 
+@app.exception_handler(requests.exceptions.JSONDecodeError)
+async def internal_request_json_parsing_error(request: Request, exc: requests.exceptions.JSONDecodeError):
+    logging.critical("Unhandled exception: The response from an external API could not be parsed as JSON.", exc)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "detail": "The response from an external API could not be parsed as JSON."
         },
     )
 
