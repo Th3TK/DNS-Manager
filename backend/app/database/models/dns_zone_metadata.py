@@ -8,8 +8,10 @@ from app.database.database import Base
 class DNSZoneMetadataInDB(Base):
     __tablename__ = "dns_zones_metadata"
 
-    # identified by the name
-    name: Mapped[str] = mapped_column(String(255), nullable=False, primary_key=True)
+    # identified by the id
+    id: Mapped[str] = mapped_column(String(255), nullable=False, primary_key=True)
+    
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     
     # metadata
     comment: Mapped[str | None] = mapped_column(String, nullable=True)

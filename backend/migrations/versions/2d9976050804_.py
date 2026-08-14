@@ -42,7 +42,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=False)
     op.create_table('dns_records_metadata',
-        sa.Column('zone_name', sa.String(length=255), nullable=False),
+        sa.Column('zone_id', sa.String(length=255), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column('type', sa.String(length=10), nullable=False),
         sa.Column('content', sa.String(), nullable=False),
@@ -51,15 +51,16 @@ def upgrade() -> None:
         sa.Column('author', sa.String(), nullable=True),
         sa.Column('origin', sa.Enum('MANUAL', 'AUTOMATIC', name='internal_record_origin'), nullable=False),
         sa.ForeignKeyConstraint(['author'], ['users.username'], ),
-        sa.PrimaryKeyConstraint('zone_name', 'name', 'type', 'content')
+        sa.PrimaryKeyConstraint('zone_id', 'name', 'type', 'content')
     )
-    op.create_index('ix_dns_records_metadata_zone_name', 'dns_records_metadata', ['zone_name'], unique=False)
+    op.create_index('ix_dns_records_metadata_zone_name', 'dns_records_metadata', ['zone_id'], unique=False)
     op.create_table('dns_zones_metadata',
+        sa.Column('id', sa.String(length=255), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column('comment', sa.String(), nullable=True),
         sa.Column('author', sa.String(), nullable=True),
         sa.ForeignKeyConstraint(['author'], ['users.username'], ),
-        sa.PrimaryKeyConstraint('name')
+        sa.PrimaryKeyConstraint('id')
     )
 
 
