@@ -29,5 +29,5 @@ async def __login_for_access_token__(
     return get_user_tokens(user)
 
 @router.get("/me", response_model=User)
-def get_me(user: Annotated[User, Depends(get_authenticated_user)],):
+def __get_me__(user: Annotated[User, Depends(get_authenticated_user)],):
     return user

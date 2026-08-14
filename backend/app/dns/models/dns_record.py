@@ -1,0 +1,77 @@
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field
+
+# DNS record types that are supported during record creation via the DNSManager interface
+type SupportedDNSRecordTypes = Literal["A", "AAAA", "CNAME", "TXT", "MX", "SRV"]
+
+type DNSRecordOrigin = Literal["manual", "automatic => traefik", "external"]
+
+type DNSRecordOriginInternal = Literal["manual", "automatic => traefik"]
+
+
+class DNSRecordIdentifier(BaseModel):
+    """
+    Contains the fields required to uniquely identify a DNS record.
+    """
+    zone_id: str
+    name: str
+    type: str 
+    content: str
+    
+    
+class DNSRecordProperties(BaseModel):
+    """
+    Properties of a DNS record managed by the DNS provider.
+    """
+    zone_id: str
+    name: str
+    type: str 
+    content: str
+    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
+    
+
+class DNSRecordMetadata(BaseModel):
+    """
+    Additional DNS record metadata stored in the application's database.
+    """
+    origin: Literal["manual", "automatic => traefik", "external"]
+    author: str | None = None # username / "watcher:<WATCHER_NAME>"
+    comment: str | None = None
+    checks_enabled: bool
+
+
+class DNSRecord(DNSRecordProperties, DNSRecordMetadata):
+    """
+    Represents a DNS record response model for GET endpoints and websockets.
+    For records with `origin="external"` (created independently of the application), some metadata may be unavailable.
+    """
+    pass
+    
+
+    
+class CreateDNSRecordForm(BaseModel):
+    """
+    Request body for creating a DNS record.
+    Contains the DNS record properties supplied by the client.
+    """
+    name: str
+    type: SupportedDNSRecordTypes
+    content: str
+    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
+    comment: str | None = None
+    checks_enabled: bool = True
+    
+    
+class CreateDNSRecordArgs(CreateDNSRecordForm):
+    """
+    Arguments for creating a DNS record.
+    Extends the API request data with properties determined by the backend, rather than supplied by the client.
+    """
+    zone_id: str
+    author: str
+    origin: DNSRecordOriginInternal
+    
+
+    
+    

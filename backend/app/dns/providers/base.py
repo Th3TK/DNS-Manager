@@ -1,0 +1,36 @@
+
+from typing import Protocol
+
+from app.dns.models.dns_record import CreateDNSRecordArgs, DNSRecordIdentifier, DNSRecordProperties
+from app.dns.models.dns_zone import CreateDNSZoneArgs, DNSZoneProperties
+
+
+class DNSProvider(Protocol):
+    
+    def create_zone(self, creation_args: CreateDNSZoneArgs) -> DNSZoneProperties:
+        ...
+        
+    def delete_zone(self, zone_id: str) -> None:
+        ...
+        
+    def get_zones(self) -> list[DNSZoneProperties]:
+        ...
+        
+    def get_zone(self, zone_id: str) -> DNSZoneProperties | None:
+        ...
+        
+    
+    def create_record(self, creation_args: CreateDNSRecordArgs) -> DNSRecordProperties:
+        ...
+        
+    def modify_record(self, record_id: DNSRecordIdentifier, modification_args: CreateDNSRecordArgs) -> DNSRecordProperties | None:
+        ...
+        
+    def delete_record(self, record_id: DNSRecordIdentifier) -> None:
+        ...
+        
+    def get_records(self, zone_id: str) -> list[DNSRecordProperties]:
+        ...
+        
+    def get_record(self, record_id: DNSRecordIdentifier) -> DNSRecordProperties | None:
+        ...
