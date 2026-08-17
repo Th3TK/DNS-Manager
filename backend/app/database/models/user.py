@@ -1,7 +1,6 @@
+from app.database.database import Base
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.database.database import Base
 
 
 class UserInDB(Base):
@@ -12,4 +11,3 @@ class UserInDB(Base):
     full_name: Mapped[str] = mapped_column(String, nullable=False, default="", server_default="")
     is_admin: Mapped[bool] = mapped_column(default=False, nullable=False, server_default="false")
     disabled: Mapped[bool] = mapped_column(default=False, nullable=False, server_default="false")
-    

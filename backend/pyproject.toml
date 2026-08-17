@@ -13,17 +13,3 @@ dependencies = [
     "sqlalchemy>=2.0.52",
     "uvicorn>=0.52.1",
 ]
-
-[dependency-groups]
-dev = [
-    "ruff>=0.16.2",
-]
-
-[tool.ruff]
-line-length = 130
-
-[tool.ruff.lint]
-select = ["E", "F", "I"]
-
-[tool.ruff.format]
-quote-style = "double"

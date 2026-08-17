@@ -5,6 +5,7 @@ class InternalRecordOrigin(StrEnum):
     MANUAL = "manual"
     AUTOMATIC = "automatic => traefik"
 
+
 class RecordOrigin(StrEnum):
     MANUAL = "manual"
     AUTOMATIC = "automatic => traefik"
@@ -22,3 +23,8 @@ class ChangeAction(StrEnum):
     DELETED = "deleted"
     RESTORED = "restored"
     PERMANENTLY_DELETED = "permanently_deleted"
+
+
+class ActionObjectType(StrEnum):
+    ZONE = "zone"
+    RECORD = "record"
