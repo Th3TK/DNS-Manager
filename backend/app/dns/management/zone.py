@@ -8,6 +8,7 @@ from app.dns.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata
 from app.dns.validators.base import validate_dns_name
 from app.users.models.user import User
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -20,23 +21,23 @@ def cleanup_zone_metadata(db: Session) -> None:
     # (i.e. they were deleted outside of the application).
     """
 
-    properties = provider.get_zones()
+    zones = provider.get_zones()
 
-    zone_names = {zone.name for zone in properties}
+    zone_names = {zone.name for zone in zones}
 
     db.execute(delete(DNSZoneMetadataInDB).where(~DNSZoneMetadataInDB.name.in_(zone_names)))
     db.commit()
 
 
-def get_zone(db: Session, zone_id: str) -> DNSZone | None:
+def get_zone(db: Session, zone_id: str) -> DNSZone:
     properties = provider.get_zone(zone_id)
 
     if properties is None:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"DNS zone with id={zone_id} could not be found.")
 
-    metadata_db = db.scalar(select(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.name == zone_id))
+    metadata_in_db = db.scalar(select(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.name == zone_id))
 
-    metadata = DNSZoneMetadata.from_db(metadata_db)
+    metadata = DNSZoneMetadata.from_db(metadata_in_db)
 
     return DNSZone(**properties.model_dump(), **metadata.model_dump())
 
@@ -49,19 +50,19 @@ def get_zones(db: Session) -> list[DNSZone]:
     if not zone_ids:
         return []
 
-    metadata_records = db.scalars(select(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.id.in_(zone_ids))).all()
+    metadata_zones_in_db = db.scalars(select(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.id.in_(zone_ids))).all()
 
-    metadata_by_id = {metadata.id: metadata for metadata in metadata_records}
+    metadata_by_id = {metadata.id: metadata for metadata in metadata_zones_in_db}
 
     zones = []
 
     for zone_properties in properties:
-        metadata = DNSZoneMetadata.from_db(metadata_by_id.get(zone_properties.id))
+        zone_metadata = DNSZoneMetadata.from_db(metadata_by_id.get(zone_properties.id))
 
         zones.append(
             DNSZone(
                 **zone_properties.model_dump(),
-                **metadata.model_dump(),
+                **zone_metadata.model_dump(),
             )
         )
 
@@ -77,7 +78,7 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs, logged_in_user: U
 
     properties = provider.create_zone(creation_args)
 
-    logger.info(f"{logged_in_user} created DNS zone {properties.id}")
+    logger.info(f"{logged_in_user.username} created DNS zone {properties.id}")
 
     metadata = DNSZoneMetadataInDB(
         id=properties.id,
@@ -92,12 +93,14 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs, logged_in_user: U
         action=ChangeAction.CREATED,
         affected_object_type=ActionObjectType.ZONE,
         object_before=None,
-        object_after=DNSZone(
-            id=properties.id,
-            name=properties.name,
-            author=logged_in_user.username,
-            comment=creation_args.comment,
-            origin="manual",
+        object_after=jsonable_encoder(
+            DNSZone(
+                id=properties.id,
+                name=properties.name,
+                author=logged_in_user.username,
+                comment=creation_args.comment,
+                origin="manual",
+            )
         ),
     )
 

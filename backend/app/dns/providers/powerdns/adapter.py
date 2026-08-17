@@ -118,6 +118,42 @@ class PowerDNSAdapter(DNSProvider):
 
     def delete_record(self, record_id: DNSRecordIdentifier) -> None: ...
 
-    def get_records(self, zone_id: str) -> list[DNSRecordProperties]: ...
+    def get_records(self, zone_id: str) -> list[DNSRecordProperties]:
+        response = self._send_request("GET", f"zones/{zone_id}?rrsets=true")
+        zone = PowerDNSZone.model_validate(response.json())
 
-    def get_record(self, record_id: DNSRecordIdentifier) -> DNSRecordProperties | None: ...
+        if zone.rrsets is None:
+            return []
+
+        records: list[DNSRecordProperties] = []
+
+        for rrset in zone.rrsets:
+            for record in rrset.records:
+                records.append(
+                    DNSRecordProperties(
+                        zone_id=zone_id,
+                        name=rrset.name,
+                        type=rrset.type,
+                        content=record.content,
+                        ttl=rrset.ttl,
+                    )
+                )
+
+        return records
+
+    def get_record(self, record_id: DNSRecordIdentifier) -> DNSRecordProperties | None:
+        response = self._send_request("GET", f"zones/{record_id.zone_id}?rrsets=true")
+        zone = PowerDNSZone.model_validate(response.json())
+
+        if zone.rrsets is None:
+            return None
+
+        for rrset in zone.rrsets:
+            if rrset.name != record_id.name or rrset.type != record_id.type:
+                continue
+
+            for record in rrset.records:
+                if record.content == record_id.content:
+                    return DNSRecordProperties(**record_id.model_dump(), ttl=rrset.ttl)
+
+        return None

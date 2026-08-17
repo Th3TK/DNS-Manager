@@ -2,24 +2,25 @@ import logging
 from typing import Annotated
 
 from app.database.database import get_db
+from app.dns.management.record import get_record, get_records
 from app.dns.management.zone import create_zone, get_zone, get_zones
-from app.dns.models.record import CreateDNSRecordForm, DNSRecord
+from app.dns.models.record import CreateDNSRecordForm, DNSRecord, DNSRecordIdentifier
 from app.dns.models.zone import CreateDNSZoneArgs, CreateDNSZoneForm, DNSZone
 from app.users.authentication import get_authenticated_administrator, get_authenticated_user
 from app.users.models.user import User
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="",
+    prefix="/zones",
     tags=["DNS Management"],
 )
 
 
-@router.get("/zones", response_model=list[DNSZone])
+@router.get("", response_model=list[DNSZone])
 def __get_all_zones__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -27,19 +28,14 @@ def __get_all_zones__(
     return get_zones(db)
 
 
-@router.get("/zone", response_model=DNSZone)
+@router.get("/{zone_id}", response_model=DNSZone)
 def __get_singular_zone__(
     user: Annotated[User, Depends(get_authenticated_user)], db: Annotated[Session, Depends(get_db)], zone_id: str
 ) -> DNSZone:
-    zone = get_zone(db, zone_id)
-
-    if zone is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"DNS zone with id={zone_id} could not be found.")
-
-    return zone
+    return get_zone(db, zone_id)
 
 
-@router.post("/zone", response_model=DNSZone)
+@router.post("", response_model=DNSZone)
 def __create_zone__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -55,7 +51,7 @@ def __create_zone__(
     )
 
 
-@router.delete("/zone", response_model=None)
+@router.delete("/{zone_id}", response_model=None)
 def __delete_zone__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -63,13 +59,40 @@ def __delete_zone__(
 ) -> None: ...
 
 
-@router.get("/records", response_model=list[DNSRecord])
-def __get_all_zone_records__(zone_id: str) -> list[DNSRecord]: ...
+@router.get("/{zone_id}/records", response_model=list[DNSRecord])
+def __get_all_zone_records__(
+    user: Annotated[User, Depends(get_authenticated_user)],
+    db: Annotated[Session, Depends(get_db)],
+    zone_id: str,
+) -> list[DNSRecord]:
+    return get_records(db, zone_id)
 
 
-@router.get("/record", response_model=DNSRecord)
-def __get_singular_record__(zone_id: str, record_name: str, type: str, content: str) -> DNSRecord: ...
+@router.get("/{zone_id}/record", response_model=DNSRecord)
+def __get_singular_record_details__(
+    user: Annotated[User, Depends(get_authenticated_user)],
+    db: Annotated[Session, Depends(get_db)],
+    zone_id: str,
+    record_name: str,
+    record_type: str,
+    record_content: str,
+) -> DNSRecord:
+    return get_record(db, DNSRecordIdentifier(zone_id=zone_id, name=record_name, type=record_type, content=record_content))
 
 
-@router.post("/record", response_model=DNSRecord)
-def __create_record__(form: CreateDNSRecordForm) -> DNSRecord: ...
+@router.post("/{zone_id}/record", response_model=DNSRecord)
+def __create_record__(
+    user: Annotated[User, Depends(get_authenticated_administrator)],
+    db: Annotated[Session, Depends(get_db)],
+    zone_id: str,
+    form: CreateDNSRecordForm,
+) -> DNSRecord: ...
+
+
+@router.patch("/{zone_id}/record", response_model=DNSRecord)
+def __modify_record__(
+    user: Annotated[User, Depends(get_authenticated_administrator)],
+    db: Annotated[Session, Depends(get_db)],
+    zone_id: str,
+    form: CreateDNSRecordForm,
+) -> DNSRecord: ...

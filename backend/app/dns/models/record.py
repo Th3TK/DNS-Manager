@@ -1,5 +1,6 @@
 from typing import Annotated, Literal
 
+from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from pydantic import BaseModel, Field
 
 # DNS record types that are supported during record creation via the DNSManager interface
@@ -14,31 +15,46 @@ class DNSRecordIdentifier(BaseModel):
     """
     Contains the fields required to uniquely identify a DNS record.
     """
+
     zone_id: str
     name: str
-    type: str 
+    type: str
     content: str
-    
-    
+
+
 class DNSRecordProperties(BaseModel):
     """
     Properties of a DNS record managed by the DNS provider.
     """
+
     zone_id: str
     name: str
-    type: str 
+    type: str
     content: str
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
-    
+
 
 class DNSRecordMetadata(BaseModel):
     """
     Additional DNS record metadata stored in the application's database.
     """
-    origin: Literal["manual", "automatic => traefik", "external"]
-    author: str | None = None # username / "watcher:<WATCHER_NAME>"
+
+    origin: DNSRecordOrigin
+    author: str | None = None  # username / "watcher:<WATCHER_NAME>"
     comment: str | None = None
     checks_enabled: bool
+
+    @classmethod
+    def from_db(cls, metadata_db: DNSRecordMetadataInDB | None) -> "DNSRecordMetadata":
+        if metadata_db is None:
+            return cls(origin="external", checks_enabled=False)
+
+        return cls(
+            origin=metadata_db.origin.value,
+            author=metadata_db.author,
+            comment=metadata_db.comment,
+            checks_enabled=metadata_db.checks_enabled,
+        )
 
 
 class DNSRecord(DNSRecordProperties, DNSRecordMetadata):
@@ -46,32 +62,30 @@ class DNSRecord(DNSRecordProperties, DNSRecordMetadata):
     Represents a DNS record response model for GET endpoints and websockets.
     For records with `origin="external"` (created independently of the application), some metadata may be unavailable.
     """
-    pass
-    
 
-    
+    pass
+
+
 class CreateDNSRecordForm(BaseModel):
     """
     Request body for creating a DNS record.
     Contains the DNS record properties supplied by the client.
     """
+
     name: str
     type: SupportedDNSRecordTypes
     content: str
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
     comment: str | None = None
     checks_enabled: bool = True
-    
-    
+
+
 class CreateDNSRecordArgs(CreateDNSRecordForm):
     """
     Arguments for creating a DNS record.
     Extends the API request data with properties determined by the backend, rather than supplied by the client.
     """
+
     zone_id: str
     author: str
     origin: DNSRecordOriginInternal
-    
-
-    
-    
