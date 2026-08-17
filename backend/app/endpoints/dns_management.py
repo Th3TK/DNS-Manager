@@ -2,9 +2,16 @@ import logging
 from typing import Annotated
 
 from app.database.database import get_db
-from app.dns.management.record import get_record, get_records
+from app.dns.management.record import create_record, get_record, get_records, modify_record
 from app.dns.management.zone import create_zone, get_zone, get_zones
-from app.dns.models.record import CreateDNSRecordForm, DNSRecord, DNSRecordIdentifier
+from app.dns.models.record import (
+    CreateDNSRecordArgs,
+    CreateDNSRecordForm,
+    DNSRecord,
+    DNSRecordIdentifier,
+    ModifyDNSRecordArgs,
+    ModifyDNSRecordForm,
+)
 from app.dns.models.zone import CreateDNSZoneArgs, CreateDNSZoneForm, DNSZone
 from app.users.authentication import get_authenticated_administrator, get_authenticated_user
 from app.users.models.user import User
@@ -41,14 +48,7 @@ def __create_zone__(
     db: Annotated[Session, Depends(get_db)],
     form: CreateDNSZoneForm,
 ):
-    return create_zone(
-        db,
-        CreateDNSZoneArgs(
-            **form.model_dump(),
-            author=user.username,
-        ),
-        user,
-    )
+    return create_zone(db, CreateDNSZoneArgs(**form.model_dump(), author=user.username))
 
 
 @router.delete("/{zone_id}", response_model=None)
@@ -75,9 +75,8 @@ def __get_singular_record_details__(
     zone_id: str,
     record_name: str,
     record_type: str,
-    record_content: str,
 ) -> DNSRecord:
-    return get_record(db, DNSRecordIdentifier(zone_id=zone_id, name=record_name, type=record_type, content=record_content))
+    return get_record(db, DNSRecordIdentifier(zone_id=zone_id, name=record_name, type=record_type))
 
 
 @router.post("/{zone_id}/record", response_model=DNSRecord)
@@ -86,7 +85,16 @@ def __create_record__(
     db: Annotated[Session, Depends(get_db)],
     zone_id: str,
     form: CreateDNSRecordForm,
-) -> DNSRecord: ...
+) -> DNSRecord:
+    return create_record(
+        db,
+        CreateDNSRecordArgs(
+            **form.model_dump(),
+            author=user.username,
+            zone_id=zone_id,
+            origin="manual",
+        ),
+    )
 
 
 @router.patch("/{zone_id}/record", response_model=DNSRecord)
@@ -94,5 +102,13 @@ def __modify_record__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
     zone_id: str,
-    form: CreateDNSRecordForm,
-) -> DNSRecord: ...
+    form: ModifyDNSRecordForm,
+) -> DNSRecord:
+    return modify_record(
+        db,
+        ModifyDNSRecordArgs(
+            **form.model_dump(),
+            author=user.username,
+            zone_id=zone_id,
+        ),
+    )

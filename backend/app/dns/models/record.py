@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from pydantic import BaseModel, Field
@@ -19,7 +19,6 @@ class DNSRecordIdentifier(BaseModel):
     zone_id: str
     name: str
     type: str
-    content: str
 
 
 class DNSRecordProperties(BaseModel):
@@ -30,7 +29,7 @@ class DNSRecordProperties(BaseModel):
     zone_id: str
     name: str
     type: str
-    content: str
+    content: str | list[str]
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
 
 
@@ -50,7 +49,7 @@ class DNSRecordMetadata(BaseModel):
             return cls(origin="external", checks_enabled=False)
 
         return cls(
-            origin=metadata_db.origin.value,
+            origin=cast(DNSRecordOrigin, metadata_db.origin),
             author=metadata_db.author,
             comment=metadata_db.comment,
             checks_enabled=metadata_db.checks_enabled,
@@ -75,7 +74,7 @@ class CreateDNSRecordForm(BaseModel):
     name: str
     type: SupportedDNSRecordTypes
     content: str
-    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
+    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
     comment: str | None = None
     checks_enabled: bool = True
 
@@ -89,3 +88,27 @@ class CreateDNSRecordArgs(CreateDNSRecordForm):
     zone_id: str
     author: str
     origin: DNSRecordOriginInternal
+
+
+class ModifyDNSRecordForm(BaseModel):
+    """
+    Request body for modifying a DNS record.
+    Contains the DNS record properties supplied by the client.
+    """
+
+    name: str
+    type: SupportedDNSRecordTypes
+    content: str
+    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
+    comment: str | None = None
+    checks_enabled: bool = True
+
+
+class ModifyDNSRecordArgs(ModifyDNSRecordForm):
+    """
+    Arguments for modifying a DNS record.
+    Extends the API request data with properties determined by the backend, rather than supplied by the client.
+    """
+
+    zone_id: str
+    author: str

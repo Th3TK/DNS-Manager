@@ -5,8 +5,7 @@ from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ActionObjectType, ActorType, ChangeAction
 from app.dns.factory import provider
 from app.dns.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata
-from app.dns.validators.base import validate_dns_name
-from app.users.models.user import User
+from app.dns.validators.base import DNSValidationError, validate_dns_name
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import delete, select
@@ -33,7 +32,7 @@ def get_zone(db: Session, zone_id: str) -> DNSZone:
     properties = provider.get_zone(zone_id)
 
     if properties is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"DNS zone with id={zone_id} could not be found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"DNS zone with id='{zone_id}' could not be found.")
 
     metadata_in_db = db.scalar(select(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.name == zone_id))
 
@@ -69,16 +68,19 @@ def get_zones(db: Session) -> list[DNSZone]:
     return zones
 
 
-def create_zone(db: Session, creation_args: CreateDNSZoneArgs, logged_in_user: User) -> DNSZone:
+def create_zone(db: Session, creation_args: CreateDNSZoneArgs) -> DNSZone:
 
     # remove metadata for zones that were deleted outside of the application
     cleanup_zone_metadata(db)
 
-    validate_dns_name(creation_args.name)
+    try:
+        validate_dns_name(creation_args.name)
+    except DNSValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
     properties = provider.create_zone(creation_args)
 
-    logger.info(f"{logged_in_user.username} created DNS zone {properties.id}")
+    logger.info(f"{creation_args.author} created DNS zone {properties.id}")
 
     metadata = DNSZoneMetadataInDB(
         id=properties.id,
@@ -87,21 +89,18 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs, logged_in_user: U
         author=creation_args.author,
     )
 
+    zone = DNSZone(
+        **properties.model_dump(),
+        **DNSZoneMetadata.from_db(metadata).model_dump(),
+    )
+
     log = ActionLogInDB(
         actor_type=ActorType.USER,
-        actor=logged_in_user.username,
+        actor=creation_args.author,
         action=ChangeAction.CREATED,
         affected_object_type=ActionObjectType.ZONE,
         object_before=None,
-        object_after=jsonable_encoder(
-            DNSZone(
-                id=properties.id,
-                name=properties.name,
-                author=logged_in_user.username,
-                comment=creation_args.comment,
-                origin="manual",
-            )
-        ),
+        object_after=jsonable_encoder(zone),
     )
 
     try:
@@ -125,9 +124,4 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs, logged_in_user: U
 
         logger.exception(f"Failed to save the action log for DNS zone {properties.name} creation.")
 
-    return DNSZone(
-        **properties.model_dump(),
-        origin="manual",
-        author=metadata.author,
-        comment=metadata.comment,
-    )
+    return zone

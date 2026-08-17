@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.dns.models.record import CreateDNSRecordArgs, DNSRecordIdentifier, DNSRecordProperties
+from app.dns.models.record import CreateDNSRecordArgs, DNSRecordIdentifier, DNSRecordProperties, ModifyDNSRecordArgs
 from app.dns.models.zone import CreateDNSZoneArgs, DNSZoneProperties
 
 
@@ -15,9 +15,7 @@ class DNSProvider(Protocol):
 
     def create_record(self, creation_args: CreateDNSRecordArgs) -> DNSRecordProperties: ...
 
-    def modify_record(
-        self, record_id: DNSRecordIdentifier, modification_args: CreateDNSRecordArgs
-    ) -> DNSRecordProperties | None: ...
+    def modify_record(self, modification_args: ModifyDNSRecordArgs) -> DNSRecordProperties: ...
 
     def delete_record(self, record_id: DNSRecordIdentifier) -> None: ...
 

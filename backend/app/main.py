@@ -2,6 +2,7 @@ import logging
 
 import requests
 from app.config import ENV_CONFIG
+from app.dns.validators.base import DNSValidationError
 from app.endpoints.action_log import router as action_log_router
 from app.endpoints.authentication import router as authentication_router
 from app.endpoints.dns_management import router as dns_management_router

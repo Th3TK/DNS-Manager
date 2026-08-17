@@ -19,7 +19,7 @@ router = APIRouter(
 def __get_list_of_action_log_entries__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
-    limit: int,
+    limit: int = 100,
     offset: int = 0,
 ) -> list[ActionLog]:
     return get_log_entries(db, limit, offset)

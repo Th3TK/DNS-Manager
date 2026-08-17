@@ -3,7 +3,7 @@ from typing import Literal
 
 import requests
 from app.config import ENV_CONFIG
-from app.dns.models.record import CreateDNSRecordArgs, DNSRecord, DNSRecordIdentifier, DNSRecordProperties
+from app.dns.models.record import CreateDNSRecordArgs, DNSRecordIdentifier, DNSRecordProperties, ModifyDNSRecordArgs
 from app.dns.models.zone import CreateDNSZoneArgs, DNSZoneProperties
 from app.dns.providers.base import DNSProvider
 from app.dns.providers.powerdns.models import PowerDNSZone
@@ -21,7 +21,7 @@ class PowerDNSAdapter(DNSProvider):
         self.session = requests.Session()
         self.api_url = join_url(ENV_CONFIG.POWERDNS_API_URL, "servers", ENV_CONFIG.POWERDNS_SERVER_ID)
 
-    def _send_request(self, method: Literal["GET", "DELETE", "POST", "PUT"], path: str, **kwargs) -> requests.Response:
+    def _send_request(self, method: Literal["GET", "DELETE", "POST", "PUT", "PATCH"], path: str, **kwargs) -> requests.Response:
         try:
             response = self.session.request(
                 method=method,
@@ -88,12 +88,34 @@ class PowerDNSAdapter(DNSProvider):
                 detail="Failed to communicate with the PowerDNS REST API.",
             )
 
+    def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
+        return DNSZoneProperties(id=zone.id, name=zone.name)
+
+    def _get_record_properties_from_powerdns_zone(
+        self, zone: PowerDNSZone, record_id: DNSRecordIdentifier
+    ) -> DNSRecordProperties | None:
+        if zone.rrsets is None:
+            return None
+
+        for rrset in zone.rrsets:
+            if rrset.name != record_id.name or rrset.type != record_id.type or not rrset.records:
+                continue
+
+            contents = [record.content for record in rrset.records]
+            content = contents[0] if len(contents) == 1 else contents
+
+            return DNSRecordProperties(**record_id.model_dump(), content=content, ttl=rrset.ttl)
+
+        return None
+
+    # ZONES
+
     def create_zone(self, creation_args: CreateDNSZoneArgs) -> DNSZoneProperties:
         body = {"id": creation_args.name, "name": creation_args.name, "kind": "Native"}
         response = self._send_request("POST", "zones", json=body)
         zone = PowerDNSZone.model_validate(response.json())
 
-        return DNSZoneProperties(id=zone.id, name=zone.name)
+        return self._get_zone_properties_from_powerdns_zone(zone)
 
     def delete_zone(self, zone_id: str) -> None:
         self._send_request("DELETE", f"zones/{zone_id}")
@@ -102,21 +124,21 @@ class PowerDNSAdapter(DNSProvider):
         response = self._send_request("GET", "zones")
         zones = [PowerDNSZone.model_validate(zone) for zone in response.json()]
 
-        return [DNSZoneProperties(id=zone.id, name=zone.name) for zone in zones]
+        return [self._get_zone_properties_from_powerdns_zone(zone) for zone in zones]
 
     def get_zone(self, zone_id: str) -> DNSZoneProperties | None:
         response = self._send_request("GET", f"zones/{zone_id}")
         zone = PowerDNSZone.model_validate(response.json())
 
-        return DNSZoneProperties(id=zone.id, name=zone.name)
+        return self._get_zone_properties_from_powerdns_zone(zone)
 
-    def create_record(self, creation_args: CreateDNSRecordArgs) -> DNSRecord: ...
+    # RECORDS
 
-    def modify_record(
-        self, record_id: DNSRecordIdentifier, modification_args: CreateDNSRecordArgs
-    ) -> DNSRecordProperties | None: ...
+    def get_record(self, record_id: DNSRecordIdentifier) -> DNSRecordProperties | None:
+        response = self._send_request("GET", f"zones/{record_id.zone_id}?rrsets=true")
+        zone = PowerDNSZone.model_validate(response.json())
 
-    def delete_record(self, record_id: DNSRecordIdentifier) -> None: ...
+        return self._get_record_properties_from_powerdns_zone(zone, record_id)
 
     def get_records(self, zone_id: str) -> list[DNSRecordProperties]:
         response = self._send_request("GET", f"zones/{zone_id}?rrsets=true")
@@ -128,32 +150,73 @@ class PowerDNSAdapter(DNSProvider):
         records: list[DNSRecordProperties] = []
 
         for rrset in zone.rrsets:
-            for record in rrset.records:
-                records.append(
-                    DNSRecordProperties(
-                        zone_id=zone_id,
-                        name=rrset.name,
-                        type=rrset.type,
-                        content=record.content,
-                        ttl=rrset.ttl,
-                    )
+            contents = [record.content for record in rrset.records]
+            content = contents[0] if len(contents) == 1 else contents
+
+            records.append(
+                DNSRecordProperties(
+                    zone_id=zone_id,
+                    name=rrset.name,
+                    type=rrset.type,
+                    content=content,
+                    ttl=rrset.ttl,
                 )
+            )
 
         return records
 
-    def get_record(self, record_id: DNSRecordIdentifier) -> DNSRecordProperties | None:
-        response = self._send_request("GET", f"zones/{record_id.zone_id}?rrsets=true")
-        zone = PowerDNSZone.model_validate(response.json())
+    def create_record(self, creation_args: CreateDNSRecordArgs) -> DNSRecordProperties:
+        body = {
+            "rrsets": [
+                {
+                    "name": creation_args.name,
+                    "type": creation_args.type,
+                    "ttl": creation_args.ttl,
+                    "changetype": "REPLACE",
+                    "records": [{"content": creation_args.content, "disabled": False}],
+                }
+            ]
+        }
 
-        if zone.rrsets is None:
-            return None
+        self._send_request("PATCH", f"zones/{creation_args.zone_id}", json=body)  # returns 204 no content
 
-        for rrset in zone.rrsets:
-            if rrset.name != record_id.name or rrset.type != record_id.type:
-                continue
+        record_id = DNSRecordIdentifier.model_validate(creation_args.model_dump())
+        record = self.get_record(record_id)
 
-            for record in rrset.records:
-                if record.content == record_id.content:
-                    return DNSRecordProperties(**record_id.model_dump(), ttl=rrset.ttl)
+        if record is None:
+            logging.error("PowerDNS PATCH succeeded, but the created record could not be retrieved.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while creating the DNS record.",
+            )
 
-        return None
+        return record
+
+    def modify_record(self, modification_args: ModifyDNSRecordArgs) -> DNSRecordProperties:
+        body = {
+            "rrsets": [
+                {
+                    "name": modification_args.name,
+                    "type": modification_args.type,
+                    "ttl": modification_args.ttl,
+                    "changetype": "REPLACE",
+                    "records": [{"content": modification_args.content, "disabled": False}],
+                },
+            ]
+        }
+
+        self._send_request("PATCH", f"zones/{modification_args.zone_id}", json=body)  # returns 204 no content
+
+        record_id = DNSRecordIdentifier.model_validate(modification_args.model_dump())
+        record = self.get_record(record_id)
+
+        if record is None:
+            logging.error("PowerDNS PATCH succeeded, but the modified record could not be retrieved.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while modifying the DNS record.",
+            )
+
+        return record
+
+    def delete_record(self, record_id: DNSRecordIdentifier) -> None: ...

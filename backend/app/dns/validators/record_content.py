@@ -75,7 +75,7 @@ def validate_srv_record_content(content: str):
     validate_dns_name(target)
 
 
-def dns_record_content_validator(content: str, type_: SupportedDNSRecordTypes):
+def validate_record_content(content: str, type_: SupportedDNSRecordTypes):
     """
     Raises an error if the provided content value is not valid.
 

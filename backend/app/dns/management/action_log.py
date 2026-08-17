@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 
 
 def get_log_entries(db: Session, limit: int = 100, offset=0) -> list[ActionLog]:
-    action_logs_in_db = db.scalars(select(ActionLogInDB).order_by(ActionLogInDB.action_timestamp).offset(offset).limit(limit))
+    action_logs_in_db = db.scalars(
+        select(ActionLogInDB).order_by(ActionLogInDB.action_timestamp.desc()).offset(offset).limit(limit)
+    )
 
     return [ActionLog.from_db(action_log_in_db) for action_log_in_db in action_logs_in_db]
 
