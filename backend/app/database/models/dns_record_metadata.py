@@ -2,14 +2,22 @@ from typing import Optional
 
 from app.database.database import Base
 from app.database.models.enums import InternalRecordOrigin
-from sqlalchemy import Boolean, Enum, ForeignKey, Index, String
+from sqlalchemy import Boolean, Enum, ForeignKey, ForeignKeyConstraint, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 
 class DNSRecordMetadataInDB(Base):
     __tablename__ = "dns_records_metadata"
 
-    __table_args__ = (Index("ix_dns_records_metadata_zone_name", "zone_id"),)
+    __table_args__ = (
+        Index("ix_dns_records_metadata_zone_name", "zone_id"),
+        ForeignKeyConstraint(
+            ["zone_id"],
+            ["dns_zones_metadata.id"],
+            name="fk_dns_records_metadata_zone_id",
+            ondelete="CASCADE",
+        ),
+    )
 
     # identified by the zone name along with the record type, name and content.
     zone_id: Mapped[str] = mapped_column(String(255), primary_key=True)
