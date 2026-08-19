@@ -1,20 +1,21 @@
 import logging
+from typing import Any, cast
 
 from app.database.models.action_log import ActionLogInDB
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ActionObjectType, ActorType, ChangeAction
 from app.dns.factory import provider
 from app.dns.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata
-from app.dns.validators.base import DNSValidationError, validate_dns_name
+from app.dns.validators.base import validate_dns_name
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import delete, select
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 
-def cleanup_zone_metadata(db: Session) -> None:
+def cleanup_zone_metadata(db: Session) -> int:
     """
     # Remove metadata for zones that no longer exist in the provider
     # (i.e. they were deleted outside of the application).
@@ -24,8 +25,10 @@ def cleanup_zone_metadata(db: Session) -> None:
 
     zone_names = {zone.name for zone in zones}
 
-    db.execute(delete(DNSZoneMetadataInDB).where(~DNSZoneMetadataInDB.name.in_(zone_names)))
+    result = cast(CursorResult[Any], db.execute(delete(DNSZoneMetadataInDB).where(~DNSZoneMetadataInDB.name.in_(zone_names))))
     db.commit()
+
+    return result.rowcount
 
 
 def get_zone(db: Session, zone_id: str) -> DNSZone:
@@ -73,10 +76,7 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs) -> DNSZone:
     # remove metadata for zones that were deleted outside of the application
     cleanup_zone_metadata(db)
 
-    try:
-        validate_dns_name(creation_args.name)
-    except DNSValidationError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    validate_dns_name(creation_args.name)
 
     properties = provider.create_zone(creation_args)
 

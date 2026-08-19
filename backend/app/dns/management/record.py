@@ -1,40 +1,48 @@
 import logging
+from typing import Any, cast
 
 from app.database.models.action_log import ActionLogInDB
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from app.database.models.enums import ActionObjectType, ActorType, ChangeAction
 from app.dns.factory import provider
 from app.dns.models.record import CreateDNSRecordArgs, DNSRecord, DNSRecordIdentifier, DNSRecordMetadata, ModifyDNSRecordArgs
+from app.dns.validators.base import validate_dns_record_name
+from app.dns.validators.record_content import validate_record_content
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import delete, select, tuple_
+from sqlalchemy import CursorResult, delete, select, tuple_
 from sqlalchemy.orm import Session
-
-from app.dns.validators.base import DNSValidationError, validate_dns_name, validate_dns_record_name
-from app.dns.validators.record_content import validate_record_content
 
 logger = logging.getLogger(__name__)
 
 
-def cleanup_record_metadata(db: Session, zone_id: str) -> None:
+def cleanup_record_metadata(db: Session, *zone_ids: str) -> int:
     """
     Remove metadata for records that no longer exist in the provider
     (i.e. they were deleted outside of the application).
     """
-    records = provider.get_records(zone_id)
+    record_keys: set[tuple[str, str, str]] = set()
 
-    record_keys = {(record.name, record.type) for record in records}
+    for zone_id in zone_ids:
+        records = provider.get_records(zone_id)
+        record_keys.update((zone_id, record.name, record.type) for record in records)
 
-    db.execute(
-        delete(DNSRecordMetadataInDB).where(
-            DNSRecordMetadataInDB.zone_id == zone_id,
-            ~tuple_(
-                DNSRecordMetadataInDB.name,
-                DNSRecordMetadataInDB.type,
-            ).in_(record_keys),
-        )
+    result = cast(
+        CursorResult[Any],
+        db.execute(
+            delete(DNSRecordMetadataInDB).where(
+                ~tuple_(
+                    DNSRecordMetadataInDB.zone_id,
+                    DNSRecordMetadataInDB.name,
+                    DNSRecordMetadataInDB.type,
+                ).in_(record_keys),
+            )
+        ),
     )
+
     db.commit()
+
+    return result.rowcount
 
 
 def get_record(db: Session, record_id: DNSRecordIdentifier) -> DNSRecord:
@@ -104,11 +112,8 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs) -> DNSRecord:
     # remove metadata for records within the zone that were deleted outside of the application
     cleanup_record_metadata(db, creation_args.zone_id)
 
-    try:
-        validate_dns_record_name(creation_args.name, creation_args.zone_id)
-        validate_record_content(creation_args.content, creation_args.type)
-    except DNSValidationError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    validate_dns_record_name(creation_args.name, creation_args.zone_id)
+    validate_record_content(creation_args.content, creation_args.type)
 
     record_id = DNSRecordIdentifier.model_validate(creation_args.model_dump())
 
@@ -176,11 +181,8 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
     # remove metadata for records within the zone that were deleted outside of the applicationd
     cleanup_record_metadata(db, modification_args.zone_id)
 
-    try:
-        validate_dns_record_name(modification_args.name, modification_args.zone_id)
-        validate_record_content(modification_args.content, modification_args.type)
-    except DNSValidationError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    validate_dns_record_name(modification_args.name, modification_args.zone_id)
+    validate_record_content(modification_args.content, modification_args.type)
 
     record_id = DNSRecordIdentifier.model_validate(modification_args.model_dump())
 

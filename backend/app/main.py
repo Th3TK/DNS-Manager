@@ -2,6 +2,10 @@ import logging
 
 import requests
 from app.config import ENV_CONFIG
+from app.database.connection import session_factory
+from app.dns.factory import provider
+from app.dns.management.record import cleanup_record_metadata
+from app.dns.management.zone import cleanup_zone_metadata
 from app.dns.validators.base import DNSValidationError
 from app.endpoints.action_log import router as action_log_router
 from app.endpoints.authentication import router as authentication_router
@@ -15,6 +19,23 @@ logging.basicConfig(level=getattr(logging, ENV_CONFIG.LOG_LEVEL))
 logger = logging.getLogger(__name__)
 
 
+# Synchronize the database with the DNS provider
+with session_factory() as db:
+    logging.info("Synchronizing database metadata with DNS provider.")
+
+    removed_zones: int = cleanup_zone_metadata(db)
+    logging.info(f"Removed {removed_zones} stale zones from the database.")
+
+    zones = provider.get_zones()
+    zone_ids = {zone.id for zone in zones}
+
+    removed_records: int = cleanup_record_metadata(db, *zone_ids)
+    logging.info(f"Removed {removed_records} stale records from the database.")
+
+    logging.info("Database synchronization with DNS provider completed.")
+
+
+# Initiate the FastAPI instance
 app = FastAPI(root_path="/api")
 
 
@@ -39,6 +60,11 @@ async def internal_request_json_parsing_error(request: Request, exc: requests.ex
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "The response from an external API could not be parsed as JSON."},
     )
+
+
+@app.exception_handler(DNSValidationError)
+async def dns_validation_error(request: Request, exc: DNSValidationError):
+    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": str(exc)})
 
 
 app.include_router(authentication_router)
