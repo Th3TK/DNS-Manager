@@ -5,6 +5,9 @@ from app.dns.models.zone import CreateDNSZoneArgs, DNSZoneProperties
 
 
 class DNSProvider(Protocol):
+    # Raises HTTP 503 if the DNS provider is unavailable.
+    def health_check(self) -> None: ...
+
     def create_zone(self, creation_args: CreateDNSZoneArgs) -> DNSZoneProperties: ...
 
     def delete_zone(self, zone_id: str) -> None: ...

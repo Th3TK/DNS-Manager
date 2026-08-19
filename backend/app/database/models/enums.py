@@ -25,6 +25,6 @@ class ChangeAction(StrEnum):
     PERMANENTLY_DELETED = "permanently_deleted"
 
 
-class ActionObjectType(StrEnum):
+class DNSObjectType(StrEnum):
     ZONE = "zone"
     RECORD = "record"

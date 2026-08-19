@@ -1,7 +1,7 @@
 from typing import Literal
 
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 type DNSZoneOrigin = Literal["manual", "external"]
 
@@ -52,7 +52,7 @@ class CreateDNSZoneForm(BaseModel):
     """
 
     name: str
-    comment: str
+    comment: str | None = None
 
 
 class CreateDNSZoneArgs(CreateDNSZoneForm):
@@ -61,5 +61,5 @@ class CreateDNSZoneArgs(CreateDNSZoneForm):
     Extends the API request data with properties determined by the backend, rather than supplied by the client.
     """
 
-    origin: Literal["manual"] = "manual"
+    origin: DNSZoneOrigin
     author: str  # username

@@ -1,13 +1,15 @@
 import logging
-from typing import Any, cast
+from typing import Any, Literal, cast
 
-from app.database.models.action_log import ActionLogInDB
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
-from app.database.models.enums import ActionObjectType, ActorType, ChangeAction
+from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
 from app.dns.factory import provider
+from app.dns.management.action_log import create_log_entry
+from app.dns.management.trash import create_trash_entry
 from app.dns.models.record import CreateDNSRecordArgs, DNSRecord, DNSRecordIdentifier, DNSRecordMetadata, ModifyDNSRecordArgs
 from app.dns.validators.base import validate_dns_record_name
 from app.dns.validators.record_content import validate_record_content
+from app.users.models.user import User
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import CursorResult, delete, select, tuple_
@@ -108,7 +110,7 @@ def get_records(db: Session, zone_id: str) -> list[DNSRecord]:
     return records
 
 
-def create_record(db: Session, creation_args: CreateDNSRecordArgs) -> DNSRecord:
+def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoration: bool = False) -> DNSRecord:
     # remove metadata for records within the zone that were deleted outside of the application
     cleanup_record_metadata(db, creation_args.zone_id)
 
@@ -128,7 +130,7 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs) -> DNSRecord:
 
     properties = provider.create_record(creation_args)
 
-    logger.info(f"{creation_args.author} created DNS record {properties.name} {properties.type} {properties.content}")
+    logger.info("%s created DNS record %s %s %s", creation_args.author, properties.name, properties.type, properties.content)
 
     metadata = DNSRecordMetadataInDB(
         zone_id=creation_args.zone_id,
@@ -142,37 +144,25 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs) -> DNSRecord:
 
     record = DNSRecord(**properties.model_dump(), **DNSRecordMetadata.from_db(metadata).model_dump())
 
-    log = ActionLogInDB(
-        actor_type=ActorType.USER,
-        actor=creation_args.author,
-        action=ChangeAction.CREATED,
-        affected_object_type=ActionObjectType.ZONE,
-        object_before=None,
-        object_after=jsonable_encoder(record),
-    )
-
     try:
         db.add(metadata)
         db.commit()
     except Exception:
         db.rollback()
-
-        logger.exception(f"Failed to save metadata for DNS record {properties.name} {properties.type} {properties.content}.")
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="A database error occurred while saving the record metadata.",
-        )
-
-    try:
-        db.add(log)
-        db.commit()
-    except Exception:
-        db.rollback()
-
         logger.exception(
-            f"Failed to save the action log for DNS record {properties.name} {properties.type} {properties.content} creation."
+            "Failed to save metadata for DNS record  %s %s %s.", properties.name, properties.type, properties.content
         )
+        record = DNSRecord(**properties.model_dump(), **DNSRecordMetadata.from_db(None).model_dump())
+
+    create_log_entry(
+        db=db,
+        actor_type=ActorType.USER,
+        actor=creation_args.author,
+        action=(ChangeAction.RESTORED if is_restoration else ChangeAction.CREATED),
+        affected_object_type=DNSObjectType.ZONE,
+        object_before=None,
+        object_after=jsonable_encoder(record),
+    )
 
     return record
 
@@ -216,35 +206,84 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
         db.commit()
     except Exception:
         db.rollback()
-
-        logger.exception(f"Failed to save metadata for DNS record {properties.name} {properties.type} {properties.content}.")
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="A database error occurred while saving the record metadata.",
-        )
+        logger.exception("Failed to save metadata for DNS record %s %s %s.", properties.name, properties.type, properties.content)
 
     metadata = DNSRecordMetadata.from_db(record_metadata_in_db)
 
     record = DNSRecord(**properties.model_dump(), **metadata.model_dump())
 
-    log = ActionLogInDB(
+    create_log_entry(
+        db=db,
         actor_type=ActorType.USER,
         actor=modification_args.author,
         action=ChangeAction.CHANGED,
-        affected_object_type=ActionObjectType.ZONE,
+        affected_object_type=DNSObjectType.ZONE,
         object_before=jsonable_encoder(record_old),
         object_after=jsonable_encoder(record),
     )
 
-    try:
-        db.add(log)
-        db.commit()
-    except Exception:
-        db.rollback()
+    return record
 
-        logger.exception(
-            f"Failed to save the action log for DNS record {properties.name} {properties.type} {properties.content} modification."
+
+def delete_record(
+    db: Session, record_id: DNSRecordIdentifier, logged_in_user: User
+) -> Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]:
+    properties = provider.get_record(record_id)
+
+    if properties is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "DNS record with "
+                f"zone_id='{record_id.zone_id}', name='{record_id.name}', type='{record_id.type}' "
+                "could not be found."
+            ),
         )
 
-    return record
+    provider.delete_record(record_id)
+
+    logger.info("%s deleted DNS record %s", logged_in_user.username, record_id)
+
+    metadata_in_db = db.scalar(
+        select(DNSRecordMetadataInDB).where(
+            DNSRecordMetadataInDB.zone_id == record_id.zone_id,
+            DNSRecordMetadataInDB.name == record_id.name,
+            DNSRecordMetadataInDB.type == record_id.type,
+        )
+    )
+
+    metadata = DNSRecordMetadata.from_db(metadata_in_db)
+
+    deleted_record = DNSRecord(**properties.model_dump(), **metadata.model_dump())
+
+    action = ChangeAction.PERMANENTLY_DELETED if metadata.origin == "external" else ChangeAction.DELETED
+
+    if metadata.origin != "external":
+        if not create_trash_entry(
+            db,
+            actor=logged_in_user.username,
+            object_type=DNSObjectType.RECORD,
+            object_data=CreateDNSRecordArgs(**deleted_record.model_dump()),
+        ):
+            action = ChangeAction.PERMANENTLY_DELETED
+
+        try:
+            db.delete(metadata_in_db)
+            db.commit()
+        except Exception:
+            db.rollback()
+            logger.exception(
+                "Failed to delete stale metadata for DNS record %s %s %s.", properties.name, properties.type, properties.content
+            )
+
+    create_log_entry(
+        db=db,
+        actor_type=ActorType.USER,
+        actor=logged_in_user.username,
+        action=action,
+        affected_object_type=DNSObjectType.RECORD,
+        object_before=jsonable_encoder(deleted_record),
+        object_after=None,
+    )
+
+    return action

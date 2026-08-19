@@ -1,5 +1,5 @@
 def join_url(*parts: str) -> str:
-    return "/".join(part.strip("/") for part in parts)
+    return "/".join(part.strip("/") for part in parts).rstrip("/")
 
 
 def normalize_url(base_url: str) -> str:

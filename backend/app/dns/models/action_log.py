@@ -6,7 +6,7 @@ from app.database.models.action_log import ActionLogInDB
 from pydantic import BaseModel, ConfigDict
 
 
-class ActionLog(BaseModel):
+class ActionLogEntry(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     entry_uuid: UUID
@@ -19,5 +19,5 @@ class ActionLog(BaseModel):
     object_after: dict[str, Any] | None = None
 
     @classmethod
-    def from_db(cls, action_log_db: ActionLogInDB) -> "ActionLog":
-        return ActionLog.model_validate(action_log_db)
+    def from_db(cls, action_log_db: ActionLogInDB) -> "ActionLogEntry":
+        return ActionLogEntry.model_validate(action_log_db)

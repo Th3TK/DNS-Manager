@@ -42,18 +42,18 @@ class PowerDNSAdapter(DNSProvider):
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=(
-                    "Connection to the PowerDNS REST API timed out. Try again later"
-                    "or check whether your PowerDNS connection settings"
-                    "in the environment variables are correctly configured."
+                    "Connection to the PowerDNS REST API timed out. Try again later "
+                    "or check whether your PowerDNS connection settings "
+                    "in the environment variables are correctly configured. "
                 ),
             )
         except requests.exceptions.ConnectionError:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=(
-                    "Could not connect to the PowerDNS REST API. Ensure that PowerDNS"
-                    "service is running and that the PowerDNS connection settings"
-                    "in the environment variables are correctly configured."
+                    "Could not connect to the PowerDNS REST API. Ensure that PowerDNS "
+                    "service is running and that the PowerDNS connection settings "
+                    "in the environment variables are correctly configured. "
                 ),
             )
         except requests.exceptions.HTTPError as exc:
@@ -66,9 +66,9 @@ class PowerDNSAdapter(DNSProvider):
 
             if exc.response.status_code == 401:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    status_code=status.HTTP_502_BAD_GATEWAY,
                     detail=(
-                        "Authentication with the PowerDNS REST API failed.Verify that POWERDNS_API_KEY contains a valid API key."
+                        "Authentication with the PowerDNS REST API failed. Verify that POWERDNS_API_KEY contains a valid API key."
                     ),
                 )
 
@@ -107,6 +107,36 @@ class PowerDNSAdapter(DNSProvider):
             return DNSRecordProperties(**record_id.model_dump(), content=content, ttl=rrset.ttl)
 
         return None
+
+    def health_check(self) -> None:
+        try:
+            self._send_request("GET", "")
+        except HTTPException as exc:
+            match exc.status_code:
+                case status.HTTP_404_NOT_FOUND:
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail=(
+                            "Could not retrieve data from the PowerDNS server due to an invalid path. "
+                            "Ensure the POWERDNS_SERVER_ID environment variable is set correctly."
+                        ),
+                    )
+                case status.HTTP_502_BAD_GATEWAY:
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail=exc.detail,
+                    )
+                case status.HTTP_503_SERVICE_UNAVAILABLE:
+                    raise exc
+                case _:
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail=(
+                            "Error occured while trying to connect to PowerDNS REST API. Ensure that PowerDNS "
+                            "service is running and that the PowerDNS connection settings "
+                            "in the environment variables are correctly configured."
+                        ),
+                    )
 
     # ZONES
 
@@ -219,4 +249,7 @@ class PowerDNSAdapter(DNSProvider):
 
         return record
 
-    def delete_record(self, record_id: DNSRecordIdentifier) -> None: ...
+    def delete_record(self, record_id: DNSRecordIdentifier) -> None:
+        body = {"rrsets": [{"name": record_id.name, "type": record_id.type, "changetype": "DELETE"}]}
+
+        self._send_request("PATCH", f"zones/{record_id.zone_id}", json=body)  # returns 204 no content
