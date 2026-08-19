@@ -27,7 +27,7 @@ class DNSRecordMetadataInDB(Base):
     type: Mapped[str] = mapped_column(String(10), primary_key=True)
 
     # metadata
-    comment: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    comment: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
 
     checks_enabled: Mapped[bool] = mapped_column(Boolean, server_default="true", nullable=False)
 

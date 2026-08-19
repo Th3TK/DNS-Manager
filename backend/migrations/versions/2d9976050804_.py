@@ -40,9 +40,9 @@ def upgrade() -> None:
     op.create_index(op.f("ix_action_log_actor"), "action_log", ["actor"], unique=False)
     op.create_table(
         "users",
-        sa.Column("username", sa.String(), nullable=False),
+        sa.Column("username", sa.String(length=64), nullable=False),
         sa.Column("password", sa.String(length=60), nullable=False),
-        sa.Column("full_name", sa.String(), nullable=False, server_default=""),
+        sa.Column("full_name", sa.String(length=128), nullable=False, server_default=""),
         sa.Column("is_admin", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("disabled", sa.Boolean(), nullable=False, server_default="false"),
         sa.PrimaryKeyConstraint("username"),
@@ -53,7 +53,7 @@ def upgrade() -> None:
         sa.Column("zone_id", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("type", sa.String(length=10), nullable=False),
-        sa.Column("comment", sa.String(), nullable=True),
+        sa.Column("comment", sa.String(length=1000), nullable=True),
         sa.Column("checks_enabled", sa.Boolean(), server_default="true", nullable=False),
         sa.Column("author", sa.String(), nullable=True),
         sa.Column("origin", sa.Enum("MANUAL", "AUTOMATIC", name="internal_record_origin"), nullable=False),
@@ -68,7 +68,7 @@ def upgrade() -> None:
         "dns_zones_metadata",
         sa.Column("id", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column("comment", sa.String(), nullable=True),
+        sa.Column("comment", sa.String(length=1000), nullable=True),
         sa.Column("author", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(
             ["author"],

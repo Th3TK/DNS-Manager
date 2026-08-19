@@ -12,6 +12,6 @@ class DNSZoneMetadataInDB(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
 
     # metadata
-    comment: Mapped[str | None] = mapped_column(String, nullable=True)
+    comment: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     author: Mapped[str | None] = mapped_column(ForeignKey("users.username"), nullable=True)

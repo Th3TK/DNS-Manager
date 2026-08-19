@@ -1,7 +1,7 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field, field_validator
 
 type DNSZoneOrigin = Literal["manual", "external"]
 
@@ -51,8 +51,13 @@ class CreateDNSZoneForm(BaseModel):
     Contains the DNS zone properties supplied by the client.
     """
 
-    name: str
-    comment: str | None = None
+    name: Annotated[str, Field(max_length=255)]
+    comment: Annotated[str | None, Field(max_length=1000, default=None)]
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return f"{value.rstrip('.')}."
 
 
 class CreateDNSZoneArgs(CreateDNSZoneForm):

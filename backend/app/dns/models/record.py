@@ -1,7 +1,7 @@
 from typing import Annotated, Literal, cast
 
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # DNS record types that are supported during record creation via the DNSManager interface
 type SupportedDNSRecordTypes = Literal["A", "AAAA", "CNAME", "TXT", "MX", "SRV"]
@@ -71,12 +71,17 @@ class CreateDNSRecordForm(BaseModel):
     Contains the DNS record properties supplied by the client.
     """
 
-    name: str
+    name: Annotated[str, Field(max_length=255)]
     type: SupportedDNSRecordTypes
-    content: str
+    content: Annotated[str, Field(max_length=255)]
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
-    comment: str | None = None
+    comment: Annotated[str | None, Field(max_length=1000, default=None)]
     checks_enabled: bool = True
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return f"{value.rstrip('.')}."
 
 
 class CreateDNSRecordArgs(CreateDNSRecordForm):
@@ -85,7 +90,7 @@ class CreateDNSRecordArgs(CreateDNSRecordForm):
     Extends the API request data with properties determined by the backend, rather than supplied by the client.
     """
 
-    zone_id: str
+    zone_id: Annotated[str, Field(max_length=255)]
     author: str
     origin: DNSRecordOriginInternal
 
@@ -96,12 +101,17 @@ class ModifyDNSRecordForm(BaseModel):
     Contains the DNS record properties supplied by the client.
     """
 
-    name: str
+    name: Annotated[str, Field(max_length=255)]
     type: SupportedDNSRecordTypes
-    content: str
+    content: Annotated[str, Field(max_length=255)]
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
-    comment: str | None = None
+    comment: Annotated[str | None, Field(max_length=1000, default=None)]
     checks_enabled: bool = True
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return f"{value.rstrip('.')}."
 
 
 class ModifyDNSRecordArgs(ModifyDNSRecordForm):
@@ -110,5 +120,5 @@ class ModifyDNSRecordArgs(ModifyDNSRecordForm):
     Extends the API request data with properties determined by the backend, rather than supplied by the client.
     """
 
-    zone_id: str
+    zone_id: Annotated[str, Field(max_length=255)]
     author: str
