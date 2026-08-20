@@ -10,17 +10,17 @@ class DNSRecordMetadataInDB(Base):
     __tablename__ = "dns_records_metadata"
 
     __table_args__ = (
-        Index("ix_dns_records_metadata_zone_name", "zone_id"),
+        Index("ix_dns_records_metadata_zone_name", "zone_name"),
         ForeignKeyConstraint(
-            ["zone_id"],
-            ["dns_zones_metadata.id"],
-            name="fk_dns_records_metadata_zone_id",
+            ["zone_name"],
+            ["dns_zones_metadata.name"],
+            name="fk_dns_records_metadata_zone_name",
             ondelete="CASCADE",
         ),
     )
 
     # identified by the zone name along with the record type, name and content.
-    zone_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    zone_name: Mapped[str] = mapped_column(String(255), primary_key=True)
 
     name: Mapped[str] = mapped_column(String(255), primary_key=True)
 

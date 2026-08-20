@@ -15,6 +15,7 @@ class RecordOrigin(StrEnum):
 class ActorType(StrEnum):
     USER = "user"
     WATCHER = "watcher"
+    AUTOMATIC = "automatic"
 
 
 class ChangeAction(StrEnum):

@@ -4,14 +4,14 @@ from uuid import UUID
 
 from app.database.database import get_db
 from app.database.models.enums import DNSObjectType
-from app.dns.management.record import create_record
-from app.dns.management.trash import delete_trash_entry, get_trash_entries, get_trash_entry
-from app.dns.management.zone import create_zone
-from app.dns.models.record import CreateDNSRecordArgs, DNSRecord
-from app.dns.models.trash import TrashEntry
-from app.dns.models.zone import CreateDNSZoneArgs, DNSZone
-from app.users.authentication import get_authenticated_administrator, get_authenticated_user
-from app.users.models.user import User
+from app.management.dns.record import create_record
+from app.management.dns.zone import create_zone
+from app.management.trash.trash import delete_trash_entry, get_trash_entries, get_trash_entry
+from app.management.users.authentication import get_authenticated_administrator, get_authenticated_user
+from app.models.record import CreateDNSRecordArgs, DNSRecord
+from app.models.trash import TrashEntry
+from app.models.user import User
+from app.models.zone import CreateDNSZoneArgs, DNSZone
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -44,7 +44,7 @@ def __get_action_log_entry__(
 @router.post("/restore/{entry_uuid}", response_model=DNSZone | DNSRecord, status_code=201)
 def __restore_dns_object_from_trash__(
     user: Annotated[User, Depends(get_authenticated_administrator)], db: Annotated[Session, Depends(get_db)], entry_uuid: UUID
-) -> DNSZone | DNSRecord:
+):
     trash_entry = get_trash_entry(db, entry_uuid)
     response = None
 

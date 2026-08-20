@@ -1,22 +1,30 @@
 import logging
+from contextlib import asynccontextmanager
 
 import requests
 from app.config import ENV_CONFIG
 from app.database.connection import session_factory
-from app.dns.factory import provider
-from app.dns.management.record import cleanup_record_metadata
-from app.dns.management.zone import cleanup_zone_metadata
-from app.dns.validators.base import DNSValidationError
 from app.endpoints.action_log import router as action_log_router
-from app.endpoints.authentication import router as authentication_router
 from app.endpoints.base import router as base_router
-from app.endpoints.dns_management import router as dns_management_router
-from app.endpoints.trash import router as dns_trash_router
+from app.endpoints.dns import router as dns_router
+from app.endpoints.trash import router as trash_router
+from app.endpoints.user import router as users_router
+from app.management.dns.record import cleanup_record_metadata
+from app.management.dns.validation import DNSValidationError
+from app.management.dns.zone import cleanup_zone_metadata
+from app.management.trash.cleanup import automatic_trash_removal
+from app.providers.factory import provider
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
-logging.basicConfig(level=getattr(logging, ENV_CONFIG.LOG_LEVEL))
+logging.basicConfig(
+    level=getattr(logging, ENV_CONFIG.LOG_LEVEL),
+    format="%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logging.getLogger("passlib").disabled = True
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +58,20 @@ with session_factory() as db:
                 )
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await automatic_trash_removal.initialize()
+    logging.info("Initialized trash removal event loop.")
+    automatic_trash_removal.start()
+    logging.info("Scheduled automatic trash removal.")
+
+    yield
+
+    automatic_trash_removal.stop()
+
+
 # Initiate the FastAPI instance
-app = FastAPI(root_path="/api")
+app = FastAPI(root_path="/api", lifespan=lifespan)
 
 
 @app.exception_handler(OperationalError)
@@ -83,7 +103,7 @@ async def dns_validation_error(request: Request, exc: DNSValidationError):
 
 
 app.include_router(base_router)
-app.include_router(authentication_router)
-app.include_router(dns_management_router)
-app.include_router(dns_trash_router)
+app.include_router(users_router)
+app.include_router(dns_router)
+app.include_router(trash_router)
 app.include_router(action_log_router)

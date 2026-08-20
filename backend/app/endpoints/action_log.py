@@ -2,10 +2,10 @@ from typing import Annotated
 from uuid import UUID
 
 from app.database.database import get_db
-from app.dns.management.action_log import get_log_entries, get_log_entry
-from app.dns.models.action_log import ActionLogEntry
-from app.users.authentication import get_authenticated_user
-from app.users.models.user import User
+from app.management.action_log.action_log import get_log_entries, get_log_entry
+from app.management.users.authentication import get_authenticated_user
+from app.models.action_log import ActionLogEntry
+from app.models.user import User
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
