@@ -12,7 +12,6 @@ class DNSZoneProperties(BaseModel):
     Properties of a DNS zone managed by the DNS provider.
     """
 
-    id: str
     name: str
 
 

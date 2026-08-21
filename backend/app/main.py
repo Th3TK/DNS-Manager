@@ -2,6 +2,10 @@ import logging
 from contextlib import asynccontextmanager
 
 import requests
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
+
 from app.config import ENV_CONFIG
 from app.endpoints.action_log import router as action_log_router
 from app.endpoints.base import router as base_router
@@ -11,9 +15,6 @@ from app.endpoints.user import router as users_router
 from app.management.dns.validation import DNSValidationError
 from app.management.trash.cleanup import automatic_trash_removal
 from app.synch import synchronize_database
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.exc import OperationalError
 
 logging.basicConfig(
     level=getattr(logging, ENV_CONFIG.LOG_LEVEL),

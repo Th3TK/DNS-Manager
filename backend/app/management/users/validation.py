@@ -10,7 +10,7 @@ def validate_username(username: str) -> None:
     if not USERNAME_PATTERN.fullmatch(username):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username may only contain lowercase letters, digits, ':', '_' and '-'.",
+            detail="Username may only contain lowercase letters, digits, and the following characters: _ @ . + : $ -.",
         )
 
     if username in RESERVED_USERNAMES:
