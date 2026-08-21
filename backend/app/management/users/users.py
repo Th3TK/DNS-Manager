@@ -5,7 +5,7 @@ from app.management.users.passwords import hash_password
 from app.management.users.validation import validate_username
 from app.models.user import CreateUserForm, ModifyUserForm, User
 from fastapi import HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -83,6 +83,20 @@ def modify_user(db: Session, username: str, modification_form: ModifyUserForm) -
     return User.from_db(user_in_db)
 
 
+def get_active_admin_count(db: Session) -> int:
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(UserInDB)
+            .where(
+                UserInDB.is_admin.is_(True),
+                UserInDB.disabled.is_(False),
+            )
+        )
+        or 0
+    )
+
+
 def delete_user(db: Session, username: str) -> None:
     user_in_db = get_raw_user(db, username)
 
@@ -90,6 +104,12 @@ def delete_user(db: Session, username: str) -> None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with username='{username}' could not be found.",
+        )
+
+    if user_in_db.is_admin and get_active_admin_count(db) == 1:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete the last active administrator.",
         )
 
     db.delete(user_in_db)
