@@ -87,9 +87,9 @@ docker exec dns-manager-backend uv run python -m app.scripts.init_admin --force
 
 ### 5. Connect to the app
 
-DNS Manager is available at http://127.0.0.1:3000.
+DNS Manager runs at [0.0.0.0:3000](http://0.0.0.0:3000) (available at http://127.0.0.1:3000).
 
-The API Swagger documentation is available at http://127.0.0.1:9000/docs.
+The API Swagger documentation runs at [0.0.0.0:9000/docs](http://0.0.0.0:9000/docs) (available at http://127.0.0.1:9000/docs).
 
 ## Production - Watcher build
 
