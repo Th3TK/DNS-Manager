@@ -1,0 +1,18 @@
+name: dns-manager
+
+services:
+    backend:
+        container_name: dns-manager-backend
+        build:
+            context: ./backend
+            dockerfile: ./docker/Dockerfile
+        env_file:
+            - .env
+        ports:
+            - "9000:8000"
+        networks:
+            - dnsnet
+networks:
+    dnsnet:
+        external: true
+        name: dnsnet

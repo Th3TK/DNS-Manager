@@ -6,10 +6,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.8.14 /uv /uvx /bin/
 
 COPY pyproject.toml uv.lock alembic.ini init.sh ./
 
-RUN uv sync --no-dev
+RUN uv sync --locked --no-dev
 
 COPY app ./app
 
 COPY migrations ./migrations
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000"]
+CMD ["uv", "run", "--no-dev", "--exact", "uvicorn", "app.main:app", "--host", "0.0.0.0"]

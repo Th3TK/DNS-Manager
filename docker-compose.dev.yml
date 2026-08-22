@@ -1,5 +1,8 @@
+name: dns-manager-dev
+
 services:
-    api:
+    backend:
+        container_name: dns-manager-backend-dev
         build:
             context: ./backend
             dockerfile: ./docker/Dockerfile.dev
@@ -7,10 +10,9 @@ services:
             - ./backend/app:/backend/app
             - ./backend/migrations:/backend/migrations
         env_file:
-            - .env
+            - .env.dev
         ports:
-            - "9000:9000"
-        command: uv run uvicorn app.main:app --host 0.0.0.0 --port 9000 --reload
+            - "9000:8000"
         networks:
             - dnsnet
 networks:
