@@ -52,7 +52,7 @@ class CreateDNSZoneForm(BaseModel):
     """
 
     name: Annotated[str, Field(max_length=255)]
-    comment: Annotated[str | None, Field(max_length=1000, default=None)]
+    comment: Annotated[str, Field(max_length=1000)] | None = None
 
     @field_validator("name", mode="after")
     @classmethod

@@ -20,14 +20,14 @@ class User(BaseModel):
 class CreateUserForm(BaseModel):
     username: Annotated[str, Field(min_length=3, max_length=64)]
     password: Annotated[str, Field(min_length=6, max_length=128)]
-    full_name: Annotated[str, Field(max_length=128, default="")]
+    full_name: Annotated[str, Field(max_length=128)] = ""
     is_admin: bool = False
     disabled: bool = False
 
 
 class ModifyUserForm(BaseModel):
     password: Annotated[str, Field(min_length=6, max_length=128)] | None = None
-    full_name: Annotated[str, Field(max_length=128, default="")] | None = None
+    full_name: Annotated[str, Field(max_length=128)] | None = None
     is_admin: bool | None = None
     disabled: bool | None = None
 

@@ -76,7 +76,7 @@ class CreateDNSRecordForm(BaseModel):
     type: SupportedDNSRecordTypes
     content: Annotated[str, Field(max_length=255)]
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
-    comment: Annotated[str | None, Field(max_length=1000, default=None)]
+    comment: Annotated[str, Field(max_length=1000)] | None = None
     checks_enabled: bool = True
 
     @field_validator("name", mode="after")
@@ -111,7 +111,7 @@ class ModifyDNSRecordForm(BaseModel):
     type: SupportedDNSRecordTypes
     content: Annotated[str, Field(max_length=255)]
     ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
-    comment: Annotated[str | None, Field(max_length=1000, default=None)]
+    comment: Annotated[str, Field(max_length=1000)] | None = None
     checks_enabled: bool = True
 
     @field_validator("name", mode="after")
