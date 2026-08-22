@@ -1,11 +1,12 @@
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
 from app.database.database import get_db
 from app.management.users.authentication import get_authenticated_administrator, get_authenticated_user
 from app.management.users.users import change_password, create_user, delete_user, get_user, get_users, modify_user
 from app.models.user import ChangePasswordForm, CreateUserForm, ModifyUserForm, User
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

@@ -1,10 +1,10 @@
 import ipaddress
+import re
 
+from app.models.exceptions import DNSValidationError
 from app.models.record import SupportedDNSRecordTypes
 
-
-class DNSValidationError(ValueError):
-    pass
+FQDN_BASE_VALID_CHARACTERS = re.compile(r"(?:[a-z0-9_-]+\.)+")
 
 
 def is_valid_ipv4(value: str) -> bool:
@@ -33,7 +33,12 @@ def validate_dns_name(name: str):
     if not name:
         raise DNSValidationError("DNS name cannot be empty.")
 
-    labels = name.rstrip(".").split(".")
+    normalized_name = f"{name.rstrip('.').lower()}."
+
+    if not FQDN_BASE_VALID_CHARACTERS.fullmatch(normalized_name):
+        raise DNSValidationError("DNS name contains invalid characters.")
+
+    labels = normalized_name.rstrip(".").split(".")
 
     if any(not label for label in labels):
         raise DNSValidationError("DNS name cannot contain empty labels.")
@@ -57,8 +62,8 @@ def validate_dns_record_name(name: str, zone_name: str):
 
     validate_dns_name(name)
 
-    normalized_name = name.rstrip(".").lower()
-    normalized_zone = zone_name.rstrip(".").lower()
+    normalized_name = f"{name.rstrip('.').lower()}."
+    normalized_zone = f"{zone_name.rstrip('.').lower()}."
 
     if normalized_name != normalized_zone and not normalized_name.endswith(f".{normalized_zone}"):
         raise DNSValidationError("DNS record name is out of zone.")

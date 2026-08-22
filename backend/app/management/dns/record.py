@@ -9,7 +9,6 @@ from app.management.trash.trash import create_trash_entry
 from app.models.record import (
     CreateDNSRecordArgs,
     DNSRecord,
-    DNSRecordIdentifier,
     DNSRecordMetadata,
     DNSRecordRemovalResult,
     ModifyDNSRecordArgs,
@@ -54,24 +53,20 @@ def cleanup_record_metadata(db: Session, *zone_names: str) -> int:
     return result.rowcount
 
 
-def get_record(db: Session, record_id: DNSRecordIdentifier) -> DNSRecord:
-    properties = provider.get_record(record_id)
+def get_record(db: Session, zone_name: str, name: str, type_: str) -> DNSRecord:
+    properties = provider.get_record(zone_name, name, type_)
 
     if properties is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=(
-                "DNS record with "
-                f"zone_id='{record_id.zone_name}', name='{record_id.name}', type='{record_id.type}' "
-                "could not be found."
-            ),
+            detail=(f"DNS record with zone_id='{zone_name}', name='{name}', type='{type_}' could not be found."),
         )
 
     metadata_in_db = db.scalar(
         select(DNSRecordMetadataInDB).where(
-            DNSRecordMetadataInDB.zone_name == record_id.zone_name,
-            DNSRecordMetadataInDB.name == record_id.name,
-            DNSRecordMetadataInDB.type == record_id.type,
+            DNSRecordMetadataInDB.zone_name == zone_name,
+            DNSRecordMetadataInDB.name == name,
+            DNSRecordMetadataInDB.type == type_,
         )
     )
 
@@ -130,10 +125,12 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
     validate_dns_record_name(creation_args.name, creation_args.zone_name)
     validate_record_content(creation_args.content, creation_args.type)
 
-    record_id = DNSRecordIdentifier.model_validate(creation_args.model_dump())
-
     # the API does not allow creating records with the same (name, type) key
-    duplicate = provider.get_record(record_id)
+    duplicate = provider.get_record(
+        zone_name=creation_args.zone_name,
+        name=creation_args.name,
+        type_=creation_args.type,
+    )
 
     if duplicate is not None:
         raise HTTPException(
@@ -149,7 +146,13 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
             detail=f"Zone with name='{creation_args.zone_name}' could not be found.",
         )
 
-    properties = provider.create_record(creation_args)
+    properties = provider.create_record(
+        zone_name=creation_args.zone_name,
+        name=creation_args.name,
+        type_=creation_args.type,
+        content=creation_args.content,
+        ttl=creation_args.ttl,
+    )
 
     logger.info("%s created DNS record %s %s %s", creation_args.author, properties.name, properties.type, properties.content)
 
@@ -195,17 +198,15 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
     validate_dns_record_name(modification_args.name, modification_args.zone_name)
     validate_record_content(modification_args.content, modification_args.type)
 
-    record_id = DNSRecordIdentifier.model_validate(modification_args.model_dump())
-
     # get the existing record; raises 404 if it does not exist.
-    record_old: DNSRecord = get_record(db, record_id)
+    record_old: DNSRecord = get_record(db, modification_args.zone_name, modification_args.name, modification_args.type)
 
     # get the ORM object
     record_metadata_in_db = db.scalar(
         select(DNSRecordMetadataInDB).where(
-            DNSRecordMetadataInDB.zone_name == record_id.zone_name,
-            DNSRecordMetadataInDB.name == record_id.name,
-            DNSRecordMetadataInDB.type == record_id.type,
+            DNSRecordMetadataInDB.zone_name == modification_args.zone_name,
+            DNSRecordMetadataInDB.name == modification_args.name,
+            DNSRecordMetadataInDB.type == modification_args.type,
         )
     )
 
@@ -224,7 +225,13 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
         )
 
     # provider DNS record modification
-    properties = provider.modify_record(modification_args)
+    properties = provider.modify_record(
+        zone_name=modification_args.zone_name,
+        name=modification_args.name,
+        type_=modification_args.type,
+        content=modification_args.content,
+        ttl=modification_args.ttl,
+    )
 
     # modify the metadata ORM object
     record_metadata_in_db.comment = modification_args.comment
@@ -254,19 +261,19 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
     return record
 
 
-def delete_record(db: Session, record_id: DNSRecordIdentifier, logged_in_user: User) -> DNSRecordRemovalResult:
+def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_user: User) -> DNSRecordRemovalResult:
     """
     Deletes a DNS zone and all of its records.
 
     Internal records are soft-deleted and stored in the trash. External records are permanently deleted.
     """
 
-    record = get_record(db, record_id)
+    record = get_record(db, zone_name, name, type_)
 
     is_record_external = record.origin == "external"
 
     # delete the record from the DNS provider
-    provider.delete_record(record_id)
+    provider.delete_record(zone_name, name, type_)
 
     result = DNSRecordRemovalResult(record_status=ChangeAction.PERMANENTLY_DELETED)
 
@@ -282,20 +289,29 @@ def delete_record(db: Session, record_id: DNSRecordIdentifier, logged_in_user: U
         try:
             db.execute(
                 delete(DNSRecordMetadataInDB).where(
-                    DNSRecordMetadataInDB.zone_name == record_id.zone_name,
-                    DNSRecordMetadataInDB.name == record_id.name,
-                    DNSRecordMetadataInDB.type == record_id.type,
+                    DNSRecordMetadataInDB.zone_name == zone_name,
+                    DNSRecordMetadataInDB.name == name,
+                    DNSRecordMetadataInDB.type == type_,
                 )
             )
             db.commit()
         except Exception:
             db.rollback()
             logger.exception(
-                "Failed to delete stale metadata for the deleted DNS record %s.",
-                record_id,
+                "Failed to delete stale metadata for the deleted DNS record %s %s %s.",
+                zone_name,
+                name,
+                type_,
             )
 
-    logger.info("%s %s DNS record %s", logged_in_user.username, result.record_status.replace("_", " "), record_id)
+    logger.info(
+        "%s %s DNS record %s %s %s",
+        logged_in_user.username,
+        result.record_status.replace("_", " "),
+        zone_name,
+        name,
+        type_,
+    )
 
     create_log_entry(
         db=db,

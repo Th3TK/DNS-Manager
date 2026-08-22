@@ -2,6 +2,9 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 from app.database.database import get_db
 from app.database.models.enums import DNSObjectType
 from app.management.dns.record import create_record
@@ -12,8 +15,6 @@ from app.models.record import CreateDNSRecordArgs, DNSRecord
 from app.models.trash import TrashEntry
 from app.models.user import User
 from app.models.zone import CreateDNSZoneArgs, DNSZone
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

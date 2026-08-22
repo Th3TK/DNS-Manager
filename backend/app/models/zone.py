@@ -57,7 +57,7 @@ class CreateDNSZoneForm(BaseModel):
     @field_validator("name", mode="after")
     @classmethod
     def normalize_name(cls, value: str) -> str:
-        return f"{value.rstrip('.')}."
+        return f"{value.rstrip('.').lower()}."
 
 
 class CreateDNSZoneArgs(CreateDNSZoneForm):

@@ -1,6 +1,5 @@
 import pytest
 from app.management.dns.validation import (
-    DNSValidationError,
     validate_a_record_content,
     validate_aaaa_record_content,
     validate_cname_record_content,
@@ -10,6 +9,7 @@ from app.management.dns.validation import (
     validate_record_content,
     validate_srv_record_content,
 )
+from app.models.exceptions import DNSValidationError
 from app.models.record import SupportedDNSRecordTypes
 
 # ---------------------------------------------------------------------------

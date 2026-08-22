@@ -12,8 +12,8 @@ from app.endpoints.base import router as base_router
 from app.endpoints.dns import router as dns_router
 from app.endpoints.trash import router as trash_router
 from app.endpoints.user import router as users_router
-from app.management.dns.validation import DNSValidationError
 from app.management.trash.cleanup import automatic_trash_removal
+from app.models.exceptions import DNSValidationError
 from app.synch import synchronize_database
 
 logging.basicConfig(
@@ -72,7 +72,7 @@ async def internal_request_json_parsing_error(request: Request, exc: requests.ex
 
 @app.exception_handler(DNSValidationError)
 async def dns_validation_error(request: Request, exc: DNSValidationError):
-    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": str(exc)})
+    return JSONResponse(status_code=exc.status_code, content=exc.detail)
 
 
 app.include_router(base_router)

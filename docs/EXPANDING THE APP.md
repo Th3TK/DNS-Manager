@@ -51,7 +51,7 @@ Ensure they all have a set default value and accept empty values. Otherwise they
 
 In the `/backend/app/providers` package create a new directory `/<your-provider-name>`. Inside that directory create files `adapter.py` and `models.py`. `adapter.py` will hold the logic while `models.py` will define models used in the direct requests with your provider.
 
-In `adapter.py`, create a class named `YourProviderNameDNSAdapter` that implements the `DNSProvider` Protocol defined in `base.py`.
+In `adapter.py`, create a class named `YourProviderNameAdapter` that implements the `DNSProvider` Protocol defined in `base.py`.
 
 The adapter is responsible for translation between application models and the DNS provider. It must implement every method defined by the `DNSProvider`.
 
@@ -62,7 +62,7 @@ The following checks are performed before any request reaches the adapter:
 - Duplicate and existing-resource checks are performed beforehand.
 - Field types and length limits are validated beforehand.
 - General DNS rules are validated beforehand.
-- DNS name character validity is not validated beforehand, as requirements may differ between providers and should therefore be handled by the adapter.
+- DNS syntax is validated beforehand. The API allows alphanumeric characters, hyphens and underscores in the DNS names. If the provider has sticter requirements, further validation should be handled by the adapter.
 
 #### 2.2 Requirements
 

@@ -63,7 +63,7 @@ def get_zones(db: Session) -> list[DNSZone]:
     zones = []
 
     for zone_properties in properties:
-        zone_metadata = DNSZoneMetadata.from_db(metadata_by_name.get(zone_properties.id))
+        zone_metadata = DNSZoneMetadata.from_db(metadata_by_name.get(zone_properties.name))
 
         zones.append(
             DNSZone(
@@ -82,9 +82,9 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs, is_restoration: b
 
     validate_dns_name(creation_args.name)
 
-    properties = provider.create_zone(creation_args)
+    properties = provider.create_zone(zone_name=creation_args.name)
 
-    logger.info("%s created DNS zone %s", creation_args.author, properties.id)
+    logger.info("%s created DNS zone %s", creation_args.author, properties.name)
 
     metadata = DNSZoneMetadataInDB(
         name=properties.name,
@@ -174,7 +174,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
             db.rollback()
             logger.exception("Failed to delete stale metadata for the deleted DNS zone %s.", zone_name)
 
-    logger.info("%s %s DNS zone %s", logged_in_user.username, result.zone_status.replace("_", " "), zone.id)
+    logger.info("%s %s DNS zone %s", logged_in_user.username, result.zone_status.replace("_", " "), zone.name)
 
     create_log_entry(
         db=db,

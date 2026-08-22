@@ -1,6 +1,9 @@
 import logging
 from typing import Annotated
 
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
 from app.database.database import get_db
 from app.management.dns.record import create_record, delete_record, get_record, get_records, modify_record
 from app.management.dns.zone import create_zone, delete_zone, get_zone, get_zones
@@ -9,15 +12,12 @@ from app.models.record import (
     CreateDNSRecordArgs,
     CreateDNSRecordForm,
     DNSRecord,
-    DNSRecordIdentifier,
     DNSRecordRemovalResult,
     ModifyDNSRecordArgs,
     ModifyDNSRecordForm,
 )
 from app.models.user import User
 from app.models.zone import CreateDNSZoneArgs, CreateDNSZoneForm, DNSZone, DNSZoneRemovalResult
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def __get_singular_record_details__(
     record_name: str,
     record_type: str,
 ) -> DNSRecord:
-    return get_record(db, DNSRecordIdentifier(zone_name=zone_name, name=record_name, type=record_type))
+    return get_record(db, zone_name=zone_name, name=record_name, type_=record_type)
 
 
 @router.post("/{zone_name}/record", response_model=DNSRecord, status_code=201)
@@ -124,4 +124,10 @@ def __delete_record__(
     record_name: str,
     record_type: str,
 ) -> DNSRecordRemovalResult:
-    return delete_record(db, DNSRecordIdentifier(zone_name=zone_name, name=record_name, type=record_type), user)
+    return delete_record(
+        db=db,
+        zone_name=zone_name,
+        name=record_name,
+        type_=record_type,
+        logged_in_user=user,
+    )

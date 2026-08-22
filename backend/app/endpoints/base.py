@@ -1,15 +1,16 @@
 import logging
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.database.database import get_db
 from app.management.users.authentication import authenticate_user
 from app.management.users.tokens import get_user_tokens
 from app.models.tokens import Tokens
 from app.providers.factory import provider
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 

@@ -82,7 +82,7 @@ class CreateDNSRecordForm(BaseModel):
     @field_validator("name", mode="after")
     @classmethod
     def normalize_name(cls, value: str) -> str:
-        return f"{value.rstrip('.')}."
+        return f"{value.rstrip('.').lower()}."
 
 
 class CreateDNSRecordArgs(CreateDNSRecordForm):
@@ -98,7 +98,7 @@ class CreateDNSRecordArgs(CreateDNSRecordForm):
     @field_validator("zone_name", mode="after")
     @classmethod
     def normalize_name(cls, value: str) -> str:
-        return f"{value.rstrip('.')}."
+        return f"{value.rstrip('.').lower()}."
 
 
 class ModifyDNSRecordForm(BaseModel):
@@ -117,7 +117,7 @@ class ModifyDNSRecordForm(BaseModel):
     @field_validator("name", mode="after")
     @classmethod
     def normalize_name(cls, value: str) -> str:
-        return f"{value.rstrip('.')}."
+        return f"{value.rstrip('.').lower()}."
 
 
 class ModifyDNSRecordArgs(ModifyDNSRecordForm):
