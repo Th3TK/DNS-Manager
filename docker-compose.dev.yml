@@ -15,6 +15,18 @@ services:
             - "9000:8000"
         networks:
             - dnsnet
+    frontend:
+        container_name: dns-manager-frontend-dev
+        build:
+            context: ./webapp
+            dockerfile: ./docker/Dockerfile.dev
+        volumes:
+            - ./webapp:/webapp
+            - /webapp/node_modules
+        ports:
+            - "3000:5173"
+        networks:
+            - dnsnet
 networks:
     dnsnet:
         external: true
