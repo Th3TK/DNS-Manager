@@ -1,3 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import LoginForm from "../components/LoginForm.vue";
+import CenterLayout from "../layouts/CenterLayout.vue";
+</script>
 
-<template><span>Login</span></template>
+<template>
+    <CenterLayout>
+        <LoginForm />
+    </CenterLayout>
+</template>

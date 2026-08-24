@@ -3,11 +3,13 @@ from contextlib import asynccontextmanager
 
 import requests
 from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
 from app.config import ENV_CONFIG
 from app.endpoints.action_log import router as action_log_router
+from app.endpoints.authentication import router as authentication_router
 from app.endpoints.base import router as base_router
 from app.endpoints.dns import router as dns_router
 from app.endpoints.trash import router as trash_router
@@ -46,6 +48,14 @@ async def lifespan(app: FastAPI):
 # Initiate the FastAPI instance
 app = FastAPI(root_path="/api", lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow local origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.exception_handler(OperationalError)
 async def sqlalchemy_connection_error_handler(request: Request, exc: OperationalError):
@@ -76,7 +86,8 @@ async def dns_validation_error(request: Request, exc: DNSValidationError):
 
 
 app.include_router(base_router)
-app.include_router(users_router)
+app.include_router(authentication_router)
 app.include_router(dns_router)
 app.include_router(trash_router)
 app.include_router(action_log_router)
+app.include_router(users_router)
