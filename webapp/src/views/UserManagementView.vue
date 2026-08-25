@@ -1,3 +1,5 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import MainLayout from "../layouts/MainLayout.vue";
+</script>
 
-<template><span>User management</span></template>
+<template><MainLayout>User</MainLayout></template>

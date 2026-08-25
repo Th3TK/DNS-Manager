@@ -1,8 +1,9 @@
 import type { AxiosError } from "axios";
+import type { User } from "../types/api.types";
 import { sendRequest } from "./requests";
 
-export const login = async (username: string, password: string, onError: (err: AxiosError) => void) =>
-    await sendRequest(
+export const login = async (username: string, password: string) =>
+    await sendRequest<true>(
         "POST",
         "/auth/login",
         {
@@ -11,5 +12,15 @@ export const login = async (username: string, password: string, onError: (err: A
                 "Content-Type": "application/x-www-form-urlencoded",
             },
         },
-        onError,
+        false,
     );
+
+export const getLoggedInUser = async () => await sendRequest<User>("GET", "/users/me");
+
+export const getAuthenticatedUser = async () => {
+    try {
+        return await getLoggedInUser();
+    } catch {
+        return null;
+    }
+};

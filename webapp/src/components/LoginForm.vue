@@ -1,19 +1,59 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef } from "vue";
-import { NForm, NFormItem, NInput, NButton, NSpace, NCard, NText } from "naive-ui";
-import { login } from "../services/api.ts";
+import { onMounted, reactive, ref, useTemplateRef } from "vue";
+import { NForm, NFormItem, NInput, NButton, NSpace, NCard, NText, type FormInst, type FormRules } from "naive-ui";
+
 import { useRouter } from "vue-router";
+import { useNotification } from "naive-ui";
+import { useErrorHandler } from "../composables/useErrorHandler.ts";
+import { HttpStatusCode } from "axios";
+import { login } from "../services/api.ts";
+
+const notification = useNotification();
+const errorHandler = useErrorHandler();
 
 const router = useRouter();
 
 const usernameInput = useTemplateRef<InstanceType<typeof NInput>>("username-input");
+const formRef = useTemplateRef<FormInst>("form-ref");
 
-const username = ref("");
-const password = ref("");
+const form = reactive({
+    username: "",
+    password: "",
+});
 
-const onLogin = () => {
-    login(username.value, password.value, (e) => console.log(e));
-    // router.push("/");
+const rules: FormRules = {
+    username: {
+        required: true,
+        message: "Username is required",
+        trigger: ["input", "blur"],
+    },
+    password: {
+        required: true,
+        message: "Password is required",
+        trigger: ["input", "blur"],
+    },
+};
+
+const onLogin = async () => {
+    try {
+        await formRef.value?.validate();
+    } catch {
+        return;
+    }
+
+    const success = await login(form.username, form.password).catch((error) => {
+        if (error.response?.status === HttpStatusCode.Unauthorized) {
+            notification.error({
+                title: "Login failed",
+                content: "Incorrect username or password.",
+                duration: 3000,
+            });
+        } else errorHandler.handleError(error);
+
+        return false;
+    });
+
+    if (success) router.push({ name: "Dashboard" });
 };
 
 onMounted(() => usernameInput.value?.focus());
@@ -24,17 +64,23 @@ onMounted(() => usernameInput.value?.focus());
         <NText
             tag="h2"
             class="header"
-            >Log in to your account</NText
         >
-        <NForm>
+            Log in to your account
+        </NText>
+
+        <NForm
+            ref="form-ref"
+            :model="form"
+            :rules="rules"
+            @submit.prevent="onLogin"
+        >
             <NFormItem
                 label="Username"
                 path="username"
             >
                 <NInput
-                    v-model:value="username"
+                    v-model:value="form.username"
                     placeholder="Username"
-                    ref="username-input"
                 />
             </NFormItem>
 
@@ -43,7 +89,7 @@ onMounted(() => usernameInput.value?.focus());
                 path="password"
             >
                 <NInput
-                    v-model:value="password"
+                    v-model:value="form.password"
                     type="password"
                     show-password-on="click"
                     placeholder="Password"
@@ -53,7 +99,7 @@ onMounted(() => usernameInput.value?.focus());
             <NSpace justify="end">
                 <NButton
                     type="primary"
-                    @click="onLogin"
+                    attr-type="submit"
                     class="submitButton"
                 >
                     Log in

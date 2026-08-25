@@ -1,3 +1,5 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import MainLayout from "../layouts/MainLayout.vue";
+</script>
 
-<template><span>Change history</span></template>
+<template><MainLayout>History</MainLayout></template>
