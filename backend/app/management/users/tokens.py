@@ -1,18 +1,12 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
 
 from app.config import ENV_CONFIG
 from app.management.users.users import get_user
 from app.models.tokens import DecodedTokenPayload, Tokens, TokenTypes
 from app.models.user import User
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import HTTPException, Request, status
 from jwt import ExpiredSignatureError, InvalidTokenError, decode, encode
 from sqlalchemy.orm import Session
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
-
-Token = Annotated[str, Depends(oauth2_scheme)]
 
 
 def create_token(token_type: TokenTypes, user: User, expires_delta: timedelta) -> str:
@@ -81,3 +75,12 @@ def validate_user_token(db: Session, token: str, token_type: TokenTypes) -> User
 
     except (InvalidTokenError, ExpiredSignatureError, ValueError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials.")
+
+
+def get_tokens(
+    request: Request,
+) -> Tokens:
+    return Tokens(
+        access_token=request.cookies.get("access_token") or "",
+        refresh_token=request.cookies.get("refresh_token") or "",
+    )

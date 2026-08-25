@@ -3,8 +3,9 @@ from typing import Annotated, Literal
 
 from app.database.database import get_db
 from app.management.users.passwords import verify_password
-from app.management.users.tokens import Token, validate_user_token
+from app.management.users.tokens import get_tokens, validate_user_token
 from app.management.users.users import get_user, get_user_password
+from app.models.tokens import Tokens
 from app.models.user import User
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -28,16 +29,18 @@ def authenticate_user(db: Session, username: str, password: str) -> User | Liter
     return user
 
 
-def get_authenticated_user(db: DatabaseSession, token: Token) -> User:
-    return validate_user_token(db, token, "access")
+def get_authenticated_user(db: DatabaseSession, tokens: Annotated[Tokens, Depends(get_tokens)]) -> User:
+    return validate_user_token(db, tokens.access_token, "access")
 
 
-def get_authenticated_administrator(db: DatabaseSession, token: Token) -> User:
-    user = validate_user_token(db, token, "access")
+def get_authenticated_administrator(db: DatabaseSession, tokens: Annotated[Tokens, Depends(get_tokens)]) -> User:
+    user = validate_user_token(db, tokens.access_token, "access")
+
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="You do not have the necessary permissions to access this resource.")
+
     return user
 
 
-def get_user_from_refresh_token(db: DatabaseSession, token: Token) -> User:
-    return validate_user_token(db, token, "refresh")
+def get_user_from_refresh_token(db: DatabaseSession, tokens: Annotated[Tokens, Depends(get_tokens)]) -> User:
+    return validate_user_token(db, tokens.refresh_token, "refresh")

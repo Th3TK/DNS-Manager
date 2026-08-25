@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import requests
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
@@ -91,3 +92,34 @@ app.include_router(dns_router)
 app.include_router(trash_router)
 app.include_router(action_log_router)
 app.include_router(users_router)
+
+
+# Add an OAuth2 security scheme to the OpenAPI schema so Swagger UI
+# always displays the Authorize button, despite authentication using
+# HTTP-only cookies.
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+    )
+
+    schema["components"]["securitySchemes"] = {
+        "OAuth2PasswordBearer": {
+            "type": "oauth2",
+            "flows": {
+                "password": {
+                    "tokenUrl": "/auth/login",
+                }
+            },
+        }
+    }
+
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = custom_openapi
