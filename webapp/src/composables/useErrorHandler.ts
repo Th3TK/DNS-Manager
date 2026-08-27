@@ -49,7 +49,7 @@ export const useErrorHandler = () => {
         });
 
         if (error?.response?.status === HttpStatusCode.Unauthorized) {
-            router.push("Login");
+            router.push("/login");
         }
     };
 

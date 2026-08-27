@@ -9,6 +9,9 @@ const theme = computed(() => (isDark.value ? darkTheme : lightTheme));
 const themeOverrides = {
     common: {
         fontSize: "16px",
+        fontFamily: "Lato",
+        fontFamilyMono: "Fira Code",
+        fontWeightStrong: "600",
     },
 };
 </script>

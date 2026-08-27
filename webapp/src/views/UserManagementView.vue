@@ -2,4 +2,8 @@
 import MainLayout from "../layouts/MainLayout.vue";
 </script>
 
-<template><MainLayout>User</MainLayout></template>
+<template>
+    <MainLayout> </MainLayout>
+</template>
+
+<style scoped></style>

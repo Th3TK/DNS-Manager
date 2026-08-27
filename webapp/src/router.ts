@@ -6,8 +6,7 @@ import ZoneListView from "./views/ZoneListView.vue";
 import ZoneDetailView from "./views/ZoneDetailView.vue";
 import ChangeHistoryView from "./views/ChangeHistoryView.vue";
 import UserManagementView from "./views/UserManagementView.vue";
-import { getAuthenticatedUser, getLoggedInUser } from "./services/api.ts";
-import _ from "lodash";
+import { getAuthenticatedUser } from "./services/api.ts";
 import { LayoutBoard, World, History, Trash, Users } from "@vicons/tabler";
 
 export const routes = [
