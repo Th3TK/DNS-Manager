@@ -2,13 +2,11 @@
 import type { Record } from "../../types/api.types";
 import { NButton, NFlex, NIcon, NText, type DataTableColumns, type DataTableRowKey } from "naive-ui";
 import { computed, h, ref } from "vue";
-import { textFilter } from "../../components/BaseDataTable/filters.ts";
 import BaseDataTable from "../../components/BaseDataTable/BaseDataTable.vue";
 import TextField from "../../components/BaseDataTable/fields/TextField.vue";
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
 import BadgeField from "../../components/BaseDataTable/fields/BadgeField.vue";
 import _ from "lodash";
-import BooleanField from "../../components/BaseDataTable/fields/BooleanField.vue";
 
 const props = defineProps<{
     data: Record[];
@@ -17,15 +15,12 @@ const props = defineProps<{
 const searchValue = ref<string>("");
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
-const authors = [...new Set(props.data.map((e) => e.author))];
-const types = [...new Set(props.data.map((e) => e.type))];
-
 const columns: DataTableColumns<Record> = [
     {
         type: "selection",
         multiple: true,
     },
-    textFilter<Record>({
+    {
         title: "Name",
         key: "name",
         sorter: "default",
@@ -35,7 +30,7 @@ const columns: DataTableColumns<Record> = [
                 searchValue: searchValue.value,
                 copyOption: true,
             }),
-    }),
+    },
 
     {
         title: "Type",
@@ -58,13 +53,10 @@ const columns: DataTableColumns<Record> = [
                 },
             }),
 
-        filterOptions: types.map((type) => ({ label: type, value: type })),
-        filter: "default",
-        filterMultiple: true,
         width: 150,
     },
 
-    textFilter<Record>({
+    {
         title: "Content",
         key: "content",
         sorter: "default",
@@ -74,7 +66,7 @@ const columns: DataTableColumns<Record> = [
                 searchValue: searchValue.value,
                 copyOption: true,
             }),
-    }),
+    },
 
     {
         title: "Origin",
@@ -100,13 +92,6 @@ const columns: DataTableColumns<Record> = [
                 },
             }),
 
-        filterOptions: [
-            { label: "External", value: "external" },
-            { label: "Manual", value: "manual" },
-            { label: "Automatic => Traefik", value: "automatic => traefik" },
-        ],
-        filter: "default",
-        filterMultiple: true,
         width: 150,
     },
     {
@@ -125,6 +110,7 @@ const count = computed(() => props.data.length);
         v-model:name="searchValue"
         v-model:selectedKeys="selectedKeys"
         :columns="columns"
+        :filterConfig="{}"
         :data="props.data"
         :searchableFieldKeys="['name', 'content']"
         rowKey="name"

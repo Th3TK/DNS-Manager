@@ -1,113 +1,60 @@
 <script setup lang="ts">
-import type { Zone } from "../../types/api.types";
-import { NButton, NFlex, NIcon, NTag, NText, type DataTableColumns, type DataTableRowKey } from "naive-ui";
-import { computed, h, ref } from "vue";
-import { textFilter } from "../../components/BaseDataTable/filters.ts";
+import { type User, type DNSZone } from "../../types/api.types";
+import { NButton, NFlex, NIcon, NText, type DataTableRowKey } from "naive-ui";
+import { computed, ref } from "vue";
 import BaseDataTable from "../../components/BaseDataTable/BaseDataTable.vue";
-import TextField from "../../components/BaseDataTable/fields/TextField.vue";
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
-import BadgeField from "../../components/BaseDataTable/fields/BadgeField.vue";
-import UserField from "../../components/BaseDataTable/fields/UserField.vue";
 import { useRouter } from "vue-router";
+import type { FilterConfig, Filters } from "../../types/table.types.ts";
+import useFetch from "../../composables/useFetch.ts";
+import _ from "lodash";
+import { columns } from "./columns.ts";
+import { getZones } from "../../services/api.ts";
 
-const props = defineProps<{
-    data: Zone[];
-}>();
+const data = ref<DNSZone[]>([]);
+const total = ref(0);
+const loading = ref(false);
+const selectedKeys = ref<DataTableRowKey[]>([]);
+
+const { data: users } = useFetch<User[]>("/users");
 
 const router = useRouter();
 
-const searchValue = ref<string>("");
-const selectedKeys = ref<DataTableRowKey[]>([]);
+const handleRowClick = (row: DNSZone) => router.push(`/zones/${row.name}`);
 
-const authors = [...new Set(props.data.map((e) => e.author))];
-
-const columns: DataTableColumns<Zone> = [
-    {
-        type: "selection",
-        multiple: false,
+const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
+    name: {
+        type: "freetext",
     },
-    textFilter<Zone>({
-        title: "Name",
-        key: "name",
-        sorter: "default",
-        render: (row: Zone) =>
-            h(TextField, {
-                value: row.name,
-                searchValue: searchValue.value,
-                copyOption: true,
-            }),
-    }),
-
-    textFilter<Zone>({
-        title: "Comment",
-        key: "comment",
-        sorter: "default",
-        render: (row: Zone) =>
-            h(TextField, {
-                value: row.comment,
-            }),
-    }),
-    {
-        title: "Author",
-        key: "author",
-        sorter: "default",
-        render: (row: Zone) =>
-            h(TextField, {
-                value: row.author,
-            }),
-        filterOptions: authors.map((author) => ({ label: author ?? "none", value: author })),
-        filter: "default",
-        filterMultiple: true,
+    author: {
+        type: "options",
+        options: _.map(users.value, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
     },
-    {
-        title: "Origin",
-        key: "origin",
-        sorter: "default",
-        render: (row: Zone) =>
-            h(BadgeField, {
-                value: row.origin,
-                variants: {
-                    external: {
-                        type: "default",
-                        bordered: false,
-                        round: true,
-                    },
-                    manual: {
-                        type: "success",
-                        bordered: false,
-                        round: true,
-                    },
-                },
-            }),
-
-        filterOptions: [
+    comment: {
+        type: "freetext",
+    },
+    origin: {
+        type: "options",
+        options: [
             { label: "External", value: "external" },
             { label: "Manual", value: "manual" },
         ],
-        filter: "default",
-        filterMultiple: true,
     },
-];
-
-const handleRowClick = (row: Zone) => router.push(`/zones/${row.name}`);
-
-const zoneCount = computed(() => props.data.length);
-
-const internalZoneCount = computed(() => props.data.filter((zone) => zone.origin === "manual").length);
-
-const externalZoneCount = computed(() => zoneCount.value - internalZoneCount.value);
+}));
 </script>
 
 <template>
     <BaseDataTable
-        v-model:name="searchValue"
         v-model:selectedKeys="selectedKeys"
+        v-model:data="data"
+        v-model:total="total"
+        v-model:loading="loading"
+        :get-data="getZones"
         :columns="columns"
-        :data="props.data"
-        :searchableFieldKeys="['name']"
+        :filterConfig="filterConfig"
         rowKey="name"
         :row-props="
-            (row: Zone) => ({
+            (row: DNSZone) => ({
                 onClick: () => handleRowClick(row),
             })
         "
@@ -123,10 +70,10 @@ const externalZoneCount = computed(() => zoneCount.value - internalZoneCount.val
                     tag="h1"
                     class="title"
                 >
-                    Zone list
-                    <NText depth="3"> ({{ zoneCount }}) </NText>
+                    DNSZone list
+                    <NText depth="3"> ({{ total }}) </NText>
                 </NText>
-                <NText depth="3">{{ internalZoneCount }} internal, {{ externalZoneCount }} external</NText>
+                <NText depth="3"> Click on a zone to view its full details and records. </NText>
             </NFlex>
         </template>
         <template #controls>
@@ -141,7 +88,7 @@ const externalZoneCount = computed(() => zoneCount.value - internalZoneCount.val
                         size="16"
                     />
                 </template>
-                Delete Zone
+                Delete DNSZone
             </NButton>
             <NButton
                 type="primary"
@@ -153,7 +100,7 @@ const externalZoneCount = computed(() => zoneCount.value - internalZoneCount.val
                         size="16"
                     />
                 </template>
-                Create Zone
+                Create DNSZone
             </NButton>
         </template>
     </BaseDataTable>

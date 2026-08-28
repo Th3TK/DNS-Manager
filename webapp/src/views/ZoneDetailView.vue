@@ -2,13 +2,13 @@
 import { useRoute } from "vue-router";
 import MainLayout from "../layouts/MainLayout.vue";
 import useFetch from "../composables/useFetch.ts";
-import type { Record, Zone } from "../types/api.types.ts";
+import type { Record, DNSZone } from "../types/api.types.ts";
 import { NDescriptions, NDescriptionsItem, NIcon, NText, NThing } from "naive-ui";
 import { World } from "@vicons/tabler";
 import RecordsTable from "../features/records/RecordsTable.vue";
 const route = useRoute();
 
-const { data: zone, error: zoneError, loading: zoneLoading } = useFetch<Zone>(`/zones/${route.params.name}`);
+const { data: zone, error: zoneError, loading: zoneLoading } = useFetch<DNSZone>(`/zones/${route.params.name}`);
 const { data: records, error: recordsError, loading: recordsLoading } = useFetch<Record[]>(`/zones/${route.params.name}/records`);
 </script>
 

@@ -8,6 +8,7 @@ import ChangeHistoryView from "./views/ChangeHistoryView.vue";
 import UserManagementView from "./views/UserManagementView.vue";
 import { getAuthenticatedUser } from "./services/api.ts";
 import { LayoutBoard, World, History, Trash, Users } from "@vicons/tabler";
+import ChangeHistoryEntryView from "./views/ChangeHistoryEntryView.vue";
 
 export const routes = [
     {
@@ -57,6 +58,15 @@ export const routes = [
         component: ChangeHistoryView,
         meta: {
             icon: History,
+        },
+    },
+    {
+        name: "HistoryEntryDetails",
+        path: "/history/:uuid",
+        component: ChangeHistoryEntryView,
+        meta: {
+            icon: History,
+            hide: true,
         },
     },
     {

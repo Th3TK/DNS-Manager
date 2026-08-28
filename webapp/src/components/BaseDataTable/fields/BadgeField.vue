@@ -5,7 +5,7 @@ import { computed } from "vue";
 
 const props = defineProps<{
     value: string;
-    variants: Record<string, TagProps>;
+    variants?: Record<string, TagProps>;
     default?: TagProps;
 }>();
 

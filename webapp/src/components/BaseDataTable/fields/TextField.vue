@@ -32,7 +32,7 @@ const copy = () => {
         />
 
         <NButton
-            v-if="copyOption"
+            v-if="copyOption && value"
             quaternary
             circle
             size="tiny"
