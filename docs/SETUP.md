@@ -64,6 +64,7 @@ And replace the placeholders with your configuration.
 | `ACCESS_TOKEN_LIFETIME_SECONDS`  | No                         | Lifetime of an access token, in seconds.                                                                                                                                      | `3600`               |
 | `REFRESH_TOKEN_LIFETIME_SECONDS` | No                         | Lifetime of a refresh token, in seconds.                                                                                                                                      | `259200`             |
 | `AUTHENTICATION_ALGORITHM`       | No                         | Algorithm used to sign JWT access tokens.                                                                                                                                     | `HS256`              |
+| `HTTPS_ENABLED`                  | No                         | Whether the application is served over HTTPS. If TRUE, authentication cookies will have the Secure attribute set.                                                             | `TRUE`               |
 
 ### 3. Build and run the containers
 

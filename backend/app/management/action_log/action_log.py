@@ -7,10 +7,27 @@ from app.database.models.action_log import ActionLogInDB
 from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
 from app.models.action_log import ActionLogEntry
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
+
+
+def get_log_entries_query(
+    db: Session, action: ChangeAction | None = None, actor: str | None = None, affected_object_name: str | None = None
+) -> Select:
+    query = select(ActionLogInDB).order_by(ActionLogInDB.action_timestamp.desc())
+
+    if action is not None:
+        query = query.where(ActionLogInDB.action == action)
+
+    if actor is not None:
+        query = query.where(ActionLogInDB.actor == actor)
+
+    if affected_object_name is not None:
+        query = query.where(ActionLogInDB.affected_object_name.contains(affected_object_name))
+
+    return query
 
 
 def get_log_entries(db: Session, limit: int = 100, offset=0) -> list[ActionLogEntry]:
@@ -39,6 +56,7 @@ def create_log_entry(
     actor: str,
     action: ChangeAction,
     affected_object_type: DNSObjectType,
+    affected_object_name: str,
     object_before: dict[str, Any] | None,
     object_after: dict[str, Any] | None,
 ) -> None:
@@ -47,6 +65,7 @@ def create_log_entry(
         actor=actor,
         action=action,
         affected_object_type=affected_object_type,
+        affected_object_name=affected_object_name,
         object_before=object_before,
         object_after=object_after,
     )
@@ -108,3 +127,7 @@ def create_log_entries(
             objects_before,
             objects_after,
         )
+
+
+def get_all_actors(db: Session) -> list[str]:
+    return [actor for (actor,) in db.query(ActionLogInDB.actor).distinct().all()]

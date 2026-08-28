@@ -1,5 +1,5 @@
 import logging
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
@@ -9,7 +9,7 @@ from app.management.dns.validation import validate_dns_name
 from app.management.trash.trash import create_trash_entries, create_trash_entry
 from app.models.record import CreateDNSRecordArgs
 from app.models.user import User
-from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneRemovalResult
+from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneOrigin, DNSZoneRemovalResult, DNSZoneSortField
 from app.providers.factory import provider
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -111,6 +111,7 @@ def create_zone(db: Session, creation_args: CreateDNSZoneArgs, is_restoration: b
         actor=creation_args.author,
         action=(ChangeAction.RESTORED if is_restoration else ChangeAction.CREATED),
         affected_object_type=DNSObjectType.ZONE,
+        affected_object_name=zone.name,
         object_before=None,
         object_after=jsonable_encoder(zone),
     )
@@ -182,6 +183,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         actor=logged_in_user.username,
         action=result.zone_status,
         affected_object_type=DNSObjectType.ZONE,
+        affected_object_name=zone.name,
         object_before=jsonable_encoder(zone),
         object_after=None,
     )
@@ -208,3 +210,41 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         )
 
     return result
+
+
+def filter_zones(
+    zones: list[DNSZone],
+    *,
+    name: str | None = None,
+    author: str | None = None,
+    comment: str | None = None,
+    origin: list[DNSZoneOrigin] | None = None,
+) -> list[DNSZone]:
+    return [
+        zone
+        for zone in zones
+        if (name is None or name.lower() in zone.name.lower())
+        and (author is None or (zone.author and author.lower() in zone.author.lower()))
+        and (comment is None or (zone.comment and comment.lower() in zone.comment.lower()))
+        and (origin is None or zone.origin in origin)
+    ]
+
+
+def sort_zones(
+    zones: list[DNSZone],
+    sort_by: DNSZoneSortField | None,
+    sort_order: Literal["ascend", "descend"] | None,
+) -> list[DNSZone]:
+    if sort_by is None:
+        return zones
+
+    reverse = sort_order == "descend"
+
+    return sorted(
+        zones,
+        key=lambda zone: (
+            getattr(zone, sort_by) is not None,
+            getattr(zone, sort_by),
+        ),
+        reverse=reverse,
+    )

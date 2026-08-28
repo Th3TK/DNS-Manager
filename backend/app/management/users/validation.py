@@ -3,7 +3,7 @@ import re
 from fastapi import HTTPException, status
 
 USERNAME_PATTERN = re.compile(r"^[a-z0-9_@.+:$-]+$")
-RESERVED_USERNAMES = {"system", "automatic"}
+RESERVED_USERNAMES = {"system", "automatic", "deleted"}
 
 
 def validate_username(username: str) -> None:

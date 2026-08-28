@@ -81,7 +81,7 @@ def get_records(db: Session, zone_name: str) -> list[DNSRecord]:
     if properties is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Zone with name='{zone_name}' could not be found.",
+            detail=f"DNSZone with name='{zone_name}' could not be found.",
         )
 
     record_keys = {(record.zone_name, record.name, record.type) for record in properties}
@@ -143,7 +143,7 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
     if zone is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Zone with name='{creation_args.zone_name}' could not be found.",
+            detail=f"DNSZone with name='{creation_args.zone_name}' could not be found.",
         )
 
     properties = provider.create_record(
@@ -183,7 +183,8 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
         actor_type=ActorType.USER,
         actor=creation_args.author,
         action=(ChangeAction.RESTORED if is_restoration else ChangeAction.CREATED),
-        affected_object_type=DNSObjectType.ZONE,
+        affected_object_type=DNSObjectType.RECORD,
+        affected_object_name=record.name,
         object_before=None,
         object_after=jsonable_encoder(record),
     )
@@ -221,7 +222,7 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
     if zone is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Zone with name='{modification_args.zone_name}' could not be found.",
+            detail=f"DNSZone with name='{modification_args.zone_name}' could not be found.",
         )
 
     # provider DNS record modification
@@ -253,7 +254,8 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
         actor_type=ActorType.USER,
         actor=modification_args.author,
         action=ChangeAction.CHANGED,
-        affected_object_type=DNSObjectType.ZONE,
+        affected_object_type=DNSObjectType.RECORD,
+        affected_object_name=record.name,
         object_before=jsonable_encoder(record_old),
         object_after=jsonable_encoder(record),
     )
@@ -319,6 +321,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
         actor=logged_in_user.username,
         action=result.record_status,
         affected_object_type=DNSObjectType.RECORD,
+        affected_object_name=record.name,
         object_before=jsonable_encoder(record),
         object_after=None,
     )

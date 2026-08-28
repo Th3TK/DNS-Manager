@@ -2,10 +2,12 @@ import logging
 from uuid import UUID
 
 from app.database.models.dns_trash import DNSTrashInDB
-from app.database.models.enums import DNSObjectType
+from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
+from app.management.action_log.action_log import create_log_entry
 from app.management.trash.cleanup import automatic_trash_removal
 from app.models.record import CreateDNSRecordArgs
 from app.models.trash import TrashEntry
+from app.models.user import User
 from app.models.zone import CreateDNSZoneArgs
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -106,14 +108,27 @@ def create_trash_entries(
     return True
 
 
-def delete_trash_entry(db: Session, entry_uuid: UUID) -> None:
-    trash_entry = db.get(DNSTrashInDB, entry_uuid)
+def delete_trash_entry(db: Session, entry_uuid: UUID, logged_in_user: User) -> None:
+    trash_entry_in_db = db.get(DNSTrashInDB, entry_uuid)
 
-    if trash_entry is None:
+    if trash_entry_in_db is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Trash entry with entry_uuid='{entry_uuid}' could not be found.",
         )
 
-    db.delete(trash_entry)
+    trash_entry = TrashEntry.from_db(trash_entry_in_db)
+
+    create_log_entry(
+        db,
+        actor_type=ActorType.USER,
+        actor=logged_in_user.username,
+        action=ChangeAction.PERMANENTLY_DELETED,
+        affected_object_type=trash_entry.object_type,
+        affected_object_name=trash_entry.object_data.name,
+        object_before=jsonable_encoder(trash_entry.object_data),
+        object_after=None,
+    )
+
+    db.delete(trash_entry_in_db)
     db.commit()

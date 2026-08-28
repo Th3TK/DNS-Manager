@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from app.database.database import Base
-from app.database.models.enums import DNSObjectType
 from sqlalchemy import DateTime, Enum, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database.database import Base
+from app.database.models.enums import DNSObjectType
 
 
 class DNSTrashInDB(Base):

@@ -73,3 +73,11 @@ class CreateDNSZoneArgs(CreateDNSZoneForm):
 class DNSZoneRemovalResult(BaseModel):
     zone_status: Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]
     records_status: Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]
+
+
+DNSZoneSortField = Literal[
+    "name",
+    "author",
+    "comment",
+    "origin",
+]

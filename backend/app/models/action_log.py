@@ -15,6 +15,7 @@ class ActionLogEntry(BaseModel):
     actor: str
     action: Literal["created", "changed", "deleted", "restored", "permanently_deleted"]
     affected_object_type: Literal["zone", "record"]
+    affected_object_name: str
     object_before: dict[str, Any] | None = None
     object_after: dict[str, Any] | None = None
 

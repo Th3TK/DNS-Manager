@@ -51,6 +51,7 @@ def test_validate_username_invalid_pattern(username: str):
     [
         "system",
         "automatic",
+        "deleted",
     ],
 )
 def test_validate_username_reserved(username: str):

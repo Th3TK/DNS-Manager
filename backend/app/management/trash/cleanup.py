@@ -79,6 +79,7 @@ class AutomaticTrashRemoval:
                     action=ChangeAction.PERMANENTLY_DELETED,
                     actor="system",
                     affected_object_type=trash_entry.object_type,
+                    affected_object_name=trash_entry.object_data.name,
                     object_before=jsonable_encoder(trash_entry),
                     object_after=None,
                 )

@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from app.database.database import Base
-from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
-from sqlalchemy import DateTime, Enum, func
+from sqlalchemy import DateTime, Enum, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database.database import Base
+from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
 
 
 class ActionLogInDB(Base):
@@ -29,6 +30,8 @@ class ActionLogInDB(Base):
     affected_object_type: Mapped[DNSObjectType] = mapped_column(
         Enum(DNSObjectType, native_enum=True, name="action_log_object_type"), nullable=False, index=True
     )
+
+    affected_object_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
 
     object_before: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
