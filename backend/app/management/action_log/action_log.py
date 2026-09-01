@@ -30,14 +30,6 @@ def get_log_entries_query(
     return query
 
 
-def get_log_entries(db: Session, limit: int = 100, offset=0) -> list[ActionLogEntry]:
-    action_logs_in_db = db.scalars(
-        select(ActionLogInDB).order_by(ActionLogInDB.action_timestamp.desc()).offset(offset).limit(limit)
-    )
-
-    return [ActionLogEntry.from_db(action_log_in_db) for action_log_in_db in action_logs_in_db]
-
-
 def get_log_entry(db: Session, entry_uuid: UUID) -> ActionLogEntry:
     action_log_in_db = db.scalar(select(ActionLogInDB).where(ActionLogInDB.entry_uuid == entry_uuid))
 

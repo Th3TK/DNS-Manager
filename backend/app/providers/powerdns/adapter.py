@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import logging
 from typing import Literal
 
@@ -89,7 +90,7 @@ class PowerDNSAdapter(DNSProvider):
             )
 
     def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
-        return DNSZoneProperties(name=zone.name)
+        return DNSZoneProperties(name=zone.name, record_count=zone.record_count)
 
     def _get_record_properties_from_powerdns_zone(
         self,
@@ -116,6 +117,8 @@ class PowerDNSAdapter(DNSProvider):
             )
 
         return None
+
+    # MISC
 
     def health_check(self) -> None:
         try:
@@ -160,14 +163,21 @@ class PowerDNSAdapter(DNSProvider):
         self._send_request("DELETE", f"zones/{zone_name}")
 
     def get_zones(self) -> list[DNSZoneProperties]:
-        response = self._send_request("GET", "zones")
-        zones = [PowerDNSZone.model_validate(zone) for zone in response.json()]
+        response = self._send_request("GET", "zones?dnssec=false")
+        zone_names = [PowerDNSZone.model_validate(zone).name for zone in response.json()]
 
-        return [self._get_zone_properties_from_powerdns_zone(zone) for zone in zones]
+        # retrieving data such as record_count
+        with ThreadPoolExecutor() as executor:
+            zones = executor.map(self.get_zone, zone_names)
 
-    def get_zone(self, zone_name: str) -> DNSZoneProperties | None:
+        return [zone for zone in zones if zone is not None]
+
+    def get_zone(
+        self,
+        zone_name: str,
+    ) -> DNSZoneProperties | None:
         try:
-            response = self._send_request("GET", f"zones/{zone_name}")
+            response = self._send_request("GET", f"zones/{zone_name}?rrsets=false&record_count=true")
         except HTTPException as exc:
             if exc.status_code == status.HTTP_404_NOT_FOUND:
                 return

@@ -1,15 +1,18 @@
+from datetime import datetime
 import logging
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.database.models.enums import DNSObjectType
 from app.management.dns.record import create_record
 from app.management.dns.zone import create_zone
-from app.management.trash.trash import delete_trash_entry, get_trash_entries, get_trash_entry
+from app.management.trash.trash import delete_trash_entry, get_trash_entries_query, get_trash_entry
 from app.management.users.authentication import get_authenticated_administrator, get_authenticated_user
 from app.models.record import CreateDNSRecordArgs, DNSRecord
 from app.models.trash import TrashEntry
@@ -29,10 +32,22 @@ router = APIRouter(
 def __get_list_of_action_log_entries__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
-    limit: int = 100,
-    offset: int = 0,
-) -> list[TrashEntry]:
-    return get_trash_entries(db, limit, offset)
+    deletion_timestamp_after: datetime | None = Query(None),
+    deletion_timestamp_before: datetime | None = Query(None),
+    actor: str | None = Query(None),
+    object_type: DNSObjectType | None = Query(None),
+    sort_by: Literal["deletion_timestamp", "actor", "object_type"] = Query("deletion_timestamp"),
+    sort_order: Literal["ascend", "descend"] = Query("descend"),
+) -> Page[TrashEntry]:
+    return get_trash_entries_query(
+        db=db,
+        deletion_timestamp_after=deletion_timestamp_after,
+        deletion_timestamp_before=deletion_timestamp_before,
+        actor=actor,
+        object_type=object_type,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
 
 
 @router.get("/{entry_uuid}", response_model=TrashEntry)

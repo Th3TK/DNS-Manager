@@ -1,13 +1,13 @@
 import logging
-from typing import Annotated, Literal
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
-from fastapi_pagination import Page, paginate
+from fastapi import APIRouter, Depends
+from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.management.dns.record import create_record, delete_record, get_record, get_records, modify_record
-from app.management.dns.zone import create_zone, delete_zone, filter_zones, get_zone, get_zones, sort_zones
+from app.management.dns.zone import create_zone, delete_zone, get_zone, get_zones
 from app.management.users.authentication import get_authenticated_administrator, get_authenticated_user
 from app.models.record import (
     CreateDNSRecordArgs,
@@ -18,7 +18,7 @@ from app.models.record import (
     ModifyDNSRecordForm,
 )
 from app.models.user import User
-from app.models.zone import CreateDNSZoneArgs, CreateDNSZoneForm, DNSZone, DNSZoneOrigin, DNSZoneRemovalResult, DNSZoneSortField
+from app.models.zone import CreateDNSZoneArgs, CreateDNSZoneForm, DNSZone, DNSZoneRemovalResult
 
 logger = logging.getLogger(__name__)
 
@@ -29,34 +29,12 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=Page[DNSZone])
-def __get_a_page_of_zones__(
+@router.get("", response_model=list[DNSZone])
+def __get_all_zones__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
-    name: str | None = Query(None),
-    author: str | None = Query(None),
-    comment: str | None = Query(None),
-    origin: list[DNSZoneOrigin] | None = Query(None),
-    sort_by: DNSZoneSortField | None = Query(None),
-    sort_order: Literal["ascend", "descend"] | None = Query(None),
-) -> Page[DNSZone]:
-    zones = get_zones(db)
-
-    zones = filter_zones(
-        zones,
-        name=name,
-        author=author,
-        comment=comment,
-        origin=origin,
-    )
-
-    zones = sort_zones(
-        zones,
-        sort_by=sort_by,
-        sort_order=sort_order,
-    )
-
-    return paginate(zones)
+) -> list[DNSZone]:
+    return get_zones(db)
 
 
 @router.get("/{zone_name}", response_model=DNSZone)

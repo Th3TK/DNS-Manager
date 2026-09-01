@@ -1,4 +1,6 @@
+from datetime import datetime
 import logging
+from typing import Literal
 from uuid import UUID
 
 from app.database.models.dns_trash import DNSTrashInDB
@@ -11,18 +13,40 @@ from app.models.user import User
 from app.models.zone import CreateDNSZoneArgs
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
+from sqlalchemy import select, Select
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 
-def get_trash_entries(db: Session, limit: int = 100, offset=0) -> list[TrashEntry]:
-    trash_entries_in_db = db.scalars(
-        select(DNSTrashInDB).order_by(DNSTrashInDB.deletion_timestamp.asc()).offset(offset).limit(limit)
-    )
+def get_trash_entries_query(
+    db: Session,
+    deletion_timestamp_after: datetime | None,
+    deletion_timestamp_before: datetime | None,
+    actor: str | None,
+    object_type: DNSObjectType | None,
+    sort_by: Literal["deletion_timestamp", "actor", "object_type"],
+    sort_order: Literal["ascend", "descend"],
+) -> Select:
+    query = select(DNSTrashInDB)
 
-    return [TrashEntry.from_db(trash_entry_in_db) for trash_entry_in_db in trash_entries_in_db]
+    if deletion_timestamp_after is not None:
+        query = query.where(DNSTrashInDB.deletion_timestamp > deletion_timestamp_after)
+
+    if deletion_timestamp_before is not None:
+        query = query.where(DNSTrashInDB.deletion_timestamp < deletion_timestamp_before)
+
+    if actor is not None:
+        query = query.where(DNSTrashInDB.actor == actor)
+
+    if object_type is not None:
+        query = query.where(DNSTrashInDB.object_type == object_type)
+
+    if sort_by is not None and sort_order is not None:
+        col = getattr(DNSTrashInDB, sort_by)
+        query = query.order_by(col.asc() if sort_order == "ascend" else col.desc())
+
+    return query
 
 
 def get_trash_entry(db: Session, entry_uuid: UUID) -> TrashEntry:
