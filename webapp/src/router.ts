@@ -9,6 +9,8 @@ import UserManagementView from "./views/UserManagementView.vue";
 import { getAuthenticatedUser } from "./services/api.ts";
 import { LayoutBoard, World, History, Trash, Users } from "@vicons/tabler";
 import ChangeHistoryEntryView from "./views/ChangeHistoryEntryView.vue";
+import TrashEntryView from "./views/TrashEntryView.vue";
+import RecordDetailView from "./views/RecordDetailView.vue";
 
 export const routes = [
     {
@@ -45,11 +47,28 @@ export const routes = [
         },
     },
     {
+        name: "RecordDetails",
+        path: "/zones/:name/record/:record_name/:record_type",
+        component: RecordDetailView,
+        meta: {
+            hide: true,
+        },
+    },
+    {
         name: "Trash",
         path: "/trash",
         component: TrashView,
         meta: {
             icon: Trash,
+        },
+    },
+    {
+        name: "TrashEntryDetails",
+        path: "/trash/:uuid",
+        component: TrashEntryView,
+        meta: {
+            icon: Trash,
+            hide: true,
         },
     },
     {

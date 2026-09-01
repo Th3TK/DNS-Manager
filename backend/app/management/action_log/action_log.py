@@ -25,7 +25,8 @@ def get_log_entries_query(
         query = query.where(ActionLogInDB.actor == actor)
 
     if affected_object_name is not None:
-        query = query.where(ActionLogInDB.affected_object_name.contains(affected_object_name))
+        pattern = affected_object_name.replace("*", "%")
+        query = query.where(ActionLogInDB.affected_object_name.like(pattern))
 
     return query
 

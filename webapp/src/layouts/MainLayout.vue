@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineOptions({
+    inheritAttrs: false,
+});
+
 import { NCard, NLayout, NLayoutContent, NLayoutSider } from "naive-ui";
 
 import AutoBreadcrumbs from "../components/AutoBreadcrumbs.vue";
@@ -22,9 +26,11 @@ import NavBar from "../components/NavBar.vue";
             <NCard
                 class="content-card"
                 content-class="content-card-content"
+                v-bind="$attrs"
             >
                 <slot />
             </NCard>
+            <slot name="portal" />
         </NLayoutContent>
     </NLayout>
 </template>

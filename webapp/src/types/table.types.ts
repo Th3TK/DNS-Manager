@@ -1,4 +1,4 @@
-import type { DataTableColumns } from "naive-ui";
+import type { DataTableColumns, DataTableSortState } from "naive-ui";
 
 export type FilterType = "freetext" | "options";
 
@@ -28,3 +28,15 @@ export interface DataPaginated<T> {
     size: number;
     pages: number;
 }
+export interface BaseDataTableExpose<T extends Record<string, any>> {
+    page: number;
+    pageSize: number;
+    filters: Filters<T>;
+    sorter: DataTableSortState | null;
+}
+
+export interface TableExpose {
+    total: number;
+}
+
+export type TableRow<T> = T & { key: string };

@@ -1,25 +1,22 @@
 <script setup lang="ts">
 import { type User, type DNSZone } from "../../types/api.types";
-import { NButton, NFlex, NIcon, NText, type DataTableRowKey } from "naive-ui";
-import { computed, ref } from "vue";
-import BaseDataTable from "../../components/BaseDataTable/BaseDataTable.vue";
+import { type DataTableRowKey, NButton, NFlex, NIcon, NText, type DataTableColumn, type DataTableColumns } from "naive-ui";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
 import { useRouter } from "vue-router";
-import type { FilterConfig, Filters } from "../../types/table.types.ts";
+import type { FilterConfig } from "../../types/table.types.ts";
 import useFetch from "../../composables/useFetch.ts";
 import _ from "lodash";
 import { columns } from "./columns.ts";
 import { getZones } from "../../services/api.ts";
-
-const data = ref<DNSZone[]>([]);
-const total = ref(0);
-const loading = ref(false);
-const selectedKeys = ref<DataTableRowKey[]>([]);
+import ClientDataTable from "../../components/data-table/ClientDataTable.vue";
 
 const { data: users } = useFetch<User[]>("/users");
 
-const router = useRouter();
+const table = useTemplateRef("table");
+const selectedKeys = ref<DataTableRowKey[]>([]);
 
+const router = useRouter();
 const handleRowClick = (row: DNSZone) => router.push(`/zones/${row.name}`);
 
 const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
@@ -41,24 +38,32 @@ const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
         ],
     },
 }));
+
+const clickableColumns = computed<DataTableColumns<DNSZone>>(() =>
+    columns.map(
+        (col) =>
+            ({
+                ...col,
+                cellProps: (row: DNSZone) =>
+                    "key" in col && col.key
+                        ? {
+                              class: "clickable-cell",
+                              onClick: () => handleRowClick(row),
+                          }
+                        : undefined,
+            }) as DataTableColumn<DNSZone>,
+    ),
+);
 </script>
 
 <template>
-    <BaseDataTable
-        v-model:selectedKeys="selectedKeys"
-        v-model:data="data"
-        v-model:total="total"
-        v-model:loading="loading"
+    <ClientDataTable
+        ref="table"
+        v-model:selected-keys="selectedKeys"
+        :rowKeys="['name']"
         :get-data="getZones"
-        :columns="columns"
+        :columns="clickableColumns"
         :filterConfig="filterConfig"
-        rowKey="name"
-        :row-props="
-            (row: DNSZone) => ({
-                onClick: () => handleRowClick(row),
-            })
-        "
-        :row-class-name="() => 'clickable-row'"
     >
         <template #header>
             <NFlex
@@ -70,8 +75,8 @@ const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
                     tag="h1"
                     class="title"
                 >
-                    DNSZone list
-                    <NText depth="3"> ({{ total }}) </NText>
+                    Zone list
+                    <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
                 </NText>
                 <NText depth="3"> Click on a zone to view its full details and records. </NText>
             </NFlex>
@@ -88,7 +93,7 @@ const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
                         size="16"
                     />
                 </template>
-                Delete DNSZone
+                Delete Zone
             </NButton>
             <NButton
                 type="primary"
@@ -100,18 +105,18 @@ const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
                         size="16"
                     />
                 </template>
-                Create DNSZone
+                Create Zone
             </NButton>
         </template>
-    </BaseDataTable>
+    </ClientDataTable>
 </template>
 
 <style lang="css" scoped>
-:deep(.clickable-row) {
+:deep(.clickable-cell) {
     cursor: pointer !important;
 }
 
-:deep(.clickable-row td > *) {
+:deep(.clickable-cell td > *) {
     cursor: initial !important;
 }
 

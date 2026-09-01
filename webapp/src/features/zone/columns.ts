@@ -1,7 +1,7 @@
 import { h } from "vue";
-import TextField from "../../components/BaseDataTable/fields/TextField.vue";
+import TextField from "../../components/data-table/fields/TextField.vue";
 import type { DNSZone } from "../../types/api.types.ts";
-import BadgeField from "../../components/BaseDataTable/fields/BadgeField.vue";
+import BadgeField from "../../components/data-table/fields/BadgeField.vue";
 import type { DataTableColumns } from "naive-ui";
 
 export const columns: DataTableColumns<DNSZone> = [
@@ -58,5 +58,15 @@ export const columns: DataTableColumns<DNSZone> = [
                     round: true,
                 },
             }),
+    },
+    {
+        title: "Number of records",
+        key: "record_count",
+        sorter: "default",
+        render: (row: DNSZone) =>
+            h(TextField, {
+                value: String(row.record_count),
+            }),
+        width: 180,
     },
 ];

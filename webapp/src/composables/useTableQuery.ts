@@ -8,7 +8,7 @@ export function useTableQuery<T extends Record<string, any>>() {
     const route = useRoute();
     const router = useRouter();
 
-    const filters = ref<Filters<T>>({});
+    const filters = ref<Filters<T>>({} as Filters<T>);
     const sorter = ref<DataTableSortState | null>(null);
     const page = ref(1);
     const pageSize = ref(25);

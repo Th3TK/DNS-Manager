@@ -1,13 +1,13 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import _ from "lodash";
 import { computed, reactive, ref } from "vue";
-import { NButton, NCheckbox, NFlex, NInput, NPopover, NSelect, NTag, type DataTableColumns } from "naive-ui";
-import type { FilterConfig, Filters } from "../../../types/table.types";
+import { NButton, NCheckbox, NFlex, NInput, NPopover, NSelect, NTag, NText, type DataTableColumns } from "naive-ui";
+import type { FilterConfig, FilterFieldConfig, Filters } from "../../../types/table.types";
 import type { SelectMixedOption } from "naive-ui/es/select/src/interface";
 
 const props = defineProps<{
     columns: DataTableColumns<T>;
-    filterConfig: Record<keyof T, FilterConfig>;
+    filterConfig: FilterConfig<T>;
 }>();
 
 const filters = defineModel<Filters<T>>();
@@ -42,7 +42,7 @@ const fields = computed<SelectMixedOption[]>(() =>
 );
 
 // filter config for the currently set field
-const selectedConfig = computed<FilterConfig | null>(() => {
+const selectedConfig = computed<FilterFieldConfig | null>(() => {
     if (field.value === null) return null;
     return props.filterConfig[field.value as keyof T] ?? null;
 });
@@ -82,7 +82,7 @@ const submit = () => {
     <NPopover
         v-if="!_.isEmpty(fields)"
         trigger="click"
-        placement="bottom-start"
+        placement="right"
     >
         <template #trigger>
             <NTag
@@ -111,6 +111,14 @@ const submit = () => {
                 v-model:value="draft.freetext"
                 placeholder="Enter value"
             />
+            <NText
+                v-if="selectedConfig?.type === 'freetext'"
+                depth="3"
+                style="font-size: 12px"
+            >
+                Only objects whose field matches this text will be shown. Use <code>*</code> as a wildcard to match any sequence of
+                characters.
+            </NText>
             <NFlex
                 v-else-if="selectedConfig?.type === 'options'"
                 vertical

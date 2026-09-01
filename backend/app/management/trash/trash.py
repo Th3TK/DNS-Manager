@@ -1,5 +1,5 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -13,7 +13,7 @@ from app.models.user import User
 from app.models.zone import CreateDNSZoneArgs
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select, Select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)

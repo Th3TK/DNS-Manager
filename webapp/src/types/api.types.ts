@@ -1,5 +1,6 @@
 export type RequestMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
+export type SupportedDNSRecordTypes = "A" | "AAAA" | "CNAME" | "TXT" | "MX" | "SRV";
 export interface User {
     username: string;
     full_name: string;
@@ -12,6 +13,12 @@ export interface DNSZone {
     comment: string;
     author: string;
     origin: "manual" | "external";
+    record_count: number;
+}
+
+export interface CreateDNSZoneForm {
+    name: string;
+    comment: string;
 }
 
 export interface DNSRecord {
@@ -26,6 +33,15 @@ export interface DNSRecord {
     checks_enabled: boolean;
 }
 
+export interface CreateDNSRecordForm {
+    name: string;
+    type: SupportedDNSRecordTypes;
+    content: string;
+    ttl: number;
+    comment: string | null;
+    checks_enabled: boolean;
+}
+
 export interface ChangeHistoryEntry {
     entry_uuid: string;
     action_timestamp: string;
@@ -37,3 +53,19 @@ export interface ChangeHistoryEntry {
     object_before: Record<string, any> | null;
     object_after: Record<string, any> | null;
 }
+
+export type TrashEntry =
+    | {
+          entry_uuid: string;
+          deletion_timestamp: string;
+          actor: string;
+          object_type: "zone";
+          object_data: CreateDNSZoneForm;
+      }
+    | {
+          entry_uuid: string;
+          deletion_timestamp: string;
+          actor: string;
+          object_type: "record";
+          object_data: CreateDNSRecordForm;
+      };

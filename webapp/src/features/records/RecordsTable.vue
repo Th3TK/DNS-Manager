@@ -1,134 +1,116 @@
 <script setup lang="ts">
-import type { Record } from "../../types/api.types";
-import { NButton, NFlex, NIcon, NText, type DataTableColumns, type DataTableRowKey } from "naive-ui";
-import { computed, h, ref } from "vue";
-import BaseDataTable from "../../components/BaseDataTable/BaseDataTable.vue";
-import TextField from "../../components/BaseDataTable/fields/TextField.vue";
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
-import BadgeField from "../../components/BaseDataTable/fields/BadgeField.vue";
 import _ from "lodash";
+import { NButton, NFlex, NIcon, NText, type DataTableColumn, type DataTableColumns, type DataTableRowKey } from "naive-ui";
+import { computed, ref, useTemplateRef } from "vue";
+import { useRouter } from "vue-router";
+import ClientDataTable from "../../components/data-table/ClientDataTable.vue";
+import useFetch from "../../composables/useFetch.ts";
+import { getRecords } from "../../services/api.ts";
+import type { DNSRecord, User } from "../../types/api.types";
+import type { FilterConfig } from "../../types/table.types.ts";
+import { columns } from "./columns.ts";
 
 const props = defineProps<{
-    data: Record[];
+    zoneName: string;
 }>();
 
-const searchValue = ref<string>("");
+const { data: users } = useFetch<User[]>("/users");
+
+const table = useTemplateRef("table");
+const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
-const columns: DataTableColumns<Record> = [
-    {
-        type: "selection",
-        multiple: true,
-    },
-    {
-        title: "Name",
-        key: "name",
-        sorter: "default",
-        render: (row: Record) =>
-            h(TextField, {
-                value: row.name,
-                searchValue: searchValue.value,
-                copyOption: true,
-            }),
-    },
+const router = useRouter();
+const handleRowClick = (row: DNSRecord) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
 
-    {
-        title: "Type",
-        key: "type",
-        sorter: "default",
-        render: (row: Record) =>
-            h(BadgeField, {
-                value: row.type,
-                variants: {
-                    A: { type: "primary" },
-                    AAAA: { type: "primary" },
-                    CNAME: { type: "error" },
-                    TXT: { type: "info" },
-                    MX: { type: "success" },
-                    SRV: { type: "success" },
-                },
-                default: {
-                    bordered: false,
-                    type: "default",
-                },
-            }),
-
-        width: 150,
+const filterConfig = computed<FilterConfig<DNSRecord>>(() => ({
+    zone_name: { type: "freetext" },
+    name: { type: "freetext" },
+    content: { type: "freetext" },
+    comment: { type: "freetext" },
+    type: {
+        type: "options",
+        options: [
+            { label: "A", value: "A" },
+            { label: "AAAA", value: "AAAA" },
+            { label: "CNAME", value: "CNAME" },
+            { label: "TXT", value: "TXT" },
+            { label: "MX", value: "MX" },
+            { label: "SRV", value: "SRV" },
+            { label: "SOA", value: "SOA" },
+            { label: "NS", value: "NS" },
+        ],
     },
-
-    {
-        title: "Content",
-        key: "content",
-        sorter: "default",
-        render: (row: Record) =>
-            h(TextField, {
-                value: _.isArray(row.content) ? row.content.join() : row.content,
-                searchValue: searchValue.value,
-                copyOption: true,
-            }),
+    author: {
+        type: "options",
+        options: _.map(users.value, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
     },
+}));
 
-    {
-        title: "Origin",
-        key: "origin",
-        sorter: "default",
-        render: (row: Record) =>
-            h(BadgeField, {
-                value: row.origin,
-                variants: {
-                    external: {
-                        type: "default",
-                    },
-                    manual: {
-                        type: "success",
-                    },
-                    "automatic => traefik": {
-                        type: "info",
-                    },
-                },
-                default: {
-                    bordered: false,
-                    round: true,
-                },
-            }),
+const getData = async () => {
+    if (!props.zoneName) {
+        loading.value = true;
+        return [];
+    }
+    return await getRecords(props.zoneName);
+};
 
-        width: 150,
-    },
-    {
-        title: "TTL",
-        key: "ttl",
-        sorter: "default",
-        width: 100,
-    },
-];
-
-const count = computed(() => props.data.length);
+const clickableColumns = computed<DataTableColumns<DNSRecord>>(() =>
+    columns.map(
+        (col) =>
+            ({
+                ...col,
+                cellProps: (row: DNSRecord) =>
+                    "key" in col && col.key
+                        ? {
+                              class: "clickable-cell",
+                              onClick: () => handleRowClick(row),
+                          }
+                        : undefined,
+            }) as DataTableColumn<DNSRecord>,
+    ),
+);
 </script>
 
 <template>
-    <BaseDataTable
-        v-model:name="searchValue"
-        v-model:selectedKeys="selectedKeys"
-        :columns="columns"
-        :filterConfig="{}"
-        :data="props.data"
-        :searchableFieldKeys="['name', 'content']"
-        rowKey="name"
+    <ClientDataTable
+        ref="table"
+        v-model:loading="loading"
+        v-model:selected-keys="selectedKeys"
+        :rowKeys="['name', 'type']"
+        :get-data="getData"
+        :columns="clickableColumns"
+        :filter-config="filterConfig"
     >
         <template #header>
-            <NFlex
-                vertical
-                :size="0"
-                class="header"
-            >
-                <NText
-                    tag="h2"
-                    class="title"
+            <NFlex>
+                <NFlex
+                    vertical
+                    :size="0"
+                    class="header"
                 >
-                    Records
-                    <NText depth="3"> ({{ count }}) </NText>
-                </NText>
-                <NText depth="3"></NText>
+                    <NText
+                        tag="h2"
+                        class="title"
+                    >
+                        Zone records
+                        <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
+                    </NText>
+                    <NText
+                        depth="3"
+                        v-if="!selectedKeys.length"
+                    >
+                        Click on a record to view its full details.
+                    </NText>
+                    <NText
+                        v-else
+                        type="primary"
+                    >
+                        Selected {{ selectedKeys.length }}
+                    </NText>
+                </NFlex>
+                <slot name="header" />
             </NFlex>
         </template>
         <template #controls>
@@ -158,10 +140,18 @@ const count = computed(() => props.data.length);
                 Create Record
             </NButton>
         </template>
-    </BaseDataTable>
+    </ClientDataTable>
 </template>
 
 <style lang="css" scoped>
+:deep(.clickable-cell) {
+    cursor: pointer !important;
+}
+
+:deep(.clickable-cell td > *) {
+    cursor: initial !important;
+}
+
 .header {
     padding-bottom: var(--spacing-md);
 }

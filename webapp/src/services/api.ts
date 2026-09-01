@@ -1,5 +1,5 @@
 import type { AxiosError } from "axios";
-import { type ChangeHistoryEntry, type DNSZone, type User } from "../types/api.types";
+import type { DNSRecord, ChangeHistoryEntry, DNSZone, TrashEntry, User } from "../types/api.types";
 import { sendRequest } from "./requests";
 import type { DataPaginated, Filters } from "../types/table.types";
 import _ from "lodash";
@@ -27,6 +27,8 @@ export const getAuthenticatedUser = async () => {
     }
 };
 
+export const getUsers = async () => await sendRequest<User[]>("GET", "/users");
+
 const prepareTableParams = <T = unknown>(
     page: number,
     pageSize: number,
@@ -51,17 +53,10 @@ const prepareTableParams = <T = unknown>(
     return params;
 };
 
-export const getZones = async (
-    page: number,
-    pageSize: number,
-    filters: Filters<DNSZone>,
-    sortBy: keyof DNSZone | null,
-    sortOrder: "ascend" | "descend" | null,
-): Promise<DataPaginated<DNSZone>> => {
-    const params = prepareTableParams(page, pageSize, filters, sortBy, sortOrder);
+export const getZones = async (): Promise<DNSZone[]> => await sendRequest<DNSZone[]>("GET", `/zones`);
 
-    return await sendRequest<DataPaginated<DNSZone>>("GET", `/zones?${params.toString()}`);
-};
+export const getRecords = async (zoneName: string): Promise<DNSRecord[]> =>
+    await sendRequest<DNSRecord[]>("GET", `/zones/${zoneName}/records`);
 
 export const getChangeHistory = async (
     page: number,
@@ -69,8 +64,12 @@ export const getChangeHistory = async (
     filters: Filters<ChangeHistoryEntry>,
 ): Promise<DataPaginated<ChangeHistoryEntry>> => {
     const params = prepareTableParams(page, pageSize, filters);
-
     return await sendRequest<DataPaginated<ChangeHistoryEntry>>("GET", `/log?${params.toString()}`);
 };
 
 export const getAllChangeHistoryActors = async () => await sendRequest<string[]>("GET", "/log/actors");
+
+export const getTrash = async (page: number, pageSize: number, filters: Filters<TrashEntry>): Promise<DataPaginated<TrashEntry>> => {
+    const params = prepareTableParams(page, pageSize, filters);
+    return await sendRequest<DataPaginated<TrashEntry>>("GET", `/trash?${params.toString()}`);
+};
