@@ -1,5 +1,5 @@
-from concurrent.futures import ThreadPoolExecutor
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
 import requests
@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class PowerDNSAdapter(DNSProvider):
+    """
+    Adapter for PowerDNS version 4.9.17
+    """
+
     session: requests.Session
     api_url: str
 
@@ -90,7 +94,7 @@ class PowerDNSAdapter(DNSProvider):
             )
 
     def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
-        return DNSZoneProperties(name=zone.name, record_count=zone.record_count)
+        return DNSZoneProperties(name=zone.name, record_count=sum(len(rrset.records) for rrset in zone.rrsets or []))
 
     def _get_record_properties_from_powerdns_zone(
         self,
@@ -177,7 +181,7 @@ class PowerDNSAdapter(DNSProvider):
         zone_name: str,
     ) -> DNSZoneProperties | None:
         try:
-            response = self._send_request("GET", f"zones/{zone_name}?rrsets=false&record_count=true")
+            response = self._send_request("GET", f"zones/{zone_name}")
         except HTTPException as exc:
             if exc.status_code == status.HTTP_404_NOT_FOUND:
                 return

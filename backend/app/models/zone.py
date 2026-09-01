@@ -13,7 +13,7 @@ class DNSZoneProperties(BaseModel):
     """
 
     name: str
-    record_count: int | None
+    record_count: int
 
 
 class DNSZoneMetadata(BaseModel):
