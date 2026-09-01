@@ -84,6 +84,7 @@ def create_log_entries(
     actor: str,
     action: ChangeAction,
     affected_object_type: DNSObjectType,
+    affected_object_names: list[str],
     objects_before: list[dict[str, Any]] | None,
     objects_after: list[dict[str, Any]] | None,
 ) -> None:
@@ -94,12 +95,14 @@ def create_log_entries(
             actor=actor,
             action=action,
             affected_object_type=affected_object_type,
+            affected_object_name=affected_object_name,
             object_before=object_before,
             object_after=object_after,
         )
-        for object_before, object_after in zip_longest(
+        for object_before, object_after, affected_object_name in zip_longest(
             objects_before or [],
             objects_after or [],
+            affected_object_names or [],
             fillvalue=None,
         )
     ]

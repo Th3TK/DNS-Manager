@@ -1,5 +1,5 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -28,7 +28,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[TrashEntry])
+@router.get("", response_model=Page[TrashEntry])
 def __get_list_of_action_log_entries__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -39,7 +39,7 @@ def __get_list_of_action_log_entries__(
     sort_by: Literal["deletion_timestamp", "actor", "object_type"] = Query("deletion_timestamp"),
     sort_order: Literal["ascend", "descend"] = Query("descend"),
 ) -> Page[TrashEntry]:
-    return get_trash_entries_query(
+    query = get_trash_entries_query(
         db=db,
         deletion_timestamp_after=deletion_timestamp_after,
         deletion_timestamp_before=deletion_timestamp_before,
@@ -48,6 +48,8 @@ def __get_list_of_action_log_entries__(
         sort_by=sort_by,
         sort_order=sort_order,
     )
+
+    return paginate(db, query)
 
 
 @router.get("/{entry_uuid}", response_model=TrashEntry)
@@ -87,7 +89,7 @@ def __restore_dns_object_from_trash__(
 
 
 @router.delete("/permanently-delete/{entry_uuid}", status_code=204)
-def __pernamently_delete_object_from_trash__(
+def __permanently_delete_object_from_trash__(
     user: Annotated[User, Depends(get_authenticated_administrator)], db: Annotated[Session, Depends(get_db)], entry_uuid: UUID
 ) -> None:
     delete_trash_entry(db, entry_uuid, user)

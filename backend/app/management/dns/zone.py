@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
@@ -9,7 +9,7 @@ from app.management.dns.validation import validate_dns_name
 from app.management.trash.trash import create_trash_entries, create_trash_entry
 from app.models.record import CreateDNSRecordArgs
 from app.models.user import User
-from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneOrigin, DNSZoneRemovalResult, DNSZoneSortField
+from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneRemovalResult
 from app.providers.factory import provider
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -194,6 +194,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         actor=logged_in_user.username,
         action=ChangeAction.PERMANENTLY_DELETED,
         affected_object_type=DNSObjectType.RECORD,
+        affected_object_names=[record.name for record in external_records],
         objects_before=jsonable_encoder(external_records),
         objects_after=None,
     )
@@ -205,6 +206,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
             actor=logged_in_user.username,
             action=result.records_status,
             affected_object_type=DNSObjectType.RECORD,
+            affected_object_names=[record.name for record in external_records],
             objects_before=jsonable_encoder(internal_records),
             objects_after=None,
         )
