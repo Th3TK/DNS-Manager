@@ -42,6 +42,15 @@ export interface CreateDNSRecordForm {
     checks_enabled: boolean;
 }
 
+export interface ModifyDNSRecordForm {
+    name: string;
+    type: SupportedDNSRecordTypes;
+    content: string;
+    ttl: number;
+    comment: string | null;
+    checks_enabled: boolean;
+}
+
 export interface ChangeHistoryEntry {
     entry_uuid: string;
     action_timestamp: string;

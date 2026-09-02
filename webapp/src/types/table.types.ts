@@ -35,8 +35,10 @@ export interface BaseDataTableExpose<T extends Record<string, any>> {
     sorter: DataTableSortState | null;
 }
 
-export interface TableExpose {
+export interface TableExpose<T extends Record<string, any>> {
     total: number;
+    refresh: () => Promise<void>;
+    selectedRows: T[];
 }
 
 export type TableRow<T> = T & { key: string };

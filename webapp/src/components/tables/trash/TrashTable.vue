@@ -14,7 +14,7 @@ const { data: users } = useFetch<User[]>("/users");
 
 const table = useTemplateRef<TableExpose>("table");
 const router = useRouter();
-const handleRowClick = (row: TrashEntry) => router.push(`/trash/${row.entry_uuid}`);
+const handleClick = (row: TrashEntry) => router.push(`/trash/${row.entry_uuid}`);
 
 const filterConfig = computed<FilterConfig<TrashEntry>>(() => ({
     actor: {
@@ -41,12 +41,7 @@ const filterConfig = computed<FilterConfig<TrashEntry>>(() => ({
         :get-data="getTrash"
         :columns="columns"
         :filterConfig="filterConfig"
-        :row-props="
-            (row: TrashEntry) => ({
-                onClick: () => handleRowClick(row),
-            })
-        "
-        :row-class-name="() => 'clickable-row'"
+        :onCellClick="handleClick"
     >
         <template #header>
             <NFlex

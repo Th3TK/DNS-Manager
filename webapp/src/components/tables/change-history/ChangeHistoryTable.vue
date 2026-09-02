@@ -14,7 +14,7 @@ const { data: users } = useFetch<User[]>("/users");
 
 const table = useTemplateRef<TableExpose>("table");
 const router = useRouter();
-const handleRowClick = (row: ChangeHistoryEntry) => router.push(`/history/${row.entry_uuid}`);
+const handleClick = (row: ChangeHistoryEntry) => router.push(`/history/${row.entry_uuid}`);
 
 const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
     action: {
@@ -46,12 +46,7 @@ const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
         :get-data="getChangeHistory"
         :columns="columns"
         :filterConfig="filterConfig"
-        :row-props="
-            (row: ChangeHistoryEntry) => ({
-                onClick: () => handleRowClick(row),
-            })
-        "
-        :row-class-name="() => 'clickable-row'"
+        :onCellClick="handleClick"
     >
         <template #header>
             <NFlex

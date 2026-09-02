@@ -1,11 +1,11 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import { NButton, NDataTable, NFlex, NIcon, NTag, type DataTableColumns, type DataTableRowKey, type DataTableSortState } from "naive-ui";
-import { type FilterConfig, type Filters, type TableRow } from "../../types/table.types.ts";
+import { NButton, NDataTable, NFlex, NIcon, NTag, type DataTableColumns, type DataTableRowKey } from "naive-ui";
+import { type FilterConfig, type TableRow } from "../../types/table.types.ts";
 import AddFilterButton from "./filters/AddFilterButton.vue";
 import { Refresh } from "@vicons/tabler";
 import { useDataTable } from "../../composables/useDataTable.ts";
 import { formatFilterText } from "./filters/filters.ts";
-import { computed, watch } from "vue";
+import { computed } from "vue";
 
 defineOptions({
     inheritAttrs: false,
@@ -19,6 +19,7 @@ const props = defineProps<{
     filterConfig: FilterConfig<T>;
     columns: DataTableColumns<T>;
     rowKeys: (keyof T)[];
+    onCellClick?: (row: T) => any;
 }>();
 
 const {
@@ -32,7 +33,7 @@ const {
     handleSorterChange,
     sorter,
     filters,
-} = useDataTable<T>(props.columns);
+} = useDataTable<T>(props.columns, props.onCellClick);
 
 const data = defineModel<TableRow<T>[]>("data", { default: () => [] });
 const loading = defineModel<boolean>("loading", { default: false });
@@ -140,7 +141,16 @@ defineExpose({
 .data-table {
     flex: 1;
 }
+
 .controls {
     margin-left: auto;
+}
+
+:deep(.clickable-cell) {
+    cursor: pointer !important;
+}
+
+:deep(.clickable-cell td > *) {
+    cursor: initial !important;
 }
 </style>

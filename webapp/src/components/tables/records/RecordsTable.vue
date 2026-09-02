@@ -22,7 +22,7 @@ const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
 const router = useRouter();
-const handleRowClick = (row: DNSRecord) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
+const handleClick = (row: DNSRecord) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
 
 const filterConfig = computed<FilterConfig<DNSRecord>>(() => ({
     zone_name: { type: "freetext" },
@@ -55,22 +55,6 @@ const getData = async () => {
     }
     return await getRecords(props.zoneName);
 };
-
-const clickableColumns = computed<DataTableColumns<DNSRecord>>(() =>
-    columns.map(
-        (col) =>
-            ({
-                ...col,
-                cellProps: (row: DNSRecord) =>
-                    "key" in col && col.key
-                        ? {
-                              class: "clickable-cell",
-                              onClick: () => handleRowClick(row),
-                          }
-                        : undefined,
-            }) as DataTableColumn<DNSRecord>,
-    ),
-);
 </script>
 
 <template>
@@ -80,7 +64,8 @@ const clickableColumns = computed<DataTableColumns<DNSRecord>>(() =>
         v-model:selected-keys="selectedKeys"
         :rowKeys="['name', 'type']"
         :get-data="getData"
-        :columns="clickableColumns"
+        :columns="columns"
+        :onCellClick="handleClick"
         :filter-config="filterConfig"
     >
         <template #header>

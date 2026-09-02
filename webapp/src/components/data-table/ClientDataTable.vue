@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { type DataTableColumns, type DataTableRowKey } from "naive-ui";
-import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
-import { type BaseDataTableExpose, type FilterConfig, type TableRow } from "../../types/table.types.ts";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
+import type { TableExpose, BaseDataTableExpose, FilterConfig, TableRow } from "../../types/table.types.ts";
 import { useErrorHandler } from "../../composables/useErrorHandler.ts";
 import { filterFunctions } from "./filters/filters.ts";
 import BaseDataTable from "./BaseDataTable.vue";
@@ -13,6 +13,7 @@ const props = defineProps<{
     filterConfig: FilterConfig<T>;
     columns: DataTableColumns<T>;
     rowKeys: (keyof T)[];
+    onCellClick?: (row: T) => any;
 }>();
 
 const { handleError } = useErrorHandler();
@@ -21,8 +22,10 @@ const table = useTemplateRef<BaseDataTableExpose<T>>("table");
 
 const data = ref<TableRow<T>[]>([]);
 const loading = defineModel<boolean>("loading", { default: false });
-const selectedKeys = defineModel<DataTableRowKey[]>("selectedKeys", { default: () => [] });
 const total = computed(() => data.value.length);
+
+const selectedKeys = defineModel<DataTableRowKey[]>("selectedKeys", { default: () => [] });
+const selectedRows = computed(() => data.value.filter((row) => selectedKeys.value.includes(row.key as DataTableRowKey)));
 
 const loadData = async () => {
     loading.value = true;
@@ -53,6 +56,8 @@ onMounted(loadData);
 
 defineExpose({
     total: total,
+    refresh: loadData,
+    selectedRows: selectedRows,
 });
 </script>
 
@@ -67,6 +72,7 @@ defineExpose({
         :filter-config="filterConfig"
         :columns="columns"
         :row-keys="rowKeys"
+        :onCellClick="onCellClick"
     >
         <template #header>
             <slot name="header" />

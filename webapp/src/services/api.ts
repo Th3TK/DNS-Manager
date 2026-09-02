@@ -1,33 +1,17 @@
 import type { AxiosError } from "axios";
-import type { DNSRecord, ChangeHistoryEntry, DNSZone, TrashEntry, User } from "../types/api.types";
+import type {
+    DNSRecord,
+    ChangeHistoryEntry,
+    DNSZone,
+    TrashEntry,
+    User,
+    CreateDNSZoneForm,
+    CreateDNSRecordForm,
+    ModifyDNSRecordForm,
+} from "../types/api.types";
 import { sendRequest } from "./requests";
 import type { DataPaginated, Filters } from "../types/table.types";
 import _ from "lodash";
-
-export const login = async (username: string, password: string) =>
-    await sendRequest<true>(
-        "POST",
-        "/auth/login",
-        {
-            data: new URLSearchParams({ username, password }),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-        },
-        false,
-    );
-
-export const getLoggedInUser = async () => await sendRequest<User>("GET", "/users/me");
-
-export const getAuthenticatedUser = async () => {
-    try {
-        return await getLoggedInUser();
-    } catch {
-        return null;
-    }
-};
-
-export const getUsers = async () => await sendRequest<User[]>("GET", "/users");
 
 const prepareTableParams = <T = unknown>(
     page: number,
@@ -53,10 +37,70 @@ const prepareTableParams = <T = unknown>(
     return params;
 };
 
-export const getZones = async (): Promise<DNSZone[]> => await sendRequest<DNSZone[]>("GET", `/zones`);
+/* ------------------------------------------------------------------------- */
+/* AUTHENTICATION                                                            */
+/* ------------------------------------------------------------------------- */
 
-export const getRecords = async (zoneName: string): Promise<DNSRecord[]> =>
-    await sendRequest<DNSRecord[]>("GET", `/zones/${zoneName}/records`);
+export const login = (username: string, password: string) =>
+    sendRequest<true>(
+        "POST",
+        "/auth/login",
+        {
+            data: new URLSearchParams({ username, password }),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        },
+        false,
+    );
+
+export const logout = () => sendRequest("POST", "/auth/logout");
+
+/* ------------------------------------------------------------------------- */
+/* USERS                                                                     */
+/* ------------------------------------------------------------------------- */
+
+export const getLoggedInUser = () => sendRequest<User>("GET", "/users/me");
+
+export const getAuthenticatedUser = () => getLoggedInUser().catch(() => null);
+
+export const getUsers = () => sendRequest<User[]>("GET", "/users");
+
+export const getUser = (username: string) => sendRequest<User>("GET", `/user/${username}`);
+
+/* ------------------------------------------------------------------------- */
+/* DNS ZONES                                                                 */
+/* ------------------------------------------------------------------------- */
+
+export const getZones = () => sendRequest<DNSZone[]>("GET", "/zones");
+
+export const getZone = (zoneName: string) => sendRequest<DNSZone>("GET", `/zones/${zoneName}`);
+
+export const createZone = (form: CreateDNSZoneForm) => sendRequest<DNSZone>("POST", "/zones", { data: form });
+
+export const deleteZone = (zoneName: string) => sendRequest<null>("DELETE", `/zones/${zoneName}`);
+
+/* ------------------------------------------------------------------------- */
+/* DNS RECORDS                                                               */
+/* ------------------------------------------------------------------------- */
+
+export const getRecords = (zoneName: string) => sendRequest<DNSRecord[]>("GET", `/zones/${zoneName}/records`);
+
+export const getRecord = (zoneName: string, recordName: string, recordType: string) =>
+    sendRequest<DNSRecord>("GET", `/zones/${zoneName}/records?record_name=${recordName}&record_type=${recordType}`);
+
+export const createRecord = (zoneName: string, form: CreateDNSRecordForm) =>
+    sendRequest<DNSRecord>("POST", `/zones/${zoneName}/record`, { data: form });
+
+export const modifyRecord = (zoneName: string, form: ModifyDNSRecordForm) =>
+    sendRequest<DNSRecord>("PATCH", `/zones/${zoneName}/record`, { data: form });
+
+export const deleteRecord = (zoneName: string, recordName: string, recordType: string) =>
+    sendRequest<null>("DELETE", `/zones/${zoneName}/records?record_name=${recordName}&record_type=${recordType}`);
+
+/* ------------------------------------------------------------------------- */
+/* CHANGE HISTORY                                                            */
+/* ------------------------------------------------------------------------- */
 
 export const getChangeHistory = async (
     page: number,
@@ -67,9 +111,13 @@ export const getChangeHistory = async (
     return await sendRequest<DataPaginated<ChangeHistoryEntry>>("GET", `/log?${params.toString()}`);
 };
 
-export const getAllChangeHistoryActors = async () => await sendRequest<string[]>("GET", "/log/actors");
+/* ------------------------------------------------------------------------- */
+/* TRASH                                                                     */
+/* ------------------------------------------------------------------------- */
 
-export const getTrash = async (page: number, pageSize: number, filters: Filters<TrashEntry>): Promise<DataPaginated<TrashEntry>> => {
+export const getTrash = (page: number, pageSize: number, filters: Filters<TrashEntry>) => {
     const params = prepareTableParams(page, pageSize, filters);
-    return await sendRequest<DataPaginated<TrashEntry>>("GET", `/trash?${params.toString()}`);
+    return sendRequest<DataPaginated<TrashEntry>>("GET", `/trash?${params.toString()}`);
 };
+
+export const getTrashEntry = (uuid: string) => sendRequest<TrashEntry>("GET", `/trash/${uuid}`);

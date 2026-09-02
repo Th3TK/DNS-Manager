@@ -1,59 +1,38 @@
 <script setup lang="ts">
 import { type User, type DNSZone } from "../../../types/api.types.ts";
-import { type DataTableRowKey, NButton, NFlex, NIcon, NText, type DataTableColumn, type DataTableColumns } from "naive-ui";
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { type DataTableRowKey, NButton, NFlex, NIcon, NText } from "naive-ui";
+import { computed, ref, shallowRef, Text, useTemplateRef } from "vue";
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
 import { useRouter } from "vue-router";
-import type { FilterConfig } from "../../../types/table.types.ts";
 import useFetch from "../../../composables/useFetch.ts";
-import _ from "lodash";
 import { columns } from "./columns.ts";
-import { getZones } from "../../../services/api.ts";
+import { deleteZone, getZones } from "../../../services/api.ts";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
+import { getFilterConfig } from "./filters.ts";
+import CreateZoneModal from "../../modals/CreateZoneModal.vue";
+import DeleteConfirmationModal from "../../modals/DeleteConfirmationModal.vue";
+import type { TableExpose } from "../../../types/table.types.ts";
 
 const { data: users } = useFetch<User[]>("/users");
 
-const table = useTemplateRef("table");
+const table = useTemplateRef<TableExpose<DNSZone>>("table");
 const selectedKeys = ref<DataTableRowKey[]>([]);
+const openedCreateModal = ref(false);
+const openedDeleteModal = ref(false);
 
 const router = useRouter();
-const handleRowClick = (row: DNSZone) => router.push(`/zones/${row.name}`);
+const handleClick = (row: DNSZone) => router.push(`/zones/${row.name}`);
 
-const filterConfig = computed<FilterConfig<DNSZone>>(() => ({
-    name: {
-        type: "freetext",
-    },
-    author: {
-        type: "options",
-        options: _.map(users.value, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
-    },
-    comment: {
-        type: "freetext",
-    },
-    origin: {
-        type: "options",
-        options: [
-            { label: "External", value: "external" },
-            { label: "Manual", value: "manual" },
-        ],
-    },
-}));
+const filterConfig = computed(() => getFilterConfig(users.value ?? []));
 
-const clickableColumns = computed<DataTableColumns<DNSZone>>(() =>
-    columns.map(
-        (col) =>
-            ({
-                ...col,
-                cellProps: (row: DNSZone) =>
-                    "key" in col && col.key
-                        ? {
-                              class: "clickable-cell",
-                              onClick: () => handleRowClick(row),
-                          }
-                        : undefined,
-            }) as DataTableColumn<DNSZone>,
-    ),
-);
+const selectedZone = computed(() => table.value?.selectedRows[0]);
+const isSelectedExternal = computed(() => selectedZone.value && selectedZone.value.origin === "external");
+
+const deleteSelected = async () => {
+    if (!selectedZone.value) return;
+    await deleteZone(selectedZone.value.name);
+    table.value?.refresh();
+};
 </script>
 
 <template>
@@ -62,7 +41,8 @@ const clickableColumns = computed<DataTableColumns<DNSZone>>(() =>
         v-model:selected-keys="selectedKeys"
         :rowKeys="['name']"
         :get-data="getZones"
-        :columns="clickableColumns"
+        :columns="columns"
+        :onCellClick="handleClick"
         :filterConfig="filterConfig"
     >
         <template #header>
@@ -86,6 +66,7 @@ const clickableColumns = computed<DataTableColumns<DNSZone>>(() =>
                 type="error"
                 strong
                 v-if="selectedKeys.length"
+                @click="openedDeleteModal = true"
             >
                 <template #icon>
                     <NIcon
@@ -95,9 +76,24 @@ const clickableColumns = computed<DataTableColumns<DNSZone>>(() =>
                 </template>
                 Delete Zone
             </NButton>
+            <DeleteConfirmationModal
+                v-model:show="openedDeleteModal"
+                @delete="deleteSelected"
+            >
+                <template #title> Zone {{ isSelectedExternal ? "permanent " : "" }}deletion </template>
+                <template #description>
+                    <NText>
+                        Selected zone will be {{ isSelectedExternal ? "permanently deleted" : "moved to trash" }} along with
+                        <NText type="error"> all of its records ({{ selectedZone?.record_count }}). </NText>
+                    </NText>
+                    <NText v-if="isSelectedExternal">This action cannot be undone.</NText>
+                </template>
+            </DeleteConfirmationModal>
+
             <NButton
                 type="primary"
                 strong
+                @click="openedCreateModal = true"
             >
                 <template #icon>
                     <NIcon
@@ -107,19 +103,15 @@ const clickableColumns = computed<DataTableColumns<DNSZone>>(() =>
                 </template>
                 Create Zone
             </NButton>
+            <CreateZoneModal
+                v-model:show="openedCreateModal"
+                :on-submit="table?.refresh"
+            />
         </template>
     </ClientDataTable>
 </template>
 
 <style lang="css" scoped>
-:deep(.clickable-cell) {
-    cursor: pointer !important;
-}
-
-:deep(.clickable-cell td > *) {
-    cursor: initial !important;
-}
-
 .header {
     padding-bottom: var(--spacing-md);
 }
