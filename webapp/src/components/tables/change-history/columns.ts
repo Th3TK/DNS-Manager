@@ -1,10 +1,10 @@
 import type { DataTableColumns } from "naive-ui";
-import type { ChangeHistoryEntry } from "../../types/api.types";
+import type { ChangeHistoryEntry } from "../../../types/api.types";
 import { h } from "vue";
-import TextField from "../../components/data-table/fields/TextField.vue";
-import DateField from "../../components/data-table/fields/DateField.vue";
-import BadgeField from "../../components/data-table/fields/BadgeField.vue";
-import ActorField from "../../components/data-table/fields/ActorField.vue";
+import TextField from "../../data-table/fields/TextField.vue";
+import DateField from "../../data-table/fields/DateField.vue";
+import BadgeField from "../../data-table/fields/BadgeField.vue";
+import ActorField from "../../data-table/fields/ActorField.vue";
 
 export const columns: DataTableColumns<ChangeHistoryEntry> = [
     {

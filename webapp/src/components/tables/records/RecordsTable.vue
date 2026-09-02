@@ -4,11 +4,11 @@ import _ from "lodash";
 import { NButton, NFlex, NIcon, NText, type DataTableColumn, type DataTableColumns, type DataTableRowKey } from "naive-ui";
 import { computed, ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
-import ClientDataTable from "../../components/data-table/ClientDataTable.vue";
-import useFetch from "../../composables/useFetch.ts";
-import { getRecords } from "../../services/api.ts";
-import type { DNSRecord, User } from "../../types/api.types";
-import type { FilterConfig } from "../../types/table.types.ts";
+import ClientDataTable from "../../data-table/ClientDataTable.vue";
+import useFetch from "../../../composables/useFetch.ts";
+import { getRecords } from "../../../services/api.ts";
+import type { DNSRecord, User } from "../../../types/api.types";
+import type { FilterConfig } from "../../../types/table.types.ts";
 import { columns } from "./columns.ts";
 
 const props = defineProps<{

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { NButton, NCard, NFlex, NIcon, NText } from "naive-ui";
 import { computed, watch } from "vue";
-import { routes } from "../router";
+import { routes } from "../../router";
 import { useRouter } from "vue-router";
 import { User as IconUser } from "@vicons/tabler";
-import useFetch from "../composables/useFetch";
-import { type User } from "../types/api.types";
-import { useErrorHandler } from "../composables/useErrorHandler";
+import useFetch from "../../composables/useFetch";
+import { type User } from "../../types/api.types";
+import { useErrorHandler } from "../../composables/useErrorHandler";
 
 const { handleError } = useErrorHandler();
 

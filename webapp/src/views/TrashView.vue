@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TrashTable from "../features/trash/TrashTable.vue";
+import TrashTable from "../components/tables//trash/TrashTable.vue";
 import MainLayout from "../layouts/MainLayout.vue";
 </script>
 

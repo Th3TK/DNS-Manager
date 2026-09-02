@@ -5,7 +5,7 @@ import useFetch from "../composables/useFetch.ts";
 import type { DNSZone } from "../types/api.types.ts";
 import { NButton, NCard, NDescriptions, NDescriptionsItem, NFlex, NIcon, NTag, NText, NThing } from "naive-ui";
 import { World as IconWorld, Maximize, Minimize } from "@vicons/tabler";
-import RecordsTable from "../features/records/RecordsTable.vue";
+import RecordsTable from "../components/tables/records/RecordsTable.vue";
 import { ref } from "vue";
 const route = useRoute();
 

@@ -4,9 +4,9 @@ import { NForm, NFormItem, NInput, NButton, NSpace, NCard, NText, type FormInst,
 
 import { useRouter } from "vue-router";
 import { useNotification } from "naive-ui";
-import { useErrorHandler } from "../composables/useErrorHandler.ts";
+import { useErrorHandler } from "../../composables/useErrorHandler.ts";
 import { HttpStatusCode } from "axios";
-import { login } from "../services/api.ts";
+import { login } from "../../services/api.ts";
 
 const notification = useNotification();
 const errorHandler = useErrorHandler();

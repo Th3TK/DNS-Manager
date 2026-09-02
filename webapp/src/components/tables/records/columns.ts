@@ -1,7 +1,7 @@
 import type { DataTableColumns } from "naive-ui";
-import type { DNSRecord } from "../../types/api.types";
-import BadgeField from "../../components/data-table/fields/BadgeField.vue";
-import TextField from "../../components/data-table/fields/TextField.vue";
+import type { DNSRecord } from "../../../types/api.types";
+import BadgeField from "../../data-table/fields/BadgeField.vue";
+import TextField from "../../data-table/fields/TextField.vue";
 import _ from "lodash";
 import { h } from "vue";
 
@@ -51,7 +51,7 @@ export const columns: DataTableColumns<DNSRecord> = [
         sorter: "default",
         render: (row: DNSRecord) =>
             h(TextField, {
-                value: _.isArray(row.content) ? row.content.join() : row.content,
+                value: _.isArray(row.content) ? row.content.join("\n") : row.content,
                 copyOption: true,
             }),
     },

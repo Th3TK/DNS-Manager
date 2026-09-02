@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { type User, type DNSZone } from "../../types/api.types";
+import { type User, type DNSZone } from "../../../types/api.types.ts";
 import { type DataTableRowKey, NButton, NFlex, NIcon, NText, type DataTableColumn, type DataTableColumns } from "naive-ui";
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
 import { useRouter } from "vue-router";
-import type { FilterConfig } from "../../types/table.types.ts";
-import useFetch from "../../composables/useFetch.ts";
+import type { FilterConfig } from "../../../types/table.types.ts";
+import useFetch from "../../../composables/useFetch.ts";
 import _ from "lodash";
 import { columns } from "./columns.ts";
-import { getZones } from "../../services/api.ts";
-import ClientDataTable from "../../components/data-table/ClientDataTable.vue";
+import { getZones } from "../../../services/api.ts";
+import ClientDataTable from "../../data-table/ClientDataTable.vue";
 
 const { data: users } = useFetch<User[]>("/users");
 

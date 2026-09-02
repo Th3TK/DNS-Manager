@@ -5,8 +5,8 @@ defineOptions({
 
 import { NCard, NLayout, NLayoutContent, NLayoutSider } from "naive-ui";
 
-import AutoBreadcrumbs from "../components/AutoBreadcrumbs.vue";
-import NavBar from "../components/NavBar.vue";
+import AutoBreadcrumbs from "../components/navigation/AutoBreadcrumbs.vue";
+import NavBar from "../components/navigation/NavBar.vue";
 </script>
 
 <template>

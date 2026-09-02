@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { Copy as IconCopy } from "@vicons/tabler";
-import { NButton, NFlex, NHighlight, NIcon, useThemeVars } from "naive-ui";
+import { NButton, NFlex, NHighlight, NIcon, NText, useThemeVars } from "naive-ui";
 
 const themeVars = useThemeVars();
 
 const props = defineProps<{
     value: string;
-    searchValue?: string;
     copyOption?: boolean;
 }>();
 
@@ -16,49 +15,43 @@ const copy = () => {
 </script>
 
 <template>
-    <NFlex
+    <NText
         class="container"
         @click.stop
     >
-        <NHighlight
-            :text="value"
-            :patterns="searchValue ? [searchValue] : []"
-            :highlight-style="{
-                background: themeVars.primaryColor,
-                fontWeight: 600,
-                padding: '2px',
-                borderRadius: '4px',
-            }"
-        />
-
+        {{ value }}
         <NButton
             v-if="copyOption && value"
             quaternary
             circle
             size="tiny"
+            class="copy-button"
             @click="copy"
+            @click.stop
         >
             <template #icon>
                 <NIcon
                     :component="IconCopy"
-                    size="14"
+                    size="16"
                 />
             </template>
         </NButton>
-    </NFlex>
+    </NText>
 </template>
 
 <style lang="css" scoped>
-.container {
-    display: flex;
-    flex: 0;
-    width: fit-content;
-    gap: var(--spacing-xs) !important;
-}
 .search-highlight {
     background: color-mix(in srgb, var(--n-color-primary) 20%, transparent);
     color: var(--n-color-primary);
     border-radius: 3px;
     padding: 1px 3px;
+}
+.container {
+    white-space: pre-line;
+    cursor: initial;
+}
+.copy-button {
+    margin-left: var(--spacing-xxs);
+    transform: translateY(1px);
 }
 </style>

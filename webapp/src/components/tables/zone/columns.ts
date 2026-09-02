@@ -1,7 +1,7 @@
 import { h } from "vue";
-import TextField from "../../components/data-table/fields/TextField.vue";
-import type { DNSZone } from "../../types/api.types.ts";
-import BadgeField from "../../components/data-table/fields/BadgeField.vue";
+import TextField from "../../data-table/fields/TextField.vue";
+import type { DNSZone } from "../../../types/api.types.ts";
+import BadgeField from "../../data-table/fields/BadgeField.vue";
 import type { DataTableColumns } from "naive-ui";
 
 export const columns: DataTableColumns<DNSZone> = [

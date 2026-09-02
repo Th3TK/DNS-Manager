@@ -1,40 +1,35 @@
 <script setup lang="ts">
-import { type ChangeHistoryEntry, type User } from "../../types/api.types";
 import { NFlex, NText } from "naive-ui";
 import { computed, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
-import type { FilterConfig, TableExpose } from "../../types/table.types.ts";
+import type { TrashEntry, User } from "../../../types/api.types";
+import type { FilterConfig, TableExpose } from "../../../types/table.types.ts";
 import { columns } from "./columns.ts";
-import { getChangeHistory } from "../../services/api.ts";
-import RemoteDataTable from "../../components/data-table/RemoteDataTable.vue";
+import { getTrash } from "../../../services/api.ts";
+import RemoteDataTable from "../../data-table/RemoteDataTable.vue";
+import useFetch from "../../../composables/useFetch.ts";
 import _ from "lodash";
-import useFetch from "../../composables/useFetch.ts";
 
 const { data: users } = useFetch<User[]>("/users");
 
 const table = useTemplateRef<TableExpose>("table");
 const router = useRouter();
-const handleRowClick = (row: ChangeHistoryEntry) => router.push(`/history/${row.entry_uuid}`);
+const handleRowClick = (row: TrashEntry) => router.push(`/trash/${row.entry_uuid}`);
 
-const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
-    action: {
-        type: "options",
-        options: [
-            { label: "Created", value: "created" },
-            { label: "Changed", value: "Changed" },
-            { label: "Deleted", value: "Deleted" },
-            { label: "Restored", value: "Restored" },
-            { label: "Permanently Deleted", value: "Permanently Deleted" },
-        ],
-    },
-
+const filterConfig = computed<FilterConfig<TrashEntry>>(() => ({
     actor: {
         type: "options",
-        options: _.map(users.value, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
+        options: _.map(users.value, (user: User) => ({
+            label: user.full_name || user.username,
+            value: user.username,
+        })),
     },
-
-    affected_object_name: {
-        type: "freetext",
+    object_type: {
+        type: "options",
+        options: [
+            { label: "Zone", value: "zone" },
+            { label: "Record", value: "record" },
+        ],
     },
 }));
 </script>
@@ -43,11 +38,11 @@ const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
     <RemoteDataTable
         ref="table"
         :rowKeys="['entry_uuid']"
-        :get-data="getChangeHistory"
+        :get-data="getTrash"
         :columns="columns"
         :filterConfig="filterConfig"
         :row-props="
-            (row: ChangeHistoryEntry) => ({
+            (row: TrashEntry) => ({
                 onClick: () => handleRowClick(row),
             })
         "
@@ -63,12 +58,10 @@ const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
                     tag="h1"
                     class="title"
                 >
-                    Change History -
+                    Trash -
                     <NText depth="3"> {{ table?.total ?? 0 }} Entries </NText>
                 </NText>
-                <NText depth="3">
-                    Full action log of changes made to DNS objects through the application. Click a row to view details.
-                </NText>
+                <NText depth="3"> Contains deleted DNS zones and records. Entries are permanently deleted after 30 days. </NText>
             </NFlex>
         </template>
     </RemoteDataTable>

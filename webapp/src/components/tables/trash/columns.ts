@@ -1,10 +1,10 @@
 import type { DataTableColumns } from "naive-ui";
-import type { TrashEntry } from "../../types/api.types";
+import type { TrashEntry } from "../../../types/api.types";
 import { h } from "vue";
-import DateField from "../../components/data-table/fields/DateField.vue";
-import BadgeField from "../../components/data-table/fields/BadgeField.vue";
-import ActorField from "../../components/data-table/fields/ActorField.vue";
-import DNSObjectField from "../../components/data-table/fields/DNSObjectField.vue";
+import DateField from "../../data-table/fields/DateField.vue";
+import BadgeField from "../../data-table/fields/BadgeField.vue";
+import ActorField from "../../data-table/fields/ActorField.vue";
+import DNSObjectField from "../../data-table/fields/DNSObjectField.vue";
 
 export const columns: DataTableColumns<TrashEntry> = [
     {
