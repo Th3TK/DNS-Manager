@@ -1,9 +1,10 @@
 from typing import Optional
 
-from app.database.database import Base
-from app.database.models.enums import InternalRecordOrigin
 from sqlalchemy import Boolean, Enum, ForeignKey, ForeignKeyConstraint, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database.database import Base
+from app.database.models.enums import InternalRecordOrigin
 
 
 class DNSRecordMetadataInDB(Base):
@@ -31,7 +32,7 @@ class DNSRecordMetadataInDB(Base):
 
     checks_enabled: Mapped[bool] = mapped_column(Boolean, server_default="true", nullable=False)
 
-    author: Mapped[str | None] = mapped_column(ForeignKey("users.username"), nullable=True)
+    author: Mapped[str | None] = mapped_column(String(64), ForeignKey("users.username", ondelete="SET NULL"), nullable=True)
 
     origin: Mapped[InternalRecordOrigin] = mapped_column(
         Enum(InternalRecordOrigin, name="internal_record_origin", native_enum=True),

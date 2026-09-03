@@ -70,6 +70,8 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["author"],
             ["users.username"],
+            name="dns_zones_metadata_author_fkey",
+            ondelete="SET NULL",
         ),
         sa.PrimaryKeyConstraint("name"),
     )
@@ -85,6 +87,8 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["author"],
             ["users.username"],
+            name="dns_records_metadata_author_fkey",
+            ondelete="SET NULL",
         ),
         sa.ForeignKeyConstraint(
             ["zone_name"], ["dns_zones_metadata.name"], name="fk_dns_records_metadata_zone_name", ondelete="CASCADE"

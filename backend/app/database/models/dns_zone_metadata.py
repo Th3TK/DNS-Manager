@@ -1,6 +1,7 @@
-from app.database.database import Base
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database.database import Base
 
 
 class DNSZoneMetadataInDB(Base):
@@ -11,4 +12,4 @@ class DNSZoneMetadataInDB(Base):
     # metadata
     comment: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
-    author: Mapped[str | None] = mapped_column(ForeignKey("users.username"), nullable=True)
+    author: Mapped[str | None] = mapped_column(String(64), ForeignKey("users.username", ondelete="SET NULL"), nullable=True)
