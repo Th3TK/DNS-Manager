@@ -4,8 +4,6 @@ from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ChangeAction
 from pydantic import BaseModel, Field, field_validator
 
-type DNSZoneOrigin = Literal["manual", "external"]
-
 
 class DNSZoneProperties(BaseModel):
     """
@@ -21,19 +19,17 @@ class DNSZoneMetadata(BaseModel):
     Additional DNS zone metadata stored in the application's database.
     """
 
-    origin: DNSZoneOrigin
-    comment: str | None = None
+    comment: str = ""
     author: str | None = None  # username
 
     @classmethod
     def from_db(cls, metadata_db: DNSZoneMetadataInDB | None) -> "DNSZoneMetadata":
         if metadata_db is None:
-            return cls(origin="external")
+            return cls()
 
         return cls(
-            origin="manual",
             author=metadata_db.author,
-            comment=metadata_db.comment,
+            comment=metadata_db.comment or "",
         )
 
 
@@ -53,7 +49,7 @@ class CreateDNSZoneForm(BaseModel):
     """
 
     name: Annotated[str, Field(max_length=255)]
-    comment: Annotated[str, Field(max_length=1000)] | None = None
+    comment: Annotated[str, Field(max_length=1000)] = ""
 
     @field_validator("name", mode="after")
     @classmethod
@@ -67,18 +63,21 @@ class CreateDNSZoneArgs(CreateDNSZoneForm):
     Extends the API request data with properties determined by the backend, rather than supplied by the client.
     """
 
-    origin: DNSZoneOrigin
     author: str  # username
+
+
+class RestoreDNSZoneArgs(BaseModel):
+    name: str
+    comment: str = ""
 
 
 class DNSZoneRemovalResult(BaseModel):
     zone_status: Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]
-    records_status: Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]
+    internal_records_status: Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]
 
 
 DNSZoneSortField = Literal[
     "name",
     "author",
     "comment",
-    "origin",
 ]

@@ -130,5 +130,15 @@ class ModifyDNSRecordArgs(ModifyDNSRecordForm):
     author: str
 
 
+class RestoreDNSRecordArgs(BaseModel):
+    zone_name: str
+    name: str
+    type: str
+    content: str | list[str]
+    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)]
+    comment: str | None = None
+    checks_enabled: bool
+
+
 class DNSRecordRemovalResult(BaseModel):
     record_status: Literal[ChangeAction.PERMANENTLY_DELETED, ChangeAction.DELETED]

@@ -12,6 +12,7 @@ from app.models.record import (
     DNSRecordMetadata,
     DNSRecordRemovalResult,
     ModifyDNSRecordArgs,
+    RestoreDNSRecordArgs,
 )
 from app.models.user import User
 from app.providers.factory import provider
@@ -284,7 +285,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
             db=db,
             actor=logged_in_user.username,
             object_type=DNSObjectType.RECORD,
-            object_data=CreateDNSRecordArgs(**record.model_dump()),
+            object_data=RestoreDNSRecordArgs(**record.model_dump()),
         ):
             result.record_status = ChangeAction.DELETED
 

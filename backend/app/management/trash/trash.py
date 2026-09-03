@@ -7,10 +7,10 @@ from app.database.models.dns_trash import DNSTrashInDB
 from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
 from app.management.action_log.action_log import create_log_entry
 from app.management.trash.cleanup import automatic_trash_removal
-from app.models.record import CreateDNSRecordArgs
+from app.models.record import RestoreDNSRecordArgs
 from app.models.trash import TrashEntry
 from app.models.user import User
-from app.models.zone import CreateDNSZoneArgs
+from app.models.zone import RestoreDNSZoneArgs
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import Select, select
@@ -62,7 +62,7 @@ def get_trash_entry(db: Session, entry_uuid: UUID) -> TrashEntry:
 
 
 def create_trash_entry(
-    db: Session, actor: str, object_type: DNSObjectType, object_data: CreateDNSRecordArgs | CreateDNSZoneArgs
+    db: Session, actor: str, object_type: DNSObjectType, object_data: RestoreDNSZoneArgs | RestoreDNSRecordArgs
 ) -> bool:
     """
     Creates an entry in the dns_trash table, saving the object for possible restoration
@@ -95,7 +95,7 @@ def create_trash_entry(
 
 
 def create_trash_entries(
-    db: Session, actor: str, object_type: DNSObjectType, objects_data: list[CreateDNSRecordArgs] | list[CreateDNSZoneArgs]
+    db: Session, actor: str, object_type: DNSObjectType, objects_data: list[RestoreDNSZoneArgs] | list[RestoreDNSRecordArgs]
 ) -> bool:
     """
     Creates entries in the dns_trash table, saving the deleted objects for possible restoration

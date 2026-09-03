@@ -1,15 +1,16 @@
 import logging
 from typing import Any, cast
 
+from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
 from app.management.action_log.action_log import create_log_entries, create_log_entry
 from app.management.dns.record import get_records
 from app.management.dns.validation import validate_dns_name
 from app.management.trash.trash import create_trash_entries, create_trash_entry
-from app.models.record import CreateDNSRecordArgs
+from app.models.record import RestoreDNSRecordArgs
 from app.models.user import User
-from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneRemovalResult
+from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneRemovalResult, RestoreDNSZoneArgs
 from app.providers.factory import provider
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -130,7 +131,6 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
     were soft-deleted or permanently deleted.
     """
     zone = get_zone(db, zone_name)
-    is_zone_external = zone.origin == "external"
 
     records = get_records(db, zone_name)
     internal_records, external_records = [], []
@@ -146,34 +146,34 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
 
     result = DNSZoneRemovalResult(
         zone_status=ChangeAction.PERMANENTLY_DELETED,
-        records_status=ChangeAction.PERMANENTLY_DELETED,
+        internal_records_status=ChangeAction.PERMANENTLY_DELETED,
     )
 
-    if not is_zone_external:
-        if create_trash_entry(
-            db=db,
-            actor=logged_in_user.username,
-            object_type=DNSObjectType.ZONE,
-            object_data=CreateDNSZoneArgs(**zone.model_dump()),
-        ):
-            result.zone_status = ChangeAction.DELETED
+    if create_trash_entry(
+        db=db,
+        actor=logged_in_user.username,
+        object_type=DNSObjectType.ZONE,
+        object_data=RestoreDNSZoneArgs(**zone.model_dump()),
+    ):
+        result.zone_status = ChangeAction.DELETED
 
-        if create_trash_entries(
-            db=db,
-            actor=logged_in_user.username,
-            object_type=DNSObjectType.RECORD,
-            objects_data=[CreateDNSRecordArgs(**record.model_dump()) for record in internal_records],
-        ):
-            result.records_status = ChangeAction.DELETED
+    if create_trash_entries(
+        db=db,
+        actor=logged_in_user.username,
+        object_type=DNSObjectType.RECORD,
+        objects_data=[RestoreDNSRecordArgs(**record.model_dump()) for record in internal_records],
+    ):
+        result.internal_records_status = ChangeAction.DELETED
 
-        try:
-            # deletes the zone metadata and records metadata using CASCADE relationships
-            db.execute(delete(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.name == zone_name))
-            db.commit()
+    try:
+        # deletes the zone metadata and records metadata
+        db.execute(delete(DNSZoneMetadataInDB).where(DNSZoneMetadataInDB.name == zone_name))
+        db.execute(delete(DNSRecordMetadataInDB).where(DNSRecordMetadataInDB.zone_name == zone_name))
+        db.commit()
 
-        except Exception:
-            db.rollback()
-            logger.exception("Failed to delete stale metadata for the deleted DNS zone %s.", zone_name)
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to delete stale metadata for the deleted DNS zone %s.", zone_name)
 
     logger.info("%s %s DNS zone %s", logged_in_user.username, result.zone_status.replace("_", " "), zone.name)
 
@@ -204,7 +204,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
             db=db,
             actor_type=ActorType.USER,
             actor=logged_in_user.username,
-            action=result.records_status,
+            action=result.internal_records_status,
             affected_object_type=DNSObjectType.RECORD,
             affected_object_names=[record.name for record in external_records],
             objects_before=jsonable_encoder(internal_records),

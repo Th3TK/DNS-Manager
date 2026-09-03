@@ -70,17 +70,13 @@ def __restore_dns_object_from_trash__(
         case DNSObjectType.ZONE:
             response = create_zone(
                 db=db,
-                creation_args=CreateDNSZoneArgs(
-                    **trash_entry.object_data.model_dump(exclude={"author", "origin"}), author=user.username, origin="manual"
-                ),
+                creation_args=CreateDNSZoneArgs(**trash_entry.object_data.model_dump(), author=user.username),
                 is_restoration=True,
             )
         case DNSObjectType.RECORD:
             response = create_record(
                 db=db,
-                creation_args=CreateDNSRecordArgs(
-                    **trash_entry.object_data.model_dump(exclude={"author", "origin"}), author=user.username, origin="manual"
-                ),
+                creation_args=CreateDNSRecordArgs(**trash_entry.object_data.model_dump(), author=user.username, origin="manual"),
                 is_restoration=True,
             )
 
