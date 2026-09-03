@@ -3,7 +3,6 @@ import logging
 from asyncio import Task
 from datetime import datetime, timedelta, timezone
 
-from app.config import ENV_CONFIG
 from app.database.connection import session_factory
 from app.database.models.dns_trash import DNSTrashInDB
 from app.database.models.enums import ActorType, ChangeAction
@@ -13,6 +12,8 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
+
+ITEM_TRASH_TIME_TO_LIVE_SECONDS = 2592000  # 30 days
 
 
 class AutomaticTrashRemoval:
@@ -53,7 +54,7 @@ class AutomaticTrashRemoval:
             logger.debug("No items in trash. Stopping automatic trash removal.")
             return
 
-        deletion_datetime = trash_entry.deletion_timestamp + timedelta(seconds=ENV_CONFIG.ITEM_TRASH_INTERVAL_SECONDS)
+        deletion_datetime = trash_entry.deletion_timestamp + timedelta(seconds=ITEM_TRASH_TIME_TO_LIVE_SECONDS)
 
         delay = (deletion_datetime - datetime.now(timezone.utc)).total_seconds()
 

@@ -16,7 +16,6 @@ class EnvConfig:
     # app options
     AUTHENTICATION_SECRET_KEY: str = get_env("AUTHENTICATION_SECRET_KEY")
     CHECK_INTERVAL_SECONDS: int = get_env_int("CHECK_INTERVAL_SECONDS", 300)
-    ITEM_TRASH_INTERVAL_SECONDS: int = get_env_int("ITEM_TRASH_INTERVAL_SECONDS", 2592000)
     MANAGED_ZONE: str = get_env("MANAGED_ZONE", "", True)
     # debug/advanced
     HTTPS_ENABLED: bool = get_env_boolean("HTTPS_ENABLED", True)

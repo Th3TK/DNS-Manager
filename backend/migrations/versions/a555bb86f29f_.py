@@ -90,9 +90,6 @@ def upgrade() -> None:
             name="dns_records_metadata_author_fkey",
             ondelete="SET NULL",
         ),
-        sa.ForeignKeyConstraint(
-            ["zone_name"], ["dns_zones_metadata.name"], name="fk_dns_records_metadata_zone_name", ondelete="CASCADE"
-        ),
         sa.PrimaryKeyConstraint("zone_name", "name", "type"),
     )
     op.create_index("ix_dns_records_metadata_zone_name", "dns_records_metadata", ["zone_name"], unique=False)
