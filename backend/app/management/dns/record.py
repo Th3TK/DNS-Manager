@@ -144,7 +144,7 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
     if zone is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"DNSZone with name='{creation_args.zone_name}' could not be found.",
+            detail=f"DNS zone with name='{creation_args.zone_name}' could not be found.",
         )
 
     properties = provider.create_record(

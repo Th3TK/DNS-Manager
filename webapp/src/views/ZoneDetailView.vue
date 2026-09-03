@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout.vue";
 import useFetch from "../composables/useFetch.ts";
 import type { DNSZone } from "../types/api.types.ts";
 import { NButton, NCard, NDescriptions, NDescriptionsItem, NFlex, NIcon, NTag, NText, NThing } from "naive-ui";
-import { World as IconWorld, Maximize, Minimize } from "@vicons/tabler";
+import { World as IconWorld, ChevronUp, ChevronDown } from "@vicons/tabler";
 import RecordsTable from "../components/tables/records/RecordsTable.vue";
 import { ref } from "vue";
 const route = useRoute();
@@ -80,7 +80,7 @@ const toggle = () => (detailsHidden.value = !detailsHidden.value);
                         >
                             <template #icon>
                                 <NIcon
-                                    :component="detailsHidden ? Minimize : Maximize"
+                                    :component="detailsHidden ? ChevronDown : ChevronUp"
                                     size="24"
                                 />
                             </template>

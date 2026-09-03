@@ -9,7 +9,7 @@ const props = defineProps<{
 </script>
 
 <template>
-    <NText @click.stop>
+    <NText @dblclick.stop>
         {{ value ? (onTrue ?? "Yes") : (onFalse ?? "No") }}
     </NText>
 </template>

@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Copy as IconCopy } from "@vicons/tabler";
-import { NButton, NFlex, NHighlight, NIcon, NText, useThemeVars } from "naive-ui";
-
-const themeVars = useThemeVars();
+import { NButton, NIcon, NText } from "naive-ui";
 
 const props = defineProps<{
     value: string;
+    monospace?: boolean;
     copyOption?: boolean;
 }>();
 
@@ -16,8 +15,11 @@ const copy = () => {
 
 <template>
     <NText
-        class="container"
-        @click.stop
+        :class="{
+            container: true,
+            monospace: monospace,
+        }"
+        @dblclick.stop
     >
         {{ value }}
         <NButton
@@ -27,7 +29,6 @@ const copy = () => {
             size="tiny"
             class="copy-button"
             @click="copy"
-            @click.stop
         >
             <template #icon>
                 <NIcon
@@ -53,5 +54,8 @@ const copy = () => {
 .copy-button {
     margin-left: var(--spacing-xxs);
     transform: translateY(1px);
+}
+.monospace {
+    font-family: monospace;
 }
 </style>

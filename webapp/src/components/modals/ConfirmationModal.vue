@@ -3,7 +3,8 @@ import { AlertTriangle } from "@vicons/tabler";
 import { NButton, NCard, NFlex, NIcon, NModal, NText } from "naive-ui";
 
 const props = defineProps<{
-    onDelete: () => unknown;
+    onSubmit: () => unknown;
+    type: "error" | "info" | "primary" | "warning";
 }>();
 
 const show = defineModel("show", { default: false });
@@ -11,7 +12,7 @@ const show = defineModel("show", { default: false });
 const close = () => (show.value = false);
 
 const onSubmit = () => {
-    props.onDelete();
+    props.onSubmit();
     close();
 };
 </script>
@@ -26,10 +27,11 @@ const onSubmit = () => {
         >
             <template #header>
                 <NText
-                    type="error"
+                    :type="type"
                     class="title"
                 >
                     <NIcon
+                        v-if="type === 'error'"
                         :component="AlertTriangle"
                         size="22"
                     />
@@ -52,12 +54,12 @@ const onSubmit = () => {
                         Cancel
                     </NButton>
                     <NButton
-                        type="error"
+                        :type="type"
                         class="button"
                         @click="onSubmit"
                         strong
                     >
-                        Delete
+                        Confirm
                     </NButton>
                 </NFlex>
             </NFlex>
@@ -67,7 +69,7 @@ const onSubmit = () => {
 
 <style scoped>
 .modal {
-    width: 450px;
+    width: 480px;
     position: fixed;
     top: var(--spacing-xl);
     left: 50%;

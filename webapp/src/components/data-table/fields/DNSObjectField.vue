@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NFlex, NText } from "naive-ui";
+import { NFlex, NTag, NText } from "naive-ui";
 import type { DNSRecord, DNSZone } from "../../../types/api.types";
 
 const props = defineProps<
@@ -15,17 +15,33 @@ const props = defineProps<
 </script>
 
 <template>
-    <NFlex vertical>
-        <NText @click.stop>
-            {{ type == "zone" ? data.name : `${data.name} ${data.type} ${data.content}` }}
+    <NFlex
+        vertical
+        @dblclick.stop
+    >
+        <NText
+            class="key"
+            v-if="type === 'zone'"
+        >
+            {{ data.name }}
         </NText>
-        <!-- <NText
+        <NFlex
+            v-else
+            :size="12"
+            align="center"
+        >
+            <NText class="key">{{ data.name }}</NText>
+            <NText class="key">{{ data.type }}</NText>
+            <NText class="key">{{ data.content }}</NText>
+        </NFlex>
+        <NText
+            v-if="data.comment"
             @click.stop
             depth="3"
             class="comment"
         >
-            {{ data.comment }}
-        </NText> -->
+            Comment: {{ data.comment }}
+        </NText>
     </NFlex>
 </template>
 
@@ -34,5 +50,9 @@ const props = defineProps<
     text-wrap: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+}
+.key {
+    font-family: monospace;
+    white-space: pre;
 }
 </style>

@@ -28,6 +28,7 @@ const props = defineProps<{
         <NText
             class="name"
             ellipsis
+            @dblclick.stop
         >
             {{ value }}
         </NText>

@@ -15,7 +15,7 @@ const passedProps = computed(() => _.merge(props.default, props.variants?.[props
 <template>
     <NTag
         v-bind="passedProps"
-        @click.stop
+        @dblclick.stop
     >
         {{ props.value }}
     </NTag>

@@ -31,6 +31,14 @@ export const useErrorHandler = () => {
         return AXIOS_ERROR_NOTIFICATIONS[error.code!];
     };
 
+    const displayErrorNotification = (title: string, message: string) => {
+        notification.error({
+            title: title,
+            content: message,
+            duration: 10000,
+        });
+    };
+
     const handleError = (error: AxiosError, title?: string, message?: string) => {
         const httpErrorDetails = getHttpErrorDetails(error);
         const axiosErrorDetails = getAxiosErrorDetails(error);
@@ -42,16 +50,12 @@ export const useErrorHandler = () => {
             notificationConfig = DEFAULT_ERROR_NOTIFICATION;
         }
 
-        notification.error({
-            title: title ?? notificationConfig.title,
-            content: message ?? notificationConfig.message,
-            duration: 10000,
-        });
+        displayErrorNotification(title ?? notificationConfig.title, message ?? notificationConfig.message);
 
         if (error?.response?.status === HttpStatusCode.Unauthorized) {
             router.push("/login");
         }
     };
 
-    return { handleError };
+    return { handleError, displayErrorNotification };
 };

@@ -10,15 +10,19 @@ export interface User {
 
 export interface DNSZone {
     name: string;
-    comment: string;
+    comment: string | null;
     author: string;
-    origin: "manual" | "external";
     record_count: number;
 }
 
 export interface CreateDNSZoneForm {
     name: string;
     comment: string;
+}
+
+export interface RestoreDNSZoneForm {
+    name: string;
+    comment: string | null;
 }
 
 export interface DNSRecord {
@@ -29,11 +33,21 @@ export interface DNSRecord {
     ttl: number;
     origin: "manual" | "external" | "automatic => traefik";
     author: string;
-    comment: string;
+    comment: string | null;
     checks_enabled: boolean;
 }
 
 export interface CreateDNSRecordForm {
+    name: string;
+    type: SupportedDNSRecordTypes;
+    content: string;
+    ttl: number;
+    comment: string | null;
+    checks_enabled: boolean;
+}
+
+export interface RestoreDNSRecordForm {
+    zone_name: string;
     name: string;
     type: SupportedDNSRecordTypes;
     content: string;
@@ -69,12 +83,12 @@ export type TrashEntry =
           deletion_timestamp: string;
           actor: string;
           object_type: "zone";
-          object_data: CreateDNSZoneForm;
+          object_data: RestoreDNSZoneForm;
       }
     | {
           entry_uuid: string;
           deletion_timestamp: string;
           actor: string;
           object_type: "record";
-          object_data: CreateDNSRecordForm;
+          object_data: RestoreDNSRecordForm;
       };

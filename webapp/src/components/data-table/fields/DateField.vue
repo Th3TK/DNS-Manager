@@ -4,12 +4,10 @@ import { NText, NTime } from "naive-ui";
 const props = defineProps<{
     value: Date;
 }>();
-
-console.log(props.value);
 </script>
 
 <template>
-    <NText @click.stop>
+    <NText @dblclick.stop>
         <NTime
             :time="value"
             type="datetime"

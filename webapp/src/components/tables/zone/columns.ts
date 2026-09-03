@@ -17,6 +17,7 @@ export const columns: DataTableColumns<DNSZone> = [
             h(TextField, {
                 value: row.name,
                 copyOption: true,
+                monospace: true,
             }),
     },
 
@@ -35,30 +36,10 @@ export const columns: DataTableColumns<DNSZone> = [
         sorter: "default",
         render: (row: DNSZone) =>
             h(TextField, {
-                value: row.author ? row.author : row.origin == "manual" ? "DELETED USER" : "-",
+                value: row.author ?? "-",
             }),
     },
-    {
-        title: "Origin",
-        key: "origin",
-        sorter: "default",
-        render: (row: DNSZone) =>
-            h(BadgeField, {
-                value: row.origin,
-                variants: {
-                    external: {
-                        type: "default",
-                    },
-                    manual: {
-                        type: "success",
-                    },
-                },
-                default: {
-                    bordered: false,
-                    round: true,
-                },
-            }),
-    },
+
     {
         title: "Number of records",
         key: "record_count",

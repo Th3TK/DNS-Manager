@@ -13,11 +13,11 @@ import { sendRequest } from "./requests";
 import type { DataPaginated, Filters } from "../types/table.types";
 import _ from "lodash";
 
-const prepareTableParams = <T = unknown>(
+const prepareTableParams = <T extends Record<string, any>>(
     page: number,
     pageSize: number,
     filters: Filters<T> = {},
-    sortBy?: keyof DNSZone | null,
+    sortBy?: keyof T | null,
     sortOrder?: "ascend" | "descend" | null,
 ): URLSearchParams => {
     const params = new URLSearchParams({
@@ -25,7 +25,7 @@ const prepareTableParams = <T = unknown>(
         size: pageSize.toString(),
     });
 
-    if (sortBy) params.append("sort_by", sortBy);
+    if (sortBy) params.append("sort_by", String(sortBy));
     if (sortOrder) params.append("sort_order", sortOrder);
 
     _.forEach(filters, (value, key) => {
@@ -115,9 +115,19 @@ export const getChangeHistory = async (
 /* TRASH                                                                     */
 /* ------------------------------------------------------------------------- */
 
-export const getTrash = (page: number, pageSize: number, filters: Filters<TrashEntry>) => {
-    const params = prepareTableParams(page, pageSize, filters);
+export const getTrash = (
+    page: number,
+    pageSize: number,
+    filters: Filters<TrashEntry>,
+    sortBy: keyof TrashEntry | null,
+    sortOrder: "ascend" | "descend" | null,
+) => {
+    const params = prepareTableParams<TrashEntry>(page, pageSize, filters, sortBy, sortOrder);
     return sendRequest<DataPaginated<TrashEntry>>("GET", `/trash?${params.toString()}`);
 };
 
 export const getTrashEntry = (uuid: string) => sendRequest<TrashEntry>("GET", `/trash/${uuid}`);
+
+export const restoreTrashEntry = (uuid: string) => sendRequest<TrashEntry>("POST", `/trash/restore/${uuid}`);
+
+export const deleteTrashEntry = (uuid: string) => sendRequest<null>("DELETE", `/trash/permanently-delete/${uuid}`);

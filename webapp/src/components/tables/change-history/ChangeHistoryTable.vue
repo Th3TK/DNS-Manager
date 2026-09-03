@@ -1,42 +1,22 @@
 <script setup lang="ts">
-import _ from "lodash";
 import { NFlex, NText } from "naive-ui";
 import { computed, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import useFetch from "../../../composables/useFetch.ts";
 import { getChangeHistory } from "../../../services/api.ts";
 import type { ChangeHistoryEntry, User } from "../../../types/api.types";
-import type { FilterConfig, TableExpose } from "../../../types/table.types.ts";
+import type { TableExpose } from "../../../types/table.types.ts";
 import RemoteDataTable from "../../data-table/RemoteDataTable.vue";
 import { columns } from "./columns.ts";
+import { getFilters } from "./filters.ts";
 
 const { data: users } = useFetch<User[]>("/users");
 
-const table = useTemplateRef<TableExpose>("table");
+const table = useTemplateRef<TableExpose<ChangeHistoryEntry>>("table");
 const router = useRouter();
 const handleClick = (row: ChangeHistoryEntry) => router.push(`/history/${row.entry_uuid}`);
 
-const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
-    action: {
-        type: "options",
-        options: [
-            { label: "Created", value: "created" },
-            { label: "Changed", value: "Changed" },
-            { label: "Deleted", value: "Deleted" },
-            { label: "Restored", value: "Restored" },
-            { label: "Permanently Deleted", value: "Permanently Deleted" },
-        ],
-    },
-
-    actor: {
-        type: "options",
-        options: _.map(users.value, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
-    },
-
-    affected_object_name: {
-        type: "freetext",
-    },
-}));
+const filterConfig = computed(() => getFilters(users.value ?? []));
 </script>
 
 <template>
@@ -62,7 +42,7 @@ const filterConfig = computed<FilterConfig<ChangeHistoryEntry>>(() => ({
                     <NText depth="3"> {{ table?.total ?? 0 }} Entries </NText>
                 </NText>
                 <NText depth="3">
-                    Full action log of changes made to DNS objects through the application. Click a row to view details.
+                    Full action log of changes made to DNS objects through the application. Double click on a row to view action details.
                 </NText>
             </NFlex>
         </template>

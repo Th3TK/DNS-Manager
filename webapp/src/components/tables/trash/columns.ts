@@ -1,12 +1,13 @@
 import type { DataTableColumns } from "naive-ui";
 import type { TrashEntry } from "../../../types/api.types";
 import { h } from "vue";
-import DateField from "../../data-table/fields/DateField.vue";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
 import ActorField from "../../data-table/fields/ActorField.vue";
 import DNSObjectField from "../../data-table/fields/DNSObjectField.vue";
+import TimeToLiveField from "../../data-table/fields/TimeToLiveField.vue";
+import TrashEntryControls from "../../data-table/fields/TrashEntryControls.vue";
 
-export const columns: DataTableColumns<TrashEntry> = [
+export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> => [
     {
         type: "selection",
     },
@@ -23,23 +24,16 @@ export const columns: DataTableColumns<TrashEntry> = [
                     size: "small",
                 },
             }),
+        width: 200,
+        sorter: "default",
     },
     {
         title: "Object",
         key: "object_data",
         render: (row: TrashEntry) =>
-            // @ts-expect-error
             h(DNSObjectField, {
                 data: row.object_data,
                 type: row.object_type,
-            }),
-    },
-    {
-        title: "Deletion timestamp",
-        key: "deletion_timestamp",
-        render: (row: TrashEntry) =>
-            h(DateField, {
-                value: new Date(row.deletion_timestamp),
             }),
     },
     {
@@ -49,5 +43,27 @@ export const columns: DataTableColumns<TrashEntry> = [
             h(ActorField, {
                 value: row.actor,
             }),
+        width: 300,
+        sorter: "default",
+    },
+    {
+        title: "Time to live",
+        key: "deletion_timestamp",
+        render: (row: TrashEntry) =>
+            h(TimeToLiveField, {
+                deletionTimestamp: new Date(row.deletion_timestamp),
+            }),
+        width: 200,
+        sorter: "default",
+    },
+    {
+        title: "Controls",
+        key: "controls",
+        render: (row: TrashEntry) =>
+            h(TrashEntryControls, {
+                entry: row,
+                refresh,
+            }),
+        width: 120,
     },
 ];

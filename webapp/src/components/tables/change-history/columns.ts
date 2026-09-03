@@ -73,6 +73,7 @@ export const columns: DataTableColumns<ChangeHistoryEntry> = [
         render: (row: ChangeHistoryEntry) =>
             h(TextField, {
                 value: row.affected_object_name,
+                monospace: true,
                 copyOption: true,
             }),
     },

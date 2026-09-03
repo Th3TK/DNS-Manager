@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
-import _ from "lodash";
-import { NButton, NFlex, NIcon, NText, NUl, type DataTableColumn, type DataTableColumns, type DataTableRowKey } from "naive-ui";
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { NButton, NFlex, NIcon, NText, type DataTableRowKey } from "naive-ui";
+import { computed, ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
 import { deleteRecord, getRecords } from "../../../services/api.ts";
 import type { DNSRecord, User } from "../../../types/api.types";
-import type { TableExpose, FilterConfig } from "../../../types/table.types.ts";
+import type { TableExpose } from "../../../types/table.types.ts";
 import { columns } from "./columns.ts";
 import CreateRecordModal from "../../modals/CreateRecordModal.vue";
-import DeleteConfirmationModal from "../../modals/DeleteConfirmationModal.vue";
 import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
-import { HttpStatusCode, isAxiosError } from "axios";
+import { HttpStatusCode } from "axios";
+import { getFilters } from "./filters.ts";
+import ConfirmationModal from "../../modals/ConfirmationModal.vue";
 
 const props = defineProps<{
     zoneName: string;
@@ -28,32 +28,12 @@ const selectedKeys = ref<DataTableRowKey[]>([]);
 const openedCreateModal = ref(false);
 const openedDeleteModal = ref(false);
 
+const filterConfig = computed(() => getFilters(users.value ?? []));
+const selInternal = computed(() => table.value?.selectedRows.filter((r) => r.origin !== "external").length ?? 0);
+const selExternal = computed(() => table.value?.selectedRows.filter((r) => r.origin === "external").length ?? 0);
+
 const router = useRouter();
 const handleClick = (row: DNSRecord) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
-
-const filterConfig = computed<FilterConfig<DNSRecord>>(() => ({
-    zone_name: { type: "freetext" },
-    name: { type: "freetext" },
-    content: { type: "freetext" },
-    comment: { type: "freetext" },
-    type: {
-        type: "options",
-        options: [
-            { label: "A", value: "A" },
-            { label: "AAAA", value: "AAAA" },
-            { label: "CNAME", value: "CNAME" },
-            { label: "TXT", value: "TXT" },
-            { label: "MX", value: "MX" },
-            { label: "SRV", value: "SRV" },
-            { label: "SOA", value: "SOA" },
-            { label: "NS", value: "NS" },
-        ],
-    },
-    author: {
-        type: "options",
-        options: _.map(users.value, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
-    },
-}));
 
 const getData = async () => {
     if (!props.zoneName) {
@@ -67,15 +47,13 @@ const deleteSelected = () => {
     const records = table.value?.selectedRows;
     if (!records) return;
     Promise.all(records.map((r) => deleteRecord(r.zone_name, r.name, r.type)))
+        .then(() => (selectedKeys.value = []))
         .catch((error) => {
             if (error.response?.status === HttpStatusCode.NotFound) return;
             handleError(error);
         })
         .finally(() => table.value?.refresh());
 };
-
-const selInternal = computed(() => table.value?.selectedRows.filter((r) => r.origin !== "external").length ?? 0);
-const selExternal = computed(() => table.value?.selectedRows.filter((r) => r.origin === "external").length ?? 0);
 </script>
 
 <template>
@@ -107,7 +85,7 @@ const selExternal = computed(() => table.value?.selectedRows.filter((r) => r.ori
                         depth="3"
                         v-if="!selectedKeys.length"
                     >
-                        Click on a record to view its full details.
+                        Double click on a record to view its full details.
                     </NText>
                     <NText
                         v-else
@@ -134,9 +112,10 @@ const selExternal = computed(() => table.value?.selectedRows.filter((r) => r.ori
                 </template>
                 Delete Selected
             </NButton>
-            <DeleteConfirmationModal
+            <ConfirmationModal
+                type="error"
                 v-model:show="openedDeleteModal"
-                @delete="deleteSelected"
+                @submit="deleteSelected"
             >
                 <template #title> Records deletion </template>
                 <template #description>
@@ -159,7 +138,7 @@ const selExternal = computed(() => table.value?.selectedRows.filter((r) => r.ori
                         </span>
                     </NText>
                 </template>
-            </DeleteConfirmationModal>
+            </ConfirmationModal>
             <NButton
                 type="primary"
                 strong

@@ -17,6 +17,7 @@ export const columns: DataTableColumns<DNSRecord> = [
         render: (row: DNSRecord) =>
             h(TextField, {
                 value: row.name,
+                monospace: true,
                 copyOption: true,
             }),
     },
@@ -52,6 +53,7 @@ export const columns: DataTableColumns<DNSRecord> = [
         render: (row: DNSRecord) =>
             h(TextField, {
                 value: _.isArray(row.content) ? row.content.join("\n") : row.content,
+                monospace: true,
                 copyOption: true,
             }),
     },

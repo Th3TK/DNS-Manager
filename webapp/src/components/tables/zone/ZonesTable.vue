@@ -10,7 +10,7 @@ import { deleteZone, getZones } from "../../../services/api.ts";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import { getFilterConfig } from "./filters.ts";
 import CreateZoneModal from "../../modals/CreateZoneModal.vue";
-import DeleteConfirmationModal from "../../modals/DeleteConfirmationModal.vue";
+import ConfirmationModal from "../../modals/ConfirmationModal.vue";
 import type { TableExpose } from "../../../types/table.types.ts";
 import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
 import { HttpStatusCode } from "axios";
@@ -29,7 +29,6 @@ const handleClick = (row: DNSZone) => router.push(`/zones/${row.name}`);
 const filterConfig = computed(() => getFilterConfig(users.value ?? []));
 
 const selectedZone = computed(() => table.value?.selectedRows[0]);
-const isSelectedExternal = computed(() => selectedZone.value && selectedZone.value.origin === "external");
 
 const deleteSelected = async () => {
     if (!selectedZone.value) return;
@@ -65,7 +64,7 @@ const deleteSelected = async () => {
                     Zone list
                     <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
                 </NText>
-                <NText depth="3"> Click on a zone to view its full details and records. </NText>
+                <NText depth="3"> Double click on a zone to view its full details and records. </NText>
             </NFlex>
         </template>
         <template #controls>
@@ -83,19 +82,23 @@ const deleteSelected = async () => {
                 </template>
                 Delete Zone
             </NButton>
-            <DeleteConfirmationModal
+            <ConfirmationModal
+                type="error"
                 v-model:show="openedDeleteModal"
-                @delete="deleteSelected"
+                @submit="deleteSelected"
             >
-                <template #title> Zone {{ isSelectedExternal ? "permanent " : "" }}deletion </template>
+                <template #title> Zone deletion </template>
                 <template #description>
                     <NText>
-                        Selected zone will be {{ isSelectedExternal ? "permanently deleted" : "moved to trash" }} along with
+                        Selected zone will be deleted along with
                         <NText type="error"> all of its records ({{ selectedZone?.record_count }}). </NText>
                     </NText>
-                    <NText v-if="isSelectedExternal">This action cannot be undone.</NText>
+                    <NText>
+                        The zone and its internal records will be moved to trash, while
+                        <NText type="error">external records will be permanently deleted.</NText>
+                    </NText>
                 </template>
-            </DeleteConfirmationModal>
+            </ConfirmationModal>
 
             <NButton
                 type="primary"
