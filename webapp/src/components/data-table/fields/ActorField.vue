@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { User as IconUser, Eye as IconEye, Terminal2 as IconTerminal2 } from "@vicons/tabler";
+import { UserCircle as IconUserCircle, Eye as IconEye, Terminal2 as IconTerminal2 } from "@vicons/tabler";
 import { NIcon } from "naive-ui";
 
 const props = defineProps<{
-    value: string;
+    value?: string;
 }>();
 </script>
 
@@ -11,18 +11,18 @@ const props = defineProps<{
     <NFlex class="container">
         <NIcon
             v-if="value === 'system'"
-            size="18"
+            size="20"
             :component="IconTerminal2"
         />
         <NIcon
-            v-else-if="value.startsWith('watcher:')"
-            size="18"
+            v-else-if="value?.startsWith('watcher:')"
+            size="20"
             :component="IconEye"
         />
         <NIcon
-            v-else
-            size="18"
-            :component="IconUser"
+            v-else-if="value"
+            size="20"
+            :component="IconUserCircle"
         />
 
         <NText
@@ -30,7 +30,7 @@ const props = defineProps<{
             ellipsis
             @dblclick.stop
         >
-            {{ value }}
+            {{ value ?? "-" }}
         </NText>
     </NFlex>
 </template>

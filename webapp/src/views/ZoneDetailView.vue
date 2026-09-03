@@ -1,74 +1,82 @@
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import MainLayout from "../layouts/MainLayout.vue";
 import useFetch from "../composables/useFetch.ts";
 import type { DNSZone } from "../types/api.types.ts";
-import { NButton, NCard, NDescriptions, NDescriptionsItem, NFlex, NIcon, NTag, NText, NThing } from "naive-ui";
-import { World as IconWorld, ChevronUp, ChevronDown } from "@vicons/tabler";
+import { NButton, NCard, NDescriptions, NDescriptionsItem, NFlex, NIcon, NTag, NText } from "naive-ui";
+import { ChevronUp, ChevronDown } from "@vicons/tabler";
 import RecordsTable from "../components/tables/records/RecordsTable.vue";
-import { ref } from "vue";
-const route = useRoute();
+import { ref, watch } from "vue";
+import ActorField from "../components/data-table/fields/ActorField.vue";
+import { useErrorHandler } from "../composables/useErrorHandler.ts";
+import { HttpStatusCode } from "axios";
 
-const { data: zone, error: zoneError, loading: zoneLoading } = useFetch<DNSZone>(`/zones/${route.params.name}`);
+const route = useRoute();
+const router = useRouter();
+const { handleError } = useErrorHandler();
+
+const { data: zone, error, loading } = useFetch<DNSZone>(`/zones/${route.params.name}`);
 
 const detailsHidden = ref(false);
 
 const toggle = () => (detailsHidden.value = !detailsHidden.value);
+
+watch(error, () => {
+    if (!error.value) return;
+
+    if (error.value.response?.status === HttpStatusCode.NotFound) {
+        router.push(`/zones`);
+        return;
+    }
+
+    handleError(error.value);
+});
 </script>
 
 <template>
     <MainLayout :class="{ hidden: detailsHidden }">
-        <NThing
+        <NFlex
+            vertical
             v-if="zone"
-            class="description"
+            size="large"
         >
-            <template #avatar>
-                <NIcon
-                    :component="IconWorld"
-                    size="30"
-                />
-            </template>
-            <template #header>
-                <NFlex align="center">
-                    <NText
-                        tag="h2"
-                        class="header"
-                    >
-                        {{ zone.name }}
-                    </NText>
-                    <NTag
-                        :bordered="false"
-                        :round="true"
-                        :type="zone.origin == 'manual' ? 'primary' : 'default'"
-                        :style="{ textTransform: 'capitalize' }"
-                    >
-                        {{ zone.origin }}
-                    </NTag>
-                </NFlex>
-            </template>
+            <NFlex align="center">
+                <NTag
+                    :bordered="false"
+                    type="primary"
+                    class="header-tag"
+                    size="large"
+                >
+                    DNS ZONE
+                </NTag>
+                <NText
+                    tag="h2"
+                    class="title"
+                >
+                    {{ zone.name }}
+                </NText>
+            </NFlex>
 
             <NDescriptions
-                label-placement="top"
+                bordered
+                v-if="zone"
                 :column="1"
+                label-placement="left"
+                class="descriptions"
             >
                 <NDescriptionsItem label="Comment">
-                    <NText
-                        class="name"
-                        ellipsis
-                    >
-                        {{ zone.comment ?? "-" }}
-                    </NText>
+                    <NText> {{ zone.comment || "-" }} </NText>
                 </NDescriptionsItem>
-                <NDescriptionsItem label="Created by">
-                    <NText
-                        class="name"
-                        ellipsis
-                    >
-                        {{ zone.author ?? "-" }}
-                    </NText>
+
+                <NDescriptionsItem
+                    label="Created by"
+                    :content-style="{ display: 'flex', alignItems: 'center' }"
+                >
+                    <ActorField :value="zone.author" />
                 </NDescriptionsItem>
             </NDescriptions>
-        </NThing>
+        </NFlex>
+
         <template #portal>
             <NCard class="tableCard">
                 <RecordsTable :zone-name="String(route.params.name)">
@@ -96,6 +104,16 @@ const toggle = () => (detailsHidden.value = !detailsHidden.value);
 .header {
     margin: 0;
 }
+.title {
+    margin: var(--spacing-xs) 0;
+}
+.monospace {
+    font-family: monospace;
+}
+.header-tag {
+    font-size: 16px;
+    font-weight: 700;
+}
 .description {
     margin-bottom: var(--spacing-lg);
 }
@@ -108,5 +126,8 @@ const toggle = () => (detailsHidden.value = !detailsHidden.value);
 }
 :deep(.hidden) {
     display: none;
+}
+.descriptions :deep(.n-descriptions-table-header) {
+    width: 250px;
 }
 </style>

@@ -78,7 +78,7 @@ const deleteSelected = () => {
                         tag="h2"
                         class="title"
                     >
-                        Zone records
+                        Zone Records
                         <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
                     </NText>
                     <NText

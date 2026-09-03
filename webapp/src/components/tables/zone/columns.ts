@@ -3,6 +3,7 @@ import TextField from "../../data-table/fields/TextField.vue";
 import type { DNSZone } from "../../../types/api.types.ts";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
 import type { DataTableColumns } from "naive-ui";
+import ActorField from "../../data-table/fields/ActorField.vue";
 
 export const columns: DataTableColumns<DNSZone> = [
     {
@@ -35,8 +36,8 @@ export const columns: DataTableColumns<DNSZone> = [
         key: "author",
         sorter: "default",
         render: (row: DNSZone) =>
-            h(TextField, {
-                value: row.author ?? "-",
+            h(ActorField, {
+                value: row.author,
             }),
     },
 

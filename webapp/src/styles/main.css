@@ -6,3 +6,13 @@
     --spacing-lg: 24px;
     --spacing-xl: 32px;
 }
+
+.data-table-clickable-cell {
+    cursor: pointer !important;
+    user-select: none;
+}
+
+.data-table-clickable-cell > * {
+    cursor: initial !important;
+    user-select: all !important;
+}

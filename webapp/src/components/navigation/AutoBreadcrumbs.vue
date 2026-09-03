@@ -44,15 +44,9 @@ function formatSegment(segment: string) {
             <NBreadcrumbItem
                 v-for="breadcrumb in breadcrumbs"
                 :key="breadcrumb.path"
+                @click="breadcrumb.clickable ? router.push(breadcrumb.path) : () => {}"
             >
-                <RouterLink
-                    v-if="breadcrumb.clickable"
-                    :to="breadcrumb.path"
-                >
-                    {{ breadcrumb.label }}
-                </RouterLink>
-
-                <NText v-else>
+                <NText>
                     {{ breadcrumb.label }}
                 </NText>
             </NBreadcrumbItem>
@@ -63,5 +57,11 @@ function formatSegment(segment: string) {
 <style scoped>
 :deep(.card) {
     padding: var(--spacing-sm) !important;
+}
+.breadcrumb-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
 }
 </style>

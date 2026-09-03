@@ -25,13 +25,15 @@ export interface RestoreDNSZoneForm {
     comment: string | null;
 }
 
+export type DNSRecordOrigin = "manual" | "external" | "automatic => traefik";
+
 export interface DNSRecord {
     zone_name: string;
     name: string;
     type: string;
     content: string | string[];
     ttl: number;
-    origin: "manual" | "external" | "automatic => traefik";
+    origin: DNSRecordOrigin;
     author: string;
     comment: string | null;
     checks_enabled: boolean;

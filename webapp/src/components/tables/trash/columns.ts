@@ -5,7 +5,7 @@ import BadgeField from "../../data-table/fields/BadgeField.vue";
 import ActorField from "../../data-table/fields/ActorField.vue";
 import DNSObjectField from "../../data-table/fields/DNSObjectField.vue";
 import TimeToLiveField from "../../data-table/fields/TimeToLiveField.vue";
-import TrashEntryControls from "../../data-table/fields/TrashEntryControls.vue";
+import TrashEntryControls from "../../controls/TrashEntryControls.vue";
 
 export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> => [
     {
@@ -47,23 +47,27 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
         sorter: "default",
     },
     {
-        title: "Time to live",
+        title: "Permanent deletion",
         key: "deletion_timestamp",
         render: (row: TrashEntry) =>
             h(TimeToLiveField, {
                 deletionTimestamp: new Date(row.deletion_timestamp),
             }),
-        width: 200,
+        width: 240,
         sorter: "default",
     },
     {
-        title: "Controls",
+        title: "",
         key: "controls",
         render: (row: TrashEntry) =>
             h(TrashEntryControls, {
                 entry: row,
-                refresh,
+                onDeleteError: refresh,
+                onDeleteSuccess: refresh,
+                onRestoreError: refresh,
+                onRestoreSuccess: refresh,
+                dropdown: true,
             }),
-        width: 120,
+        width: 80,
     },
 ];

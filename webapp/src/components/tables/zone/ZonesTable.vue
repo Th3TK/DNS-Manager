@@ -61,7 +61,7 @@ const deleteSelected = async () => {
                     tag="h1"
                     class="title"
                 >
-                    Zone list
+                    Zone List
                     <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
                 </NText>
                 <NText depth="3"> Double click on a zone to view its full details and records. </NText>

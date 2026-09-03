@@ -101,15 +101,13 @@ defineExpose({
             :columns="initializedColumns"
             :data="data"
             :loading="loading"
-            :single-line="false"
-            :single="false"
             :row-key="getKey"
             :pagination="{
                 page: page,
                 pageSize: pageSize,
                 itemCount: total,
                 showSizePicker: true,
-                pageSizes: [5, 10, 25, 50, 100],
+                pageSizes: [10, 25, 50, 100],
                 onChange: handlePageChange,
                 onUpdatePageSize: handlePageSizeChange,
             }"
@@ -144,13 +142,5 @@ defineExpose({
 
 .controls {
     margin-left: auto;
-}
-
-:deep(.clickable-cell) {
-    cursor: pointer !important;
-}
-
-:deep(.clickable-cell td > *) {
-    cursor: initial !important;
 }
 </style>
