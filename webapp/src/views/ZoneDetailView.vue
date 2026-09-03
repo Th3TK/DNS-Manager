@@ -76,7 +76,7 @@ const toggle = () => (detailsHidden.value = !detailsHidden.value);
                         <NButton
                             class="expandButton"
                             @click="toggle"
-                            secondary
+                            quaternary
                         >
                             <template #icon>
                                 <NIcon

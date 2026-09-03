@@ -12,8 +12,11 @@ import { getFilterConfig } from "./filters.ts";
 import CreateZoneModal from "../../modals/CreateZoneModal.vue";
 import DeleteConfirmationModal from "../../modals/DeleteConfirmationModal.vue";
 import type { TableExpose } from "../../../types/table.types.ts";
+import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
+import { HttpStatusCode } from "axios";
 
 const { data: users } = useFetch<User[]>("/users");
+const { handleError } = useErrorHandler();
 
 const table = useTemplateRef<TableExpose<DNSZone>>("table");
 const selectedKeys = ref<DataTableRowKey[]>([]);
@@ -30,8 +33,12 @@ const isSelectedExternal = computed(() => selectedZone.value && selectedZone.val
 
 const deleteSelected = async () => {
     if (!selectedZone.value) return;
-    await deleteZone(selectedZone.value.name);
-    table.value?.refresh();
+    deleteZone(selectedZone.value.name)
+        .catch((error) => {
+            if (error.response?.status === HttpStatusCode.NotFound) return;
+            handleError(error);
+        })
+        .finally(() => table.value?.refresh());
 };
 </script>
 
@@ -105,7 +112,7 @@ const deleteSelected = async () => {
             </NButton>
             <CreateZoneModal
                 v-model:show="openedCreateModal"
-                :on-submit="table?.refresh"
+                @submit="table?.refresh"
             />
         </template>
     </ClientDataTable>

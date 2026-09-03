@@ -2,25 +2,29 @@
 import { World } from "@vicons/tabler";
 import { NButton, NCard, NFlex, NForm, NFormItem, NIcon, NInput, NModal, NText, type FormInst } from "naive-ui";
 import type { CreateDNSZoneForm, DNSZone } from "../../types/api.types";
-import { reactive, ref, useTemplateRef, watch } from "vue";
+import { onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import _ from "lodash";
 import { isValidDnsZoneNameLength, normalizeDnsName, sanitizeDnsName } from "../../services/dns";
-import { isAxiosError } from "axios";
+import { AxiosError, isAxiosError } from "axios";
 import { createZone } from "../../services/api";
+import { useErrorHandler } from "../../composables/useErrorHandler";
 
 const props = defineProps<{
     onSubmit?: (zone: DNSZone) => void;
 }>();
 
+const { handleError } = useErrorHandler();
+
 const show = defineModel<boolean>("show", { default: false });
 
-const formRef = ref<FormInst | null>(null);
+const nameInput = useTemplateRef<InstanceType<typeof NInput>>("name-input");
 
 const form = reactive<CreateDNSZoneForm>({
     name: "",
     comment: "",
 });
 
+const formRef = ref<FormInst | null>(null);
 const nameError = ref<string | undefined>();
 
 const onNameChange = (value: string) => {
@@ -49,6 +53,7 @@ const onSubmit = async () => {
         if (isAxiosError(error) && error.response?.status === 409) {
             nameError.value = "A zone with this name already exists.";
         }
+        handleError(error as AxiosError);
     }
 };
 
@@ -57,6 +62,8 @@ watch(show, () => {
     form.comment = "";
     nameError.value = undefined;
 });
+
+onMounted(() => nameInput.value?.focus());
 </script>
 
 <template>
@@ -88,7 +95,8 @@ watch(show, () => {
                         :feedback="nameError"
                     >
                         <NInput
-                            placeholder="example.com"
+                            ref="name-input"
+                            placeholder="e.g. example.com"
                             :value="form.name"
                             @update:value="onNameChange"
                             @blur="onNameBlur"

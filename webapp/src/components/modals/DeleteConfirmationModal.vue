@@ -67,7 +67,7 @@ const onSubmit = () => {
 
 <style scoped>
 .modal {
-    width: 400px;
+    width: 450px;
     position: fixed;
     top: var(--spacing-xl);
     left: 50%;

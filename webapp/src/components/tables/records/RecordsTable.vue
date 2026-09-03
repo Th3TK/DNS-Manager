@@ -1,25 +1,32 @@
 <script setup lang="ts">
 import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
 import _ from "lodash";
-import { NButton, NFlex, NIcon, NText, type DataTableColumn, type DataTableColumns, type DataTableRowKey } from "naive-ui";
-import { computed, ref, useTemplateRef } from "vue";
+import { NButton, NFlex, NIcon, NText, NUl, type DataTableColumn, type DataTableColumns, type DataTableRowKey } from "naive-ui";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
-import { getRecords } from "../../../services/api.ts";
+import { deleteRecord, getRecords } from "../../../services/api.ts";
 import type { DNSRecord, User } from "../../../types/api.types";
-import type { FilterConfig } from "../../../types/table.types.ts";
+import type { TableExpose, FilterConfig } from "../../../types/table.types.ts";
 import { columns } from "./columns.ts";
+import CreateRecordModal from "../../modals/CreateRecordModal.vue";
+import DeleteConfirmationModal from "../../modals/DeleteConfirmationModal.vue";
+import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
+import { HttpStatusCode, isAxiosError } from "axios";
 
 const props = defineProps<{
     zoneName: string;
 }>();
 
 const { data: users } = useFetch<User[]>("/users");
+const { handleError } = useErrorHandler();
 
-const table = useTemplateRef("table");
+const table = useTemplateRef<TableExpose<DNSRecord>>("table");
 const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
+const openedCreateModal = ref(false);
+const openedDeleteModal = ref(false);
 
 const router = useRouter();
 const handleClick = (row: DNSRecord) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
@@ -55,6 +62,20 @@ const getData = async () => {
     }
     return await getRecords(props.zoneName);
 };
+
+const deleteSelected = () => {
+    const records = table.value?.selectedRows;
+    if (!records) return;
+    Promise.all(records.map((r) => deleteRecord(r.zone_name, r.name, r.type)))
+        .catch((error) => {
+            if (error.response?.status === HttpStatusCode.NotFound) return;
+            handleError(error);
+        })
+        .finally(() => table.value?.refresh());
+};
+
+const selInternal = computed(() => table.value?.selectedRows.filter((r) => r.origin !== "external").length ?? 0);
+const selExternal = computed(() => table.value?.selectedRows.filter((r) => r.origin === "external").length ?? 0);
 </script>
 
 <template>
@@ -103,6 +124,7 @@ const getData = async () => {
                 type="error"
                 strong
                 v-if="selectedKeys.length"
+                @click="openedDeleteModal = true"
             >
                 <template #icon>
                     <NIcon
@@ -112,9 +134,36 @@ const getData = async () => {
                 </template>
                 Delete Selected
             </NButton>
+            <DeleteConfirmationModal
+                v-model:show="openedDeleteModal"
+                @delete="deleteSelected"
+            >
+                <template #title> Records deletion </template>
+                <template #description>
+                    <NText>
+                        <strong v-if="selInternal && selExternal">
+                            Selected {{ table?.selectedRows.length ?? 0 }}
+                            {{ (table?.selectedRows.length ?? 0) === 1 ? "record" : "records" }} will be deleted.
+                        </strong>
+                        <span>
+                            {{
+                                (selInternal
+                                    ? `${selInternal} internal ${selInternal === 1 ? "record" : "records"} will be moved to trash`
+                                    : "") +
+                                (selInternal && selExternal ? ", while " : "") +
+                                (selExternal
+                                    ? `${selExternal} external ${selExternal === 1 ? "record" : "records"} will be permanently deleted`
+                                    : "") +
+                                "."
+                            }}
+                        </span>
+                    </NText>
+                </template>
+            </DeleteConfirmationModal>
             <NButton
                 type="primary"
                 strong
+                @click="openedCreateModal = true"
             >
                 <template #icon>
                     <NIcon
@@ -124,6 +173,11 @@ const getData = async () => {
                 </template>
                 Create Record
             </NButton>
+            <CreateRecordModal
+                @submit="table?.refresh"
+                :zone-name="zoneName"
+                v-model:show="openedCreateModal"
+            />
         </template>
     </ClientDataTable>
 </template>

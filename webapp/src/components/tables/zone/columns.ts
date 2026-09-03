@@ -26,7 +26,7 @@ export const columns: DataTableColumns<DNSZone> = [
         sorter: "default",
         render: (row: DNSZone) =>
             h(TextField, {
-                value: row.comment,
+                value: row.comment || "-",
             }),
     },
     {
@@ -35,7 +35,7 @@ export const columns: DataTableColumns<DNSZone> = [
         sorter: "default",
         render: (row: DNSZone) =>
             h(TextField, {
-                value: row.author,
+                value: row.author ? row.author : row.origin == "manual" ? "DELETED USER" : "-",
             }),
     },
     {

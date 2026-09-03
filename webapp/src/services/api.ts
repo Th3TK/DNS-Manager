@@ -96,7 +96,7 @@ export const modifyRecord = (zoneName: string, form: ModifyDNSRecordForm) =>
     sendRequest<DNSRecord>("PATCH", `/zones/${zoneName}/record`, { data: form });
 
 export const deleteRecord = (zoneName: string, recordName: string, recordType: string) =>
-    sendRequest<null>("DELETE", `/zones/${zoneName}/records?record_name=${recordName}&record_type=${recordType}`);
+    sendRequest<null>("DELETE", `/zones/${zoneName}/record?record_name=${recordName}&record_type=${recordType}`);
 
 /* ------------------------------------------------------------------------- */
 /* CHANGE HISTORY                                                            */

@@ -12,7 +12,7 @@ import _ from "lodash";
 
 const { data: users } = useFetch<User[]>("/users");
 
-const table = useTemplateRef<TableExpose>("table");
+const table = useTemplateRef<TableExpose<TrashEntry>>("table");
 const router = useRouter();
 const handleClick = (row: TrashEntry) => router.push(`/trash/${row.entry_uuid}`);
 
