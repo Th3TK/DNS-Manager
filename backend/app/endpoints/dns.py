@@ -2,7 +2,6 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -50,7 +49,7 @@ def __create_zone__(
     db: Annotated[Session, Depends(get_db)],
     form: CreateDNSZoneForm,
 ):
-    return create_zone(db, CreateDNSZoneArgs(**form.model_dump(), author=user.username, origin="manual"))
+    return create_zone(db, CreateDNSZoneArgs(**form.model_dump(), author=user.username))
 
 
 @router.delete("/{zone_name}", response_model=DNSZoneRemovalResult, status_code=200)
@@ -105,15 +104,16 @@ def __modify_record__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
     zone_name: str,
+    record_name: str,
+    record_type: str,
     form: ModifyDNSRecordForm,
 ) -> DNSRecord:
     return modify_record(
-        db,
-        ModifyDNSRecordArgs(
-            **form.model_dump(),
-            author=user.username,
-            zone_name=zone_name,
-        ),
+        db=db,
+        zone_name=zone_name,
+        name=record_name,
+        type_=record_type,
+        modification_args=ModifyDNSRecordArgs(**form.model_dump(), author=user.username),
     )
 
 

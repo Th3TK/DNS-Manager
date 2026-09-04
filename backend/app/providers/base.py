@@ -61,9 +61,12 @@ class DNSProvider(Protocol):
         """
         ...
 
-    def modify_record(self, zone_name: str, name: str, type_: str, content: str, ttl: int) -> DNSRecordProperties:
+    def modify_record(
+        self, zone_name: str, name: str, type_: str, new_name: str, new_type: str, new_content: str, new_ttl: int
+    ) -> DNSRecordProperties:
         """
         Modifies an existing record's content and time-to-live.
+        Name and type must be replaced with the newly provided values.
         It is guaranteed that the record exists.
         Returns the modified record properties.
         """

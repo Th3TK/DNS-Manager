@@ -8,6 +8,14 @@ export interface User {
     disabled: boolean;
 }
 
+export interface CreateUserForm {
+    username: string;
+    password: string;
+    full_name: string;
+    is_admin: string;
+    disabled: string;
+}
+
 export interface DNSZone {
     name: string;
     comment: string | null;
@@ -59,12 +67,12 @@ export interface RestoreDNSRecordForm {
 }
 
 export interface ModifyDNSRecordForm {
-    name: string;
-    type: SupportedDNSRecordTypes;
-    content: string;
-    ttl: number;
+    name: string | null;
+    type: SupportedDNSRecordTypes | null;
+    content: string | null;
+    ttl: number | null;
     comment: string | null;
-    checks_enabled: boolean;
+    checks_enabled: boolean | null;
 }
 
 export type ChangeHistoryAction = "created" | "changed" | "deleted" | "restored" | "permanently_deleted";

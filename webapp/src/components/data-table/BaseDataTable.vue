@@ -77,7 +77,7 @@ defineExpose({
                     closable
                     @close="removeFilter(key as string)"
                 >
-                    {{ formatFilterText(key as string, value, columns) }}
+                    {{ formatFilterText(key as string, value, columns, filterConfig) }}
                 </NTag>
             </NFlex>
             <NFlex class="controls">

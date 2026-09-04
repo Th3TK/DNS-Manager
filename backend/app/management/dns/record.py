@@ -2,7 +2,7 @@ import logging
 from typing import Any, cast
 
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
-from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
+from app.database.models.enums import ActorType, ChangeAction, DNSObjectType, InternalRecordOrigin
 from app.management.action_log.action_log import create_log_entry
 from app.management.dns.validation import validate_dns_record_name, validate_record_content
 from app.management.trash.trash import create_trash_entry
@@ -13,6 +13,7 @@ from app.models.record import (
     DNSRecordRemovalResult,
     ModifyDNSRecordArgs,
     RestoreDNSRecordArgs,
+    SupportedDNSRecordTypes,
 )
 from app.models.user import User
 from app.providers.factory import provider
@@ -193,22 +194,47 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
     return record
 
 
-def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRecord:
-    # remove metadata for records within the zone that were deleted outside of the applicationd
-    cleanup_record_metadata(db, modification_args.zone_name)
+def modify_record(
+    db: Session, zone_name: str, name: str, type_: SupportedDNSRecordTypes, modification_args: ModifyDNSRecordArgs
+) -> DNSRecord:
+    # remove metadata for records within the zone that were deleted outside of the application
+    cleanup_record_metadata(db, zone_name)
 
-    validate_dns_record_name(modification_args.name, modification_args.zone_name)
-    validate_record_content(modification_args.content, modification_args.type)
+    # validate query
+    validate_dns_record_name(name, zone_name)
+
+    # validate new name
+    if modification_args.name:
+        validate_dns_record_name(modification_args.name, zone_name)
+
+    if modification_args.content:
+        validate_record_content(modification_args.content, modification_args.type or type_)
 
     # get the existing record; raises 404 if it does not exist.
-    record_old: DNSRecord = get_record(db, modification_args.zone_name, modification_args.name, modification_args.type)
+    record_old: DNSRecord = get_record(db, zone_name, name, type_)
 
-    # get the ORM object
+    # if we're modifying name or type, then check for existing duplicates
+    if (modification_args.name and modification_args.name != name) or (
+        modification_args.type and modification_args.type != type_
+    ):
+        duplicate = provider.get_record(
+            zone_name=zone_name,
+            name=modification_args.name or name,
+            type_=modification_args.type or type_,
+        )
+
+        if duplicate is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="DNS record with the same name and type already exists.",
+            )
+
+    # get the ORM object from the database
     record_metadata_in_db = db.scalar(
         select(DNSRecordMetadataInDB).where(
-            DNSRecordMetadataInDB.zone_name == modification_args.zone_name,
-            DNSRecordMetadataInDB.name == modification_args.name,
-            DNSRecordMetadataInDB.type == modification_args.type,
+            DNSRecordMetadataInDB.zone_name == zone_name,
+            DNSRecordMetadataInDB.name == name,
+            DNSRecordMetadataInDB.type == type_,
         )
     )
 
@@ -218,27 +244,51 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
             detail="The API does not support modifying DNS records created outside the application.",
         )
 
-    zone = provider.get_zone(modification_args.zone_name)
+    zone = provider.get_zone(zone_name)
 
     if zone is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"DNSZone with name='{modification_args.zone_name}' could not be found.",
+            detail=f"DNS zone with name='{zone_name}' could not be found.",
         )
 
-    # provider DNS record modification
+    record_old_content_normalized = record_old.content[0] if isinstance(record_old.content, list) else record_old.content
+
+    # prepare a new record
+    record_new = DNSRecord(
+        zone_name=zone_name,
+        name=modification_args.name or name,
+        type=modification_args.type or type_,
+        content=modification_args.content or record_old_content_normalized,
+        comment=modification_args.comment or record_old.comment,
+        checks_enabled=modification_args.checks_enabled or record_old.checks_enabled,
+        ttl=modification_args.ttl or record_old.ttl,
+        author=modification_args.author,
+        origin="manual",
+    )
+
+    # if there are no changes to be made, return
+    if record_old == record_new:
+        return record_old
+
+    # modify record in the DNS provider
     properties = provider.modify_record(
-        zone_name=modification_args.zone_name,
-        name=modification_args.name,
-        type_=modification_args.type,
-        content=modification_args.content,
-        ttl=modification_args.ttl,
+        zone_name=zone_name,
+        name=name,
+        type_=type_,
+        new_name=record_new.name,
+        new_type=record_new.type,
+        new_ttl=record_new.ttl,
+        new_content=str(record_new.content),
     )
 
     # modify the metadata ORM object
-    record_metadata_in_db.comment = modification_args.comment
-    record_metadata_in_db.checks_enabled = modification_args.checks_enabled
-    record_metadata_in_db.author = modification_args.author
+    record_metadata_in_db.name = record_new.name
+    record_metadata_in_db.type = record_new.type
+    record_metadata_in_db.comment = record_new.comment
+    record_metadata_in_db.checks_enabled = record_new.checks_enabled
+    record_metadata_in_db.author = record_new.author
+    record_metadata_in_db.origin = InternalRecordOrigin.MANUAL
 
     try:
         db.commit()
@@ -246,22 +296,18 @@ def modify_record(db: Session, modification_args: ModifyDNSRecordArgs) -> DNSRec
         db.rollback()
         logger.exception("Failed to save metadata for DNS record %s %s %s.", properties.name, properties.type, properties.content)
 
-    metadata = DNSRecordMetadata.from_db(record_metadata_in_db)
-
-    record = DNSRecord(**properties.model_dump(), **metadata.model_dump())
-
     create_log_entry(
         db=db,
         actor_type=ActorType.USER,
         actor=modification_args.author,
         action=ChangeAction.CHANGED,
         affected_object_type=DNSObjectType.RECORD,
-        affected_object_name=record.name,
+        affected_object_name=record_old.name,
         object_before=jsonable_encoder(record_old),
-        object_after=jsonable_encoder(record),
+        object_after=jsonable_encoder(record_new),
     )
 
-    return record
+    return record_new
 
 
 def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_user: User) -> DNSRecordRemovalResult:

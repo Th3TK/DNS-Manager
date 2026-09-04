@@ -1,44 +1,28 @@
 <script setup lang="ts">
 import { type User, type DNSZone } from "../../../types/api.types.ts";
-import { type DataTableRowKey, NButton, NFlex, NIcon, NText } from "naive-ui";
-import { computed, ref, shallowRef, Text, useTemplateRef } from "vue";
-import { Plus as IconPlus, Trash as IconTrash } from "@vicons/tabler";
+import { type DataTableRowKey, NFlex, NText } from "naive-ui";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import useFetch from "../../../composables/useFetch.ts";
-import { columns } from "./columns.ts";
-import { deleteZone, getZones } from "../../../services/api.ts";
+import { getColumns } from "./columns.ts";
+import { getZones } from "../../../services/api.ts";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import { getFilterConfig } from "./filters.ts";
-import CreateZoneModal from "../../modals/CreateZoneModal.vue";
-import ConfirmationModal from "../../modals/ConfirmationModal.vue";
 import type { TableExpose } from "../../../types/table.types.ts";
-import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
-import { HttpStatusCode } from "axios";
+import ZoneControls from "../../controls/ZoneControls.vue";
 
 const { data: users } = useFetch<User[]>("/users");
-const { handleError } = useErrorHandler();
+const router = useRouter();
 
 const table = useTemplateRef<TableExpose<DNSZone>>("table");
 const selectedKeys = ref<DataTableRowKey[]>([]);
-const openedCreateModal = ref(false);
-const openedDeleteModal = ref(false);
 
-const router = useRouter();
+const refresh = () => table.value?.refresh();
 const handleClick = (row: DNSZone) => router.push(`/zones/${row.name}`);
 
+const columns = computed(() => getColumns(refresh));
 const filterConfig = computed(() => getFilterConfig(users.value ?? []));
-
-const selectedZone = computed(() => table.value?.selectedRows[0]);
-
-const deleteSelected = async () => {
-    if (!selectedZone.value) return;
-    deleteZone(selectedZone.value.name)
-        .catch((error) => {
-            if (error.response?.status === HttpStatusCode.NotFound) return;
-            handleError(error);
-        })
-        .finally(() => table.value?.refresh());
-};
+const selectedRows = computed(() => table.value?.selectedRows ?? []);
 </script>
 
 <template>
@@ -68,54 +52,11 @@ const deleteSelected = async () => {
             </NFlex>
         </template>
         <template #controls>
-            <NButton
-                type="error"
-                strong
-                v-if="selectedKeys.length"
-                @click="openedDeleteModal = true"
-            >
-                <template #icon>
-                    <NIcon
-                        :component="IconTrash"
-                        size="16"
-                    />
-                </template>
-                Delete Zone
-            </NButton>
-            <ConfirmationModal
-                type="error"
-                v-model:show="openedDeleteModal"
-                @submit="deleteSelected"
-            >
-                <template #title> Zone deletion </template>
-                <template #description>
-                    <NText>
-                        Selected zone will be deleted along with
-                        <NText type="error"> all of its records ({{ selectedZone?.record_count }}). </NText>
-                    </NText>
-                    <NText>
-                        The zone and its internal records will be moved to trash, while
-                        <NText type="error">external records will be permanently deleted.</NText>
-                    </NText>
-                </template>
-            </ConfirmationModal>
-
-            <NButton
-                type="primary"
-                strong
-                @click="openedCreateModal = true"
-            >
-                <template #icon>
-                    <NIcon
-                        :component="IconPlus"
-                        size="16"
-                    />
-                </template>
-                Create Zone
-            </NButton>
-            <CreateZoneModal
-                v-model:show="openedCreateModal"
-                @submit="table?.refresh"
+            <ZoneControls
+                :zones="selectedRows"
+                @delete-error="refresh"
+                @delete-success="refresh"
+                @create-success="refresh"
             />
         </template>
     </ClientDataTable>

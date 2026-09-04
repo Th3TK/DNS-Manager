@@ -5,7 +5,7 @@ import BadgeField from "../../data-table/fields/BadgeField.vue";
 import ActorField from "../../data-table/fields/ActorField.vue";
 import DNSObjectField from "../../data-table/fields/DNSObjectField.vue";
 import TimeToLiveField from "../../data-table/fields/TimeToLiveField.vue";
-import TrashEntryControls from "../../controls/TrashEntryControls.vue";
+import TrashControls from "../../controls/TrashControls.vue";
 
 export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> => [
     {
@@ -24,7 +24,7 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
                     size: "small",
                 },
             }),
-        width: 200,
+        width: 150,
         sorter: "default",
     },
     {
@@ -43,7 +43,6 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
             h(ActorField, {
                 value: row.actor,
             }),
-        width: 300,
         sorter: "default",
     },
     {
@@ -53,14 +52,13 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
             h(TimeToLiveField, {
                 deletionTimestamp: new Date(row.deletion_timestamp),
             }),
-        width: 240,
         sorter: "default",
     },
     {
         title: "",
         key: "controls",
         render: (row: TrashEntry) =>
-            h(TrashEntryControls, {
+            h(TrashControls, {
                 entry: row,
                 onDeleteError: refresh,
                 onDeleteSuccess: refresh,
@@ -68,6 +66,6 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
                 onRestoreSuccess: refresh,
                 dropdown: true,
             }),
-        width: 80,
+        width: 60,
     },
 ];

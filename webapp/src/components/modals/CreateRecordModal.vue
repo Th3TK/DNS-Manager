@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRightBar } from "@vicons/tabler";
+import { Tag } from "@vicons/tabler";
 import {
     NButton,
     NCard,
@@ -18,27 +18,27 @@ import {
 import type { CreateDNSRecordForm, DNSRecord, SupportedDNSRecordTypes } from "../../types/api.types";
 import { onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import {
+    contentNormalizationFuncs,
+    contentPlaceholders,
+    contentSanitizationFuncs,
     isValidDnsZoneNameLength,
     isValidIpv6Address,
     isValidMxContent,
     isValidSrvContent,
-    normalizeDnsName,
     normalizeDnsRecordName,
-    normalizeMxContent,
-    normalizeSrvContent,
-    sanitazeIpv4Address,
     sanitizeDnsName,
-    sanitizeIpv6Address,
-    sanitizeMxContent,
-    sanitizeSrvContent,
 } from "../../services/dns";
-import { isAxiosError } from "axios";
-import { createRecord } from "../../services/api";
+import { AxiosError, isAxiosError } from "axios";
+import { createRecord, modifyRecord } from "../../services/api";
+import { useErrorHandler } from "../../composables/useErrorHandler";
 
 const props = defineProps<{
-    onSubmit?: (zone: DNSRecord) => void;
+    onSubmit?: (record: DNSRecord) => void;
     zoneName: string;
+    modifying?: DNSRecord;
 }>();
+
+const { handleError } = useErrorHandler();
 
 const show = defineModel<boolean>("show", { default: false });
 
@@ -106,33 +106,7 @@ const onNameBlur = () => {
 
 const onTypeChange = () => {
     keyError.value = "";
-};
-
-const contentSanitizationFuncs: Record<SupportedDNSRecordTypes, (val: string) => string> = {
-    A: sanitazeIpv4Address,
-    AAAA: sanitizeIpv6Address,
-    CNAME: sanitizeDnsName,
-    MX: sanitizeMxContent,
-    SRV: sanitizeSrvContent,
-    TXT: (v) => v,
-};
-
-const contentNormalizationFuncs: Record<SupportedDNSRecordTypes, (val: string) => string> = {
-    A: (v) => v,
-    AAAA: (v) => v,
-    CNAME: normalizeDnsName,
-    MX: normalizeMxContent,
-    SRV: normalizeSrvContent,
-    TXT: (v) => v,
-};
-
-const contentPlaceholders: Record<SupportedDNSRecordTypes, string> = {
-    A: "e.g. 192.168.1.1",
-    AAAA: "e.g. 2001:db8::1",
-    CNAME: "e.g. target.example.com.",
-    TXT: 'e.g. "v=spf1 include:example.com ~all"',
-    MX: "e.g. 10 mail.example.com.",
-    SRV: "e.g. 10 5 5060 sip.example.com.",
+    form.content = "";
 };
 
 const onContentChange = (value: string) => {
@@ -150,24 +124,32 @@ const close = () => {
 const onSubmit = async () => {
     try {
         await formRef.value?.validate();
-        const zone = await createRecord(props.zoneName, form);
+
+        const record = props.modifying
+            ? await modifyRecord(props.zoneName, props.modifying?.name, props.modifying?.type, form)
+            : await createRecord(props.zoneName, form);
 
         close();
-        props.onSubmit?.(zone);
+        props.onSubmit?.(record);
     } catch (error) {
         if (isAxiosError(error) && error.response?.status === 409) {
             keyError.value = "A record with this name and type already exists.";
         }
+        handleError(error as AxiosError);
     }
 };
 
-watch(show, () => {
-    form.name = "";
-    form.comment = "";
-    form.type = "A";
-    form.content = "";
-    form.ttl = 60;
-    form.checks_enabled = true;
+// reset values
+watch([show, () => props.modifying], () => {
+    Object.assign(form, {
+        name: props.modifying?.name ?? "",
+        comment: props.modifying?.comment ?? "",
+        type: (props.modifying?.type as SupportedDNSRecordTypes) ?? "A",
+        content: [props.modifying?.content].flat()[0] ?? "",
+        ttl: props.modifying?.ttl ?? 60,
+        checks_enabled: props.modifying?.checks_enabled ?? true,
+    });
+
     nameError.value = undefined;
     keyError.value = undefined;
 });
@@ -186,7 +168,7 @@ onMounted(() => nameInput.value?.focus());
         >
             <template #header-extra>
                 <NIcon
-                    :component="ArrowRightBar"
+                    :component="Tag"
                     size="24"
                 />
             </template>

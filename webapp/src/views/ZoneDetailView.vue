@@ -10,6 +10,7 @@ import { ref, watch } from "vue";
 import ActorField from "../components/data-table/fields/ActorField.vue";
 import { useErrorHandler } from "../composables/useErrorHandler.ts";
 import { HttpStatusCode } from "axios";
+import ZoneControls from "../components/controls/ZoneControls.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -21,11 +22,15 @@ const detailsHidden = ref(false);
 
 const toggle = () => (detailsHidden.value = !detailsHidden.value);
 
+const navigateToTable = () => {
+    router.push({ name: "Zones" });
+};
+
 watch(error, () => {
     if (!error.value) return;
 
     if (error.value.response?.status === HttpStatusCode.NotFound) {
-        router.push(`/zones`);
+        navigateToTable();
         return;
     }
 
@@ -37,10 +42,9 @@ watch(error, () => {
     <MainLayout :class="{ hidden: detailsHidden }">
         <NFlex
             vertical
-            v-if="zone"
             size="large"
         >
-            <NFlex align="center">
+            <NFlex class="header">
                 <NTag
                     :bordered="false"
                     type="primary"
@@ -53,26 +57,31 @@ watch(error, () => {
                     tag="h2"
                     class="title"
                 >
-                    {{ zone.name }}
+                    {{ zone?.name }}
                 </NText>
+                <ZoneControls
+                    v-if="zone"
+                    :zones="zone"
+                    class="controls"
+                    @delete-success="navigateToTable"
+                />
             </NFlex>
 
             <NDescriptions
                 bordered
-                v-if="zone"
                 :column="1"
                 label-placement="left"
                 class="descriptions"
             >
                 <NDescriptionsItem label="Comment">
-                    <NText> {{ zone.comment || "-" }} </NText>
+                    <NText> {{ zone?.comment || "-" }} </NText>
                 </NDescriptionsItem>
 
                 <NDescriptionsItem
                     label="Created by"
                     :content-style="{ display: 'flex', alignItems: 'center' }"
                 >
-                    <ActorField :value="zone.author" />
+                    <ActorField :value="zone?.author" />
                 </NDescriptionsItem>
             </NDescriptions>
         </NFlex>
@@ -102,7 +111,8 @@ watch(error, () => {
 
 <style lang="css" scoped>
 .header {
-    margin: 0;
+    width: 100%;
+    align-items: center;
 }
 .title {
     margin: var(--spacing-xs) 0;
@@ -129,5 +139,8 @@ watch(error, () => {
 }
 .descriptions :deep(.n-descriptions-table-header) {
     width: 250px;
+}
+:deep(.controls) {
+    margin-left: auto;
 }
 </style>

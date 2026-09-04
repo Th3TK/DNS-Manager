@@ -4,7 +4,7 @@ export type FilterType = "freetext" | "options";
 
 export type FilterOption = {
     label: string;
-    value: string;
+    value: string | number;
 };
 
 export type FilterFieldConfig =

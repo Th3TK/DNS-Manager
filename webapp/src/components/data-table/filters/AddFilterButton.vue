@@ -15,6 +15,9 @@ const filters = defineModel<Filters<T>>();
 // selected field
 const field = ref<string | null>(null);
 
+// control open
+const opened = ref<boolean>(false);
+
 // draft values for the filters
 const draft = reactive<{
     freetext: string;
@@ -75,14 +78,16 @@ const submit = () => {
     } as Filters<T>;
 
     onSelectField(null);
+    opened.value = false;
 };
 </script>
 
 <template>
     <NPopover
         v-if="!_.isEmpty(fields)"
-        trigger="click"
         placement="right"
+        trigger="click"
+        v-model:show="opened"
     >
         <template #trigger>
             <NTag

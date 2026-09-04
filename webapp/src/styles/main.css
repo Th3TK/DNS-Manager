@@ -15,4 +15,6 @@
 .data-table-clickable-cell > * {
     cursor: initial !important;
     user-select: all !important;
+    width: fit-content;
+    max-width: 100%;
 }

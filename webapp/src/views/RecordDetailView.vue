@@ -10,6 +10,7 @@ import ActorField from "../components/data-table/fields/ActorField.vue";
 import DNSRecordOriginTag from "../components/display/DNSRecordOriginTag.vue";
 import { useErrorHandler } from "../composables/useErrorHandler.ts";
 import { HttpStatusCode } from "axios";
+import RecordControls from "../components/controls/RecordControls.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -19,9 +20,28 @@ const {
     data: record,
     error,
     loading,
+    refresh,
 } = useFetch<DNSRecord>(
-    `/zones/${route.params.name}/record?record_name=${route.params.record_name}&record_type=${route.params.record_type}`,
+    () => `/zones/${route.params.name}/record?record_name=${route.params.record_name}&record_type=${route.params.record_type}`,
 );
+
+const onEdit = async (record: DNSRecord) => {
+    if (record.name !== route.params.name || record.type !== route.params.type) {
+        await router.replace({
+            name: "RecordDetails",
+            params: {
+                name: record.zone_name,
+                record_name: record.name,
+                record_type: record.type,
+            },
+        });
+    }
+    refresh();
+};
+
+const navigateToTable = () => {
+    router.push({ name: "ZoneDetails", params: { name: route.params.name } });
+};
 
 watch(error, () => {
     if (!error.value) return;
@@ -39,10 +59,12 @@ watch(error, () => {
     <MainLayout>
         <NFlex
             vertical
-            v-if="record"
             size="large"
         >
-            <NFlex align="center">
+            <NFlex
+                class="header"
+                v-if="record"
+            >
                 <DNSRecordTypeTag
                     :value="record.type"
                     class="header-tag"
@@ -55,6 +77,14 @@ watch(error, () => {
                 >
                     {{ record.name }}
                 </NText>
+                <RecordControls
+                    :records="record"
+                    :zone-name="record.zone_name"
+                    @edit-success="onEdit"
+                    @delete-error="refresh"
+                    @delete-success="navigateToTable"
+                    class="controls"
+                />
             </NFlex>
             <NText
                 tag="h3"
@@ -135,6 +165,13 @@ watch(error, () => {
 </template>
 
 <style lang="css" scoped>
+.header {
+    width: 100%;
+    align-items: center;
+}
+:deep(.controls) {
+    margin-left: auto;
+}
 .title {
     margin: var(--spacing-xs) 0;
 }

@@ -107,16 +107,18 @@ class ModifyDNSRecordForm(BaseModel):
     Contains the DNS record properties supplied by the client.
     """
 
-    name: Annotated[str, Field(max_length=255)]
-    type: SupportedDNSRecordTypes
-    content: Annotated[str, Field(max_length=255)]
-    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] = 60
+    name: Annotated[str, Field(max_length=255)] | None = None
+    type: SupportedDNSRecordTypes | None = None
+    content: Annotated[str, Field(max_length=255)] | None = None
+    ttl: Annotated[int, Field(gt=0, le=2_147_483_647)] | None = None
     comment: Annotated[str, Field(max_length=1000)] | None = None
-    checks_enabled: bool = True
+    checks_enabled: bool | None = None
 
     @field_validator("name", mode="after")
     @classmethod
-    def normalize_name(cls, value: str) -> str:
+    def normalize_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         return f"{value.rstrip('.').lower()}."
 
 
@@ -126,7 +128,6 @@ class ModifyDNSRecordArgs(ModifyDNSRecordForm):
     Extends the API request data with properties determined by the backend, rather than supplied by the client.
     """
 
-    zone_name: Annotated[str, Field(max_length=255)]
     author: str
 
 

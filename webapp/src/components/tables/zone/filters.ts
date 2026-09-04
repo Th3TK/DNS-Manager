@@ -14,11 +14,4 @@ export const getFilterConfig = (users: User[]): FilterConfig<DNSZone> => ({
     comment: {
         type: "freetext",
     },
-    origin: {
-        type: "options",
-        options: [
-            { label: "External", value: "external" },
-            { label: "Manual", value: "manual" },
-        ],
-    },
 });

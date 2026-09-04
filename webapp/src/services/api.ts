@@ -8,6 +8,7 @@ import type {
     CreateDNSZoneForm,
     CreateDNSRecordForm,
     ModifyDNSRecordForm,
+    CreateUserForm,
 } from "../types/api.types";
 import { sendRequest } from "./requests";
 import type { DataPaginated, Filters } from "../types/table.types";
@@ -66,7 +67,11 @@ export const getAuthenticatedUser = () => getLoggedInUser().catch(() => null);
 
 export const getUsers = () => sendRequest<User[]>("GET", "/users");
 
-export const getUser = (username: string) => sendRequest<User>("GET", `/user/${username}`);
+export const getUser = (username: string) => sendRequest<User>("GET", `/users/${username}`);
+
+export const createUser = (form: CreateUserForm) => sendRequest<User>("POST", "/users", { data: form });
+
+export const deleteUser = (username: string) => sendRequest<null>("DELETE", `/users/${username}`);
 
 /* ------------------------------------------------------------------------- */
 /* DNS ZONES                                                                 */
@@ -92,8 +97,8 @@ export const getRecord = (zoneName: string, recordName: string, recordType: stri
 export const createRecord = (zoneName: string, form: CreateDNSRecordForm) =>
     sendRequest<DNSRecord>("POST", `/zones/${zoneName}/record`, { data: form });
 
-export const modifyRecord = (zoneName: string, form: ModifyDNSRecordForm) =>
-    sendRequest<DNSRecord>("PATCH", `/zones/${zoneName}/record`, { data: form });
+export const modifyRecord = (zoneName: string, recordName: string, recordType: string, form: ModifyDNSRecordForm) =>
+    sendRequest<DNSRecord>("PATCH", `/zones/${zoneName}/record?record_name=${recordName}&record_type=${recordType}`, { data: form });
 
 export const deleteRecord = (zoneName: string, recordName: string, recordType: string) =>
     sendRequest<null>("DELETE", `/zones/${zoneName}/record?record_name=${recordName}&record_type=${recordType}`);

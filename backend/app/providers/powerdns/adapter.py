@@ -241,10 +241,6 @@ class PowerDNSAdapter(DNSProvider):
         return records
 
     def create_record(self, zone_name: str, name: str, type_: str, content: str, ttl: int) -> DNSRecordProperties:
-        # modify_record accomplishes the same thing
-        return self.modify_record(zone_name, name, type_, content, ttl)
-
-    def modify_record(self, zone_name: str, name: str, type_: str, content: str, ttl: int) -> DNSRecordProperties:
         body = {
             "rrsets": [
                 {
@@ -260,6 +256,35 @@ class PowerDNSAdapter(DNSProvider):
         self._send_request("PATCH", f"zones/{zone_name}", json=body)  # returns 204 no content
 
         record = self.get_record(zone_name, name, type_)
+
+        if record is None:
+            logging.error("PowerDNS PATCH succeeded, but the modified record could not be retrieved.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while modifying the DNS record.",
+            )
+
+        return record
+
+    def modify_record(
+        self, zone_name: str, name: str, type_: str, new_name: str, new_type: str, new_content: str, new_ttl: int
+    ) -> DNSRecordProperties:
+        body = {
+            "rrsets": [
+                {"name": name, "type": type_, "changetype": "DELETE"},
+                {
+                    "name": new_name,
+                    "type": new_type,
+                    "ttl": new_ttl,
+                    "changetype": "REPLACE",
+                    "records": [{"content": new_content, "disabled": False}],
+                },
+            ]
+        }
+
+        self._send_request("PATCH", f"zones/{zone_name}", json=body)  # returns 204 no content
+
+        record = self.get_record(zone_name, new_name, new_type)
 
         if record is None:
             logging.error("PowerDNS PATCH succeeded, but the modified record could not be retrieved.")

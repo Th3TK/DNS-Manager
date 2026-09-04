@@ -5,6 +5,7 @@ import { computed } from "vue";
 
 const props = defineProps<{
     value: string;
+    label?: string;
     variants?: Record<string, TagProps>;
     default?: TagProps;
 }>();
@@ -17,6 +18,6 @@ const passedProps = computed(() => _.merge(props.default, props.variants?.[props
         v-bind="passedProps"
         @dblclick.stop
     >
-        {{ props.value }}
+        {{ label ? label : props.value }}
     </NTag>
 </template>

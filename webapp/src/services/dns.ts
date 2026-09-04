@@ -1,5 +1,6 @@
 import _ from "lodash";
 import ipaddr from "ipaddr.js";
+import type { SupportedDNSRecordTypes } from "../types/api.types";
 
 export const sanitizeDnsName = (value: string) =>
     value
@@ -116,4 +117,31 @@ export const isValidSrvContent = (value: string) => {
     if ([priority, weight, port].some((e) => !/^\d+$/.test(e) || Number(e) > 65535)) return false;
 
     return isValidDnsName(target);
+};
+
+export const contentSanitizationFuncs: Record<SupportedDNSRecordTypes, (val: string) => string> = {
+    A: sanitazeIpv4Address,
+    AAAA: sanitizeIpv6Address,
+    CNAME: sanitizeDnsName,
+    MX: sanitizeMxContent,
+    SRV: sanitizeSrvContent,
+    TXT: (v) => v,
+};
+
+export const contentNormalizationFuncs: Record<SupportedDNSRecordTypes, (val: string) => string> = {
+    A: (v) => v,
+    AAAA: (v) => v,
+    CNAME: normalizeDnsName,
+    MX: normalizeMxContent,
+    SRV: normalizeSrvContent,
+    TXT: (v) => v,
+};
+
+export const contentPlaceholders: Record<SupportedDNSRecordTypes, string> = {
+    A: "e.g. 192.168.1.1",
+    AAAA: "e.g. 2001:db8::1",
+    CNAME: "e.g. target.example.com.",
+    TXT: 'e.g. "v=spf1 include:example.com ~all"',
+    MX: "e.g. 10 mail.example.com.",
+    SRV: "e.g. 10 5 5060 sip.example.com.",
 };

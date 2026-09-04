@@ -4,8 +4,9 @@ import BadgeField from "../../data-table/fields/BadgeField.vue";
 import TextField from "../../data-table/fields/TextField.vue";
 import _ from "lodash";
 import { h } from "vue";
+import RecordControls from "../../controls/RecordControls.vue";
 
-export const columns: DataTableColumns<DNSRecord> = [
+export const getColumns = (zoneName: string, refresh: () => void): DataTableColumns<DNSRecord> => [
     {
         type: "selection",
         multiple: true,
@@ -89,5 +90,19 @@ export const columns: DataTableColumns<DNSRecord> = [
         key: "ttl",
         sorter: "default",
         width: 100,
+    },
+    {
+        title: "",
+        key: "controls",
+        render: (row: DNSRecord) =>
+            h(RecordControls, {
+                records: row,
+                zoneName: zoneName,
+                dropdown: true,
+                onDeleteError: refresh,
+                onDeleteSuccess: refresh,
+                onEditSuccess: refresh,
+            }),
+        width: 60,
     },
 ];

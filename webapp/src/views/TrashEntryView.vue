@@ -7,7 +7,6 @@ import { useRoute, useRouter } from "vue-router";
 import { useErrorHandler } from "../composables/useErrorHandler.ts";
 import TimeToLiveField from "../components/data-table/fields/TimeToLiveField.vue";
 import ActorField from "../components/data-table/fields/ActorField.vue";
-import TrashEntryControls from "../components/controls/TrashEntryControls.vue";
 import { AxiosError, HttpStatusCode } from "axios";
 
 const route = useRoute();
@@ -46,7 +45,7 @@ const handleControlsError = (error: AxiosError) => {
                 >
                     Deleted item
                 </NText>
-                <TrashEntryControls
+                <TrashControls
                     :entry="item"
                     @delete-success="navigateToTable"
                     @restore-success="navigateToTable"
