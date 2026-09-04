@@ -67,12 +67,14 @@ export interface ModifyDNSRecordForm {
     checks_enabled: boolean;
 }
 
+export type ChangeHistoryAction = "created" | "changed" | "deleted" | "restored" | "permanently_deleted";
+
 export interface ChangeHistoryEntry {
     entry_uuid: string;
     action_timestamp: string;
     actor_type: "user" | "watcher" | "automatic";
     actor: string;
-    action: "created" | "changed" | "deleted" | "restored" | "permanently_deleted";
+    action: ChangeHistoryAction;
     affected_object_type: "zone" | "record";
     affected_object_name: string;
     object_before: Record<string, any> | null;

@@ -5,6 +5,7 @@ import TextField from "../../data-table/fields/TextField.vue";
 import DateField from "../../data-table/fields/DateField.vue";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
 import ActorField from "../../data-table/fields/ActorField.vue";
+import ActionTypeTag from "../../display/ActionTypeTag.vue";
 
 export const columns: DataTableColumns<ChangeHistoryEntry> = [
     {
@@ -27,30 +28,9 @@ export const columns: DataTableColumns<ChangeHistoryEntry> = [
         title: "Action",
         key: "action",
         render: (row: ChangeHistoryEntry) =>
-            h(BadgeField, {
-                value: row.action.replace("_", " ").toUpperCase(),
-                variants: {
-                    CREATED: {
-                        type: "success",
-                    },
-                    CHANGED: {
-                        type: "info",
-                    },
-                    RESTORED: {
-                        type: "success",
-                    },
-                    DELETED: {
-                        type: "warning",
-                    },
-                    "PERMANENTLY DELETED": {
-                        type: "error",
-                    },
-                },
-                default: {
-                    bordered: false,
-                    round: true,
-                    size: "small",
-                },
+            h(ActionTypeTag, {
+                value: row.action,
+                size: "small",
             }),
     },
     {

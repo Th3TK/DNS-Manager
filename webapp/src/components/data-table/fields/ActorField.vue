@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { UserCircle as IconUserCircle, Eye as IconEye, Terminal2 as IconTerminal2 } from "@vicons/tabler";
-import { NIcon } from "naive-ui";
+import { NFlex, NIcon, NText } from "naive-ui";
 
 const props = defineProps<{
     value?: string;
@@ -39,10 +39,10 @@ const props = defineProps<{
 .container {
     display: flex;
     align-items: center;
-    min-width: 0;
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
     box-sizing: border-box;
-    gap: 6px;
+    gap: 6px !important;
 }
 
 .name {
@@ -52,5 +52,7 @@ const props = defineProps<{
     white-space: nowrap;
     line-height: 1.2;
     text-overflow: ellipsis;
+    width: fit-content;
+    max-width: 100%;
 }
 </style>
