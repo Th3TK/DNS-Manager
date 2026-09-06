@@ -15,6 +15,7 @@ from app.models.record import (
     DNSRecordRemovalResult,
     ModifyDNSRecordArgs,
     ModifyDNSRecordForm,
+    SupportedDNSRecordTypes,
 )
 from app.models.user import User
 from app.models.zone import CreateDNSZoneArgs, CreateDNSZoneForm, DNSZone, DNSZoneRemovalResult
@@ -105,7 +106,7 @@ def __modify_record__(
     db: Annotated[Session, Depends(get_db)],
     zone_name: str,
     record_name: str,
-    record_type: str,
+    record_type: SupportedDNSRecordTypes,
     form: ModifyDNSRecordForm,
 ) -> DNSRecord:
     return modify_record(

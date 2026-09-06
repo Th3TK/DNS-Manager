@@ -6,19 +6,17 @@ import { Refresh } from "@vicons/tabler";
 import { useDataTable } from "../../composables/useDataTable.ts";
 import { formatFilterText } from "./filters/filters.ts";
 import { computed } from "vue";
+import _ from "lodash";
 
 defineOptions({
     inheritAttrs: false,
 });
 
 const props = defineProps<{
-    data: T[];
-    loading: boolean;
-    total: number;
-    refresh: () => void;
-    filterConfig: FilterConfig<T>;
     columns: DataTableColumns<T>;
     rowKeys: (keyof T)[];
+    filterConfig?: FilterConfig<T>;
+    refresh?: () => void;
     onCellClick?: (row: T) => any;
 }>();
 
@@ -35,18 +33,30 @@ const {
     filters,
 } = useDataTable<T>(props.columns, props.onCellClick);
 
-const data = defineModel<TableRow<T>[]>("data", { default: () => [] });
+const data = defineModel<T[]>("data", { default: () => [] });
 const loading = defineModel<boolean>("loading", { default: false });
 const total = defineModel<number>("total", { default: 0 });
 const selectedKeys = defineModel<DataTableRowKey[]>("selectedKeys", { default: () => [] });
 
-const getKey = computed(() => (row: TableRow<T>) => row.key as DataTableRowKey);
+const keyedData = computed(() =>
+    _.map(
+        data.value,
+        (e: T, i) =>
+            ({
+                ...e,
+                key: [..._.map(props.rowKeys, (key) => e[key]), i].join(":::"),
+            }) as TableRow<T>,
+    ),
+);
+
+const selectedRows = computed(() => keyedData.value.filter((row) => selectedKeys.value.includes(row.key as DataTableRowKey)));
 
 defineExpose({
     page,
     pageSize,
     filters,
     sorter,
+    selectedRows,
 });
 </script>
 
@@ -61,6 +71,7 @@ defineExpose({
             class="full-controls"
         >
             <NFlex
+                v-if="filterConfig"
                 :size="8"
                 class="filters"
             >
@@ -82,6 +93,7 @@ defineExpose({
             </NFlex>
             <NFlex class="controls">
                 <NButton
+                    v-if="refresh"
                     @click="refresh"
                     tertiary
                     type="default"
@@ -99,16 +111,16 @@ defineExpose({
             v-bind="$attrs"
             v-model:checked-row-keys="selectedKeys"
             :columns="initializedColumns"
-            :data="data"
+            :data="keyedData"
             :loading="loading"
-            :row-key="getKey"
+            :row-key="(row) => row.key"
             :pagination="{
                 page: page,
                 pageSize: pageSize,
                 itemCount: total,
                 showSizePicker: true,
                 pageSizes: [10, 25, 50, 100],
-                onChange: handlePageChange,
+                onUpdatePage: handlePageChange,
                 onUpdatePageSize: handlePageSizeChange,
             }"
             striped

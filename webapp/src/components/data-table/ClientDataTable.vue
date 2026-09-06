@@ -20,20 +20,15 @@ const { handleError } = useErrorHandler();
 
 const table = useTemplateRef<BaseDataTableExpose<T>>("table");
 
-const data = ref<TableRow<T>[]>([]);
+const data = ref<T[]>([]);
 const loading = defineModel<boolean>("loading", { default: false });
-const total = computed(() => data.value.length);
-
 const selectedKeys = defineModel<DataTableRowKey[]>("selectedKeys", { default: () => [] });
-const selectedRows = computed(() => data.value.filter((row) => selectedKeys.value.includes(row.key as DataTableRowKey)));
 
 const loadData = async () => {
     loading.value = true;
 
     try {
-        const fetchedData = await props.getData();
-        // ensuring rows have unique keys
-        data.value = _.map(fetchedData, (e: T) => ({ ...e, key: _.map(props.rowKeys, (key) => e[key]).join(":::") }));
+        data.value = await props.getData();
     } catch (error) {
         if (isAxiosError(error)) handleError(error);
         throw error;
@@ -53,6 +48,9 @@ const filteredData = computed(() =>
 );
 
 onMounted(loadData);
+
+const total = computed(() => filteredData.value.length);
+const selectedRows = computed(() => table.value?.selectedRows ?? []);
 
 defineExpose({
     total: total,

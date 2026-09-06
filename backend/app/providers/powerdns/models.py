@@ -1,4 +1,3 @@
-
 from typing import Literal
 
 from pydantic import BaseModel
@@ -8,8 +7,8 @@ class PowerDNSComment(BaseModel):
     account: str
     content: str
     modified_at: int
-    
-    
+
+
 class PowerDNSRecordObject(BaseModel):
     content: str
     disabled: bool
@@ -23,7 +22,7 @@ class PowerDNSRRset(BaseModel):
     changetype: str | None = None
     comments: list[PowerDNSComment] | None = None
     write_unchanged: bool | None = None
-    
+
 
 class PowerDNSZone(BaseModel):
     id: str
@@ -51,8 +50,19 @@ class PowerDNSZone(BaseModel):
     master_tsig_key_ids: list[str] | None = None
     slave_tsig_key_ids: list[str] | None = None
     last_check: int | None = None
-    
-    
-class CreatePowerDNSZoneForm(BaseModel):
+
+
+class PowerDNSCreateZoneForm(BaseModel):
     name: str
-    kind: Literal['Native']
+    kind: Literal["Native"]
+
+
+class PowerDNSSearchResultRecord(BaseModel):
+    content: str
+    disabled: bool
+    name: str
+    object_type: Literal["record"]
+    zone_id: str
+    zone: str
+    type: str
+    ttl: int

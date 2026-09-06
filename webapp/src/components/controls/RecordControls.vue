@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 
 import type { DNSRecord } from "../../types/api.types.ts";
 
-import { computed, toRef } from "vue";
+import { computed, toRef, watch } from "vue";
 import { useRecordActions } from "../../composables/useRecordActions.ts";
 import RecordDropdownControls from "./record/RecordDropdownControls.vue";
 import _ from "lodash";
@@ -11,6 +11,7 @@ import RecordButtonControls from "./record/RecordButtonControls.vue";
 import RecordTableControls from "./record/RecordTableControls.vue";
 import CreateRecordModal from "../modals/CreateRecordModal.vue";
 import ConfirmationModal from "../modals/ConfirmationModal.vue";
+import { NText } from "naive-ui";
 
 defineOptions({
     inheritAttrs: false,

@@ -32,12 +32,10 @@ const { handleError } = useErrorHandler();
 
 const table = useTemplateRef<BaseDataTableExpose<T>>("table");
 
-const data = shallowRef<TableRow<T>[]>([]);
+const data = shallowRef<T[]>([]);
 const loading = ref<boolean>(false);
 const total = ref<number>(0);
-
 const selectedKeys = ref<DataTableRowKey[]>([]);
-const selectedRows = computed(() => data.value.filter((row) => selectedKeys.value.includes(row.key as DataTableRowKey)));
 
 const loadData = async () => {
     loading.value = true;
@@ -53,7 +51,7 @@ const loadData = async () => {
             table.value.sorter?.order || null,
         );
 
-        data.value = _.map(result.items, (e: T) => ({ ...e, key: _.map(props.rowKeys, (key) => e[key]).join(":::") }));
+        data.value = result.items;
         total.value = result.total;
     } catch (error) {
         if (isAxiosError(error)) handleError(error);
@@ -73,6 +71,8 @@ watch(
         immediate: true,
     },
 );
+
+const selectedRows = computed(() => table.value?.selectedRows ?? []);
 
 defineExpose({
     total: total,

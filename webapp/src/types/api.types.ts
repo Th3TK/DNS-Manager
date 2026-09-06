@@ -75,6 +75,15 @@ export interface ModifyDNSRecordForm {
     checks_enabled: boolean | null;
 }
 
+export interface NameSearchDNSRecord {
+    zone_name: string;
+    name: string;
+    type: string;
+    content: string | string[];
+    origin: DNSRecordOrigin;
+    location: "active" | "trash";
+}
+
 export type ChangeHistoryAction = "created" | "changed" | "deleted" | "restored" | "permanently_deleted";
 
 export interface ChangeHistoryEntry {

@@ -8,9 +8,8 @@ from app.management.action_log.action_log import create_log_entries, create_log_
 from app.management.dns.record import get_records
 from app.management.dns.validation import validate_dns_name
 from app.management.trash.trash import create_trash_entries, create_trash_entry
-from app.models.record import RestoreDNSRecordArgs
 from app.models.user import User
-from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneRemovalResult, RestoreDNSZoneArgs
+from app.models.zone import CreateDNSZoneArgs, DNSZone, DNSZoneMetadata, DNSZoneRemovalResult
 from app.providers.factory import provider
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -26,7 +25,7 @@ def cleanup_zone_metadata(db: Session) -> int:
     # (i.e. they were deleted outside of the application).
     """
 
-    zones = provider.get_zones()
+    zones = provider.get_zones(skip_record_count=True)
 
     zone_names = {zone.name for zone in zones}
 
@@ -153,7 +152,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         db=db,
         actor=logged_in_user.username,
         object_type=DNSObjectType.ZONE,
-        object_data=RestoreDNSZoneArgs(**zone.model_dump()),
+        object_data=zone,
     ):
         result.zone_status = ChangeAction.DELETED
 
@@ -161,7 +160,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         db=db,
         actor=logged_in_user.username,
         object_type=DNSObjectType.RECORD,
-        objects_data=[RestoreDNSRecordArgs(**record.model_dump()) for record in internal_records],
+        objects_data=internal_records,
     ):
         result.internal_records_status = ChangeAction.DELETED
 

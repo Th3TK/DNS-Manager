@@ -11,7 +11,7 @@ class DNSZoneProperties(BaseModel):
     """
 
     name: str
-    record_count: int
+    record_count: int | None
 
 
 class DNSZoneMetadata(BaseModel):
@@ -64,11 +64,6 @@ class CreateDNSZoneArgs(CreateDNSZoneForm):
     """
 
     author: str  # username
-
-
-class RestoreDNSZoneArgs(BaseModel):
-    name: str
-    comment: str = ""
 
 
 class DNSZoneRemovalResult(BaseModel):

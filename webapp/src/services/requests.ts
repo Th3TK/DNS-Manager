@@ -10,7 +10,7 @@ const API_URL = `http://${window.location.hostname}:9000/api`;
 
 const BASE_REQUEST_CONFIG = {
     transitional: { clarifyTimeoutError: true },
-    timeout: 5000,
+    timeout: 10000,
     timeoutErrorMessage: "No response from the API service.",
     withCredentials: true,
 };

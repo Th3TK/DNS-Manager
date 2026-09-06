@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Trash } from "@vicons/tabler";
-import { NButton, NIcon } from "naive-ui";
+import { NButton, NFlex, NIcon } from "naive-ui";
 
 const emit = defineEmits<{
     delete: [];

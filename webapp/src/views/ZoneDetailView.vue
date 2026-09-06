@@ -117,9 +117,7 @@ watch(error, () => {
 .title {
     margin: var(--spacing-xs) 0;
 }
-.monospace {
-    font-family: monospace;
-}
+
 .header-tag {
     font-size: 16px;
     font-weight: 700;

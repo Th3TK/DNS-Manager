@@ -3,8 +3,8 @@ from uuid import UUID
 
 from app.database.models.dns_trash import DNSTrashInDB
 from app.database.models.enums import DNSObjectType
-from app.models.record import RestoreDNSRecordArgs
-from app.models.zone import RestoreDNSZoneArgs
+from app.models.record import DNSRecord
+from app.models.zone import DNSZone
 from pydantic import BaseModel, ConfigDict
 
 
@@ -15,11 +15,11 @@ class TrashEntry(BaseModel):
     deletion_timestamp: datetime
     actor: str
     object_type: DNSObjectType
-    object_data: RestoreDNSZoneArgs | RestoreDNSRecordArgs
+    object_data: DNSZone | DNSRecord
 
     @classmethod
     def from_db(cls, trash_entry_db: DNSTrashInDB) -> "TrashEntry":
-        form_model = RestoreDNSRecordArgs if trash_entry_db.object_type == DNSObjectType.RECORD else RestoreDNSZoneArgs
+        form_model = DNSRecord if trash_entry_db.object_type == DNSObjectType.RECORD else DNSZone
 
         result = cls.model_validate(trash_entry_db)
         result.object_data = form_model.model_validate(trash_entry_db.object_data)

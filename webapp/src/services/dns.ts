@@ -145,3 +145,9 @@ export const contentPlaceholders: Record<SupportedDNSRecordTypes, string> = {
     MX: "e.g. 10 mail.example.com.",
     SRV: "e.g. 10 5 5060 sip.example.com.",
 };
+
+export const sanitizeNameSearchValue = (value: string) =>
+    value
+        .toLowerCase()
+        .replace(/[^a-z0-9.*?_-]/g, "")
+        .replace(/\.{2,}/g, ".");

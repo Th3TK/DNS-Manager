@@ -33,12 +33,13 @@ export interface BaseDataTableExpose<T extends Record<string, any>> {
     pageSize: number;
     filters: Filters<T>;
     sorter: DataTableSortState | null;
+    selectedRows: TableRow<T>[];
 }
 
 export interface TableExpose<T extends Record<string, any>> {
     total: number;
     refresh: () => Promise<void>;
-    selectedRows: T[];
+    selectedRows: TableRow<T>[];
 }
 
 export type TableRow<T> = T & { key: string };

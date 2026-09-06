@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NFlex, NText, type DataTableRowKey } from "naive-ui";
-import { computed, ref, useTemplateRef } from "vue";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
@@ -35,6 +35,8 @@ const getData = async () => {
     }
     return await getRecords(props.zoneName);
 };
+
+watch([() => table.value?.selectedRows, selectedKeys], () => console.log(table.value?.selectedRows, selectedKeys.value));
 </script>
 
 <template>

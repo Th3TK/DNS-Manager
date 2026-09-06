@@ -10,9 +10,9 @@ from app.models.record import (
     CreateDNSRecordArgs,
     DNSRecord,
     DNSRecordMetadata,
+    DNSRecordProperties,
     DNSRecordRemovalResult,
     ModifyDNSRecordArgs,
-    RestoreDNSRecordArgs,
     SupportedDNSRecordTypes,
 )
 from app.models.user import User
@@ -77,31 +77,34 @@ def get_record(db: Session, zone_name: str, name: str, type_: str) -> DNSRecord:
     return DNSRecord(**properties.model_dump(), **metadata.model_dump())
 
 
-def get_records(db: Session, zone_name: str) -> list[DNSRecord]:
-    properties = provider.get_records(zone_name)
-
-    if properties is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"DNSZone with name='{zone_name}' could not be found.",
-        )
-
+def expand_records_properties_with_metadata(db: Session, properties: list[DNSRecordProperties]) -> list[DNSRecord]:
     record_keys = {(record.zone_name, record.name, record.type) for record in properties}
 
     if not record_keys:
         return []
 
-    metadata_records_in_db = db.scalars(
-        select(DNSRecordMetadataInDB).where(
-            tuple_(
-                DNSRecordMetadataInDB.zone_name,
-                DNSRecordMetadataInDB.name,
-                DNSRecordMetadataInDB.type,
-            ).in_(record_keys)
-        )
-    )
+    metadata_by_key: dict[tuple[str, str, str], DNSRecordMetadataInDB] = {}
 
-    metadata_by_key = {(metadata.zone_name, metadata.name, metadata.type): metadata for metadata in metadata_records_in_db}
+    record_keys = list(record_keys)
+
+    for i in range(0, len(record_keys), 1000):
+        batch = record_keys[i : i + 1000]
+
+        metadata_records_in_db = db.scalars(
+            select(DNSRecordMetadataInDB).where(
+                tuple_(
+                    DNSRecordMetadataInDB.zone_name,
+                    DNSRecordMetadataInDB.name,
+                    DNSRecordMetadataInDB.type,
+                ).in_(batch)
+            )
+        )
+
+        metadata_by_key.update(
+            {(metadata.zone_name, metadata.name, metadata.type): metadata for metadata in metadata_records_in_db}
+        )
+
+    records = []
 
     records = []
 
@@ -118,6 +121,18 @@ def get_records(db: Session, zone_name: str) -> list[DNSRecord]:
         )
 
     return records
+
+
+def get_records(db: Session, zone_name: str) -> list[DNSRecord]:
+    properties = provider.get_records(zone_name)
+
+    if properties is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"DNSZone with name='{zone_name}' could not be found.",
+        )
+
+    return expand_records_properties_with_metadata(db, properties)
 
 
 def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoration: bool = False) -> DNSRecord:
@@ -327,12 +342,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
     result = DNSRecordRemovalResult(record_status=ChangeAction.PERMANENTLY_DELETED)
 
     if not is_record_external:
-        if create_trash_entry(
-            db=db,
-            actor=logged_in_user.username,
-            object_type=DNSObjectType.RECORD,
-            object_data=RestoreDNSRecordArgs(**record.model_dump()),
-        ):
+        if create_trash_entry(db=db, actor=logged_in_user.username, object_type=DNSObjectType.RECORD, object_data=record):
             result.record_status = ChangeAction.DELETED
 
         try:

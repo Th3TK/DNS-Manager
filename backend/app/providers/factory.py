@@ -2,7 +2,7 @@ import logging
 
 from app.config import ENV_CONFIG
 from app.providers.base import DNSProvider
-from app.providers.powerdns.adapter import PowerDNSAdapter
+from app.providers.powerdns.adapter import PowerDNSAdapter_4_9_17
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def get_dns_provider() -> DNSProvider:
     match ENV_CONFIG.DNS_PROVIDER:
         case "powerdns":
-            return PowerDNSAdapter()
+            return PowerDNSAdapter_4_9_17()
         case _:
             logger.critical(
                 "Invalid DNS provider configured: %r. The application cannot start and will now shut down.",

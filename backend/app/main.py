@@ -14,6 +14,7 @@ from app.endpoints.action_log import router as action_log_router
 from app.endpoints.authentication import router as authentication_router
 from app.endpoints.base import router as base_router
 from app.endpoints.dns import router as dns_router
+from app.endpoints.name_search import router as name_search_router
 from app.endpoints.trash import router as trash_router
 from app.endpoints.user import router as users_router
 from app.management.trash.cleanup import automatic_trash_removal
@@ -61,6 +62,7 @@ app.add_middleware(
 
 @app.exception_handler(OperationalError)
 async def sqlalchemy_connection_error_handler(request: Request, exc: OperationalError):
+    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
@@ -90,6 +92,7 @@ async def dns_validation_error(request: Request, exc: DNSValidationError):
 app.include_router(base_router)
 app.include_router(authentication_router)
 app.include_router(dns_router)
+app.include_router(name_search_router)
 app.include_router(trash_router)
 app.include_router(action_log_router)
 app.include_router(users_router)

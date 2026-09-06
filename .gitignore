@@ -12,6 +12,7 @@ __pycache__/
 *.pyo
 *.pyd
 .pytest_cache
+*.local.py
 
 # Virtual environments
 .venv/

@@ -1,4 +1,3 @@
-import type { AxiosError } from "axios";
 import type {
     DNSRecord,
     ChangeHistoryEntry,
@@ -9,6 +8,7 @@ import type {
     CreateDNSRecordForm,
     ModifyDNSRecordForm,
     CreateUserForm,
+    NameSearchDNSRecord,
 } from "../types/api.types";
 import { sendRequest } from "./requests";
 import type { DataPaginated, Filters } from "../types/table.types";
@@ -49,7 +49,7 @@ export const login = (username: string, password: string) =>
         {
             data: new URLSearchParams({ username, password }),
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-": "application/x-www-form-urlencoded",
             },
         },
         false,
@@ -84,6 +84,8 @@ export const getZone = (zoneName: string) => sendRequest<DNSZone>("GET", `/zones
 export const createZone = (form: CreateDNSZoneForm) => sendRequest<DNSZone>("POST", "/zones", { data: form });
 
 export const deleteZone = (zoneName: string) => sendRequest<null>("DELETE", `/zones/${zoneName}`);
+
+export const nameSearch = (query: string) => sendRequest<NameSearchDNSRecord[]>("GET", `/name-search?query=${query}`);
 
 /* ------------------------------------------------------------------------- */
 /* DNS RECORDS                                                               */

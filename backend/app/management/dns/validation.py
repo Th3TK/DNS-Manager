@@ -4,7 +4,8 @@ import re
 from app.models.exceptions import DNSValidationError
 from app.models.record import SupportedDNSRecordTypes
 
-FQDN_BASE_VALID_CHARACTERS = re.compile(r"(?:[a-z0-9_-]+\.)+")
+FQDN_BASE_VALID_CHARACTERS = re.compile(r"(?:[a-z0-9_\-]+\.)+")
+QUERY_VALID_CHARACTERS = re.compile(r"(?:[a-z0-9_\-\*\?]+\.)+")
 
 
 def is_valid_ipv4(value: str) -> bool:
@@ -163,3 +164,12 @@ def validate_record_content(content: str, type_: SupportedDNSRecordTypes):
             validate_srv_record_content(content)
         case "TXT":
             pass
+
+
+def validate_search_query(query: str):
+    normalized_query = f"{query.rstrip('.')}."
+
+    if not QUERY_VALID_CHARACTERS.fullmatch(normalized_query):
+        raise DNSValidationError(
+            "Invalid query. The query may only contain valid DNS record name characters and the supported wildcards '*' and '?'."
+        )

@@ -19,9 +19,11 @@ class DNSProvider(Protocol):
         """
         ...
 
-    def get_zones(self) -> list[DNSZoneProperties]:
+    def get_zones(self, skip_record_count: bool = False) -> list[DNSZoneProperties]:
         """
         Retrieves all zones and returns their properties in a list.
+        Some providers require making seperate requests for each zones to retrieve their `record_count`
+        `skip_record_count` is used for optimalization - if True, `record_count` may not be provided in the return model
         """
         ...
 
@@ -45,11 +47,29 @@ class DNSProvider(Protocol):
         """
         ...
 
+    def get_records_by_name(self, zone_name: str, name: str) -> list[DNSRecordProperties] | None:
+        """
+        Retrieves all records in a provided zone, whose names match `name`, and returns their properties in a list.
+        Returns an empty list if there is no such record.
+        Returns `None` if the zone does not exist.
+        """
+        ...
+
     def get_records(self, zone_name: str) -> list[DNSRecordProperties] | None:
         """
         Retrieves all records in a zone and returns their properties in a list.
         Returns an empty list if the zone has no records.
         Returns `None` if the zone does not exist.
+        """
+        ...
+
+    def query_records(self, name_query: str) -> list[DNSRecordProperties]:
+        """
+        Retrieves all records across all zones whose names match `name_query`.
+
+        `name_query` may contain the following wildcards:
+            * - matches any sequence of characters
+            ? - matches any single character
         """
         ...
 

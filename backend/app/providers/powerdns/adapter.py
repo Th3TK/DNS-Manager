@@ -7,14 +7,14 @@ from app.config import ENV_CONFIG
 from app.models.record import DNSRecordProperties
 from app.models.zone import DNSZoneProperties
 from app.providers.base import DNSProvider
-from app.providers.powerdns.models import PowerDNSZone
+from app.providers.powerdns.models import PowerDNSSearchResultRecord, PowerDNSZone
 from app.utils.paths import join_url
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
 
 
-class PowerDNSAdapter(DNSProvider):
+class PowerDNSAdapter_4_9_17(DNSProvider):
     """
     Adapter for PowerDNS version 4.9.17
     """
@@ -96,31 +96,39 @@ class PowerDNSAdapter(DNSProvider):
     def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
         return DNSZoneProperties(name=zone.name, record_count=sum(len(rrset.records) for rrset in zone.rrsets or []))
 
-    def _get_record_properties_from_powerdns_zone(
+    def _get_records_properties_from_powerdns_zone(
         self,
         zone: PowerDNSZone,
-        name: str,
-        type_: str,
-    ) -> DNSRecordProperties | None:
+        name: str | None = None,
+        type_: str | None = None,
+    ) -> list[DNSRecordProperties]:
+
         if zone.rrsets is None:
-            return None
+            return []
+
+        records: list[DNSRecordProperties] = []
 
         for rrset in zone.rrsets:
-            if rrset.name != name or rrset.type != type_ or not rrset.records:
+            if name is not None and rrset.name != name:
+                continue
+
+            if type_ is not None and rrset.type != type_:
                 continue
 
             contents = [record.content for record in rrset.records]
             content = contents[0] if len(contents) == 1 else contents
 
-            return DNSRecordProperties(
-                zone_name=zone.name,
-                name=name,
-                type=type_,
-                content=content,
-                ttl=rrset.ttl,
+            records.append(
+                DNSRecordProperties(
+                    zone_name=zone.name,
+                    name=rrset.name,
+                    type=rrset.type,
+                    content=content,
+                    ttl=rrset.ttl,
+                )
             )
 
-        return None
+        return records
 
     # MISC
 
@@ -166,13 +174,18 @@ class PowerDNSAdapter(DNSProvider):
     def delete_zone(self, zone_name: str) -> None:
         self._send_request("DELETE", f"zones/{zone_name}")
 
-    def get_zones(self) -> list[DNSZoneProperties]:
+    def get_zones(self, skip_record_count: bool = False) -> list[DNSZoneProperties]:
         response = self._send_request("GET", "zones?dnssec=false")
-        zone_names = [PowerDNSZone.model_validate(zone).name for zone in response.json()]
+        powerdns_zones = [PowerDNSZone.model_validate(zone) for zone in response.json()]
 
-        # retrieving data such as record_count
-        with ThreadPoolExecutor() as executor:
-            zones = executor.map(self.get_zone, zone_names)
+        if skip_record_count:
+            return [self._get_zone_properties_from_powerdns_zone(powerdns_zone) for powerdns_zone in powerdns_zones]
+
+        names = [powerdns_zone.name for powerdns_zone in powerdns_zones]
+
+        # count records
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            zones = executor.map(self.get_zone, names)
 
         return [zone for zone in zones if zone is not None]
 
@@ -207,9 +220,10 @@ class PowerDNSAdapter(DNSProvider):
 
         zone = PowerDNSZone.model_validate(response.json())
 
-        return self._get_record_properties_from_powerdns_zone(zone, name, type_)
+        matched = self._get_records_properties_from_powerdns_zone(zone, name, type_)
+        return matched[0] if matched else None
 
-    def get_records(self, zone_name: str) -> list[DNSRecordProperties] | None:
+    def get_records_by_name(self, zone_name: str, name: str) -> list[DNSRecordProperties] | None:
         try:
             response = self._send_request("GET", f"zones/{zone_name}?rrsets=true")
         except HTTPException as exc:
@@ -219,22 +233,28 @@ class PowerDNSAdapter(DNSProvider):
 
         zone = PowerDNSZone.model_validate(response.json())
 
-        if zone.rrsets is None:
-            return []
+        return self._get_records_properties_from_powerdns_zone(zone, name)
+
+    def get_records(self, zone_name: str) -> list[DNSRecordProperties] | None:
+        response = self._send_request("GET", f"zones/{zone_name}?rrsets=true")
+        zone = PowerDNSZone.model_validate(response.json())
+
+        return self._get_records_properties_from_powerdns_zone(zone)
+
+    def query_records(self, name_query: str) -> list[DNSRecordProperties] | None:
+        response = self._send_request("GET", f"search-data?q={name_query.rstrip('.')}&object_type=record&max=100000")
 
         records: list[DNSRecordProperties] = []
 
-        for rrset in zone.rrsets:
-            contents = [record.content for record in rrset.records]
-            content = contents[0] if len(contents) == 1 else contents
-
+        for entry in response.json():
+            record = PowerDNSSearchResultRecord.model_validate(entry)
             records.append(
                 DNSRecordProperties(
-                    zone_name=zone_name,
-                    name=rrset.name,
-                    type=rrset.type,
-                    content=content,
-                    ttl=rrset.ttl,
+                    zone_name=record.zone,
+                    name=record.name,
+                    content=record.content,
+                    type=record.type,
+                    ttl=record.ttl,
                 )
             )
 
