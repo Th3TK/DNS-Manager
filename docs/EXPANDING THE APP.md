@@ -83,7 +83,7 @@ Adapter methods have following return models:
 
 `DNSRecordProperties` imported from `app.models.record`
 
-> Records are identified by (zone_name, name, type). The application does not allow creating multiple records with the same key. DNSRecordProperties normally represents a single record. If the provider contains multiple records with the same key due to external creation, content must contain a `list[str]` with all record contents.
+> Records are identified by (zone_name, name, type). The application does not allow creating multiple records with the same key. DNSRecordProperties normally represents a single record. If the provider contains multiple records with the same key due to external creation, content must contain a `list[str]` with all record contents. This enables support for displaying externally created duplicates without requiring the rest of the application to query records by content.
 
 #### 2.4 Method requirements
 

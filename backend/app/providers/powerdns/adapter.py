@@ -1,9 +1,11 @@
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
 import requests
 from app.config import ENV_CONFIG
+from app.models.exceptions import DNSProviderException
 from app.models.record import DNSRecordProperties
 from app.models.zone import DNSZoneProperties
 from app.providers.base import DNSProvider
@@ -44,22 +46,16 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
             return response
 
         except requests.exceptions.Timeout:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=(
-                    "Connection to the PowerDNS REST API timed out. Try again later "
-                    "or check whether your PowerDNS connection settings "
-                    "in the environment variables are correctly configured. "
-                ),
+            raise DNSProviderException(
+                "Connection to the PowerDNS REST API timed out. Try again later "
+                "or check whether your PowerDNS connection settings "
+                "in the environment variables are correctly configured. "
             )
         except requests.exceptions.ConnectionError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=(
-                    "Could not connect to the PowerDNS REST API. Ensure that PowerDNS "
-                    "service is running and that the PowerDNS connection settings "
-                    "in the environment variables are correctly configured. "
-                ),
+            raise DNSProviderException(
+                "Could not connect to the PowerDNS REST API. Ensure that PowerDNS "
+                "service is running and that the PowerDNS connection settings "
+                "in the environment variables are correctly configured. "
             )
         except requests.exceptions.HTTPError as exc:
             if exc.response is None:
@@ -70,11 +66,8 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
                 )
 
             if exc.response.status_code == 401:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=(
-                        "Authentication with the PowerDNS REST API failed. Verify that POWERDNS_API_KEY contains a valid API key."
-                    ),
+                raise DNSProviderException(
+                    "Authentication with the PowerDNS REST API failed.Verify that POWERDNS_API_KEY contains a valid API key."
                 )
 
             try:
@@ -88,13 +81,13 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
 
         except requests.exceptions.RequestException as exc:
             logger.error("Unhandled error occured while trying to communicate with the PowerDNS REST API.", exc)
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Failed to communicate with the PowerDNS REST API.",
-            )
+            raise DNSProviderException("Failed to communicate with the PowerDNS REST API.")
 
     def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
-        return DNSZoneProperties(name=zone.name, record_count=sum(len(rrset.records) for rrset in zone.rrsets or []))
+        return DNSZoneProperties(
+            name=zone.name,
+            record_count=sum(len(rrset.records) for rrset in zone.rrsets or []),
+        )
 
     def _get_records_properties_from_powerdns_zone(
         self,
@@ -130,39 +123,34 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
 
         return records
 
+    # -------------------------------------------------------------------------
     # MISC
+    # -------------------------------------------------------------------------
 
     def health_check(self) -> None:
         try:
             self._send_request("GET", "")
+        except DNSProviderException as exc:
+            raise exc
         except HTTPException as exc:
             match exc.status_code:
                 case status.HTTP_404_NOT_FOUND:
-                    raise HTTPException(
-                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail=(
-                            "Could not retrieve data from the PowerDNS server due to an invalid path. "
-                            "Ensure the POWERDNS_SERVER_ID environment variable is set correctly."
-                        ),
+                    raise DNSProviderException(
+                        "Could not retrieve data from the PowerDNS server due to an invalid path. "
+                        "Ensure the POWERDNS_SERVER_ID environment variable is set correctly."
                     )
                 case status.HTTP_502_BAD_GATEWAY:
-                    raise HTTPException(
-                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail=exc.detail,
-                    )
-                case status.HTTP_503_SERVICE_UNAVAILABLE:
-                    raise exc
+                    raise DNSProviderException(exc.detail)
                 case _:
-                    raise HTTPException(
-                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail=(
-                            "Error occured while trying to connect to PowerDNS REST API. Ensure that PowerDNS "
-                            "service is running and that the PowerDNS connection settings "
-                            "in the environment variables are correctly configured."
-                        ),
+                    raise DNSProviderException(
+                        "Error occured while trying to connect to PowerDNS REST API. Ensure that PowerDNS "
+                        "service is running and that the PowerDNS connection settings "
+                        "in the environment variables are correctly configured."
                     )
 
+    # -------------------------------------------------------------------------
     # ZONES
+    # -------------------------------------------------------------------------
 
     def create_zone(self, zone_name: str) -> DNSZoneProperties:
         body = {"name": zone_name, "kind": "Native"}
@@ -203,7 +191,9 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
 
         return self._get_zone_properties_from_powerdns_zone(zone)
 
+    # -------------------------------------------------------------------------
     # RECORDS
+    # -------------------------------------------------------------------------
 
     def get_record(
         self,
@@ -242,17 +232,44 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         return self._get_records_properties_from_powerdns_zone(zone)
 
     def query_records(self, name_query: str) -> list[DNSRecordProperties] | None:
+        # search-data matches both record names and content
+        # we'll have to filter out content matches but it's still faster than fetching all records
         response = self._send_request("GET", f"search-data?q={name_query.rstrip('.')}&object_type=record&max=100000")
 
-        records: list[DNSRecordProperties] = []
+        pattern = re.escape(name_query.rstrip("."))
+        pattern = pattern.replace(r"\*", ".*").replace(r"\?", ".")
+        pattern = f"^{pattern}{re.escape('.')}$"
+
+        # DNSRecordProperties has to represent an RRset for consistency with the rest of the application
+        # we're grouping contents from records with equal keys (zone_name, name, type)
+        record_contents: dict[tuple[str, str, str], list[str]] = {}
+        record_properties: dict[tuple[str, str, str], PowerDNSSearchResultRecord] = {}
 
         for entry in response.json():
             record = PowerDNSSearchResultRecord.model_validate(entry)
+
+            # filter out the content matches
+            if not re.fullmatch(pattern, record.name):
+                continue
+
+            key = (record.zone, record.name, record.type)
+
+            if key not in record_contents:
+                record_contents[key] = []
+                record_properties[key] = record
+
+            record_contents[key].append(record.content)
+
+        records = []
+
+        for key, contents in record_contents.items():
+            record = record_properties[key]
+
             records.append(
                 DNSRecordProperties(
                     zone_name=record.zone,
                     name=record.name,
-                    content=record.content,
+                    content=contents if len(contents) > 1 else contents[0],
                     type=record.type,
                     ttl=record.ttl,
                 )

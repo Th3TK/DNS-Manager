@@ -6,3 +6,7 @@ class DNSValidationError(ValueError):
         self.detail = detail
         self.status_code = status_code
         super().__init__(detail)
+
+
+class DNSProviderException(Exception):
+    """Raised when the DNS provider cannot fulfill a request."""

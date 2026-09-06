@@ -18,7 +18,7 @@ from app.endpoints.name_search import router as name_search_router
 from app.endpoints.trash import router as trash_router
 from app.endpoints.user import router as users_router
 from app.management.trash.cleanup import automatic_trash_removal
-from app.models.exceptions import DNSValidationError
+from app.models.exceptions import DNSProviderException, DNSValidationError
 from app.synch import synchronize_database
 
 logging.basicConfig(
@@ -62,7 +62,6 @@ app.add_middleware(
 
 @app.exception_handler(OperationalError)
 async def sqlalchemy_connection_error_handler(request: Request, exc: OperationalError):
-    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
@@ -70,7 +69,19 @@ async def sqlalchemy_connection_error_handler(request: Request, exc: Operational
                 "Could not connect to the database. Ensure that the PostgreSQL "
                 "database is running and that the database connection settings "
                 "in the environment variables are correctly configured."
-            )
+            ),
+            "code": "DATABASE_UNAVAILABLE",
+        },
+    )
+
+
+@app.exception_handler(DNSProviderException)
+async def dns_provider_error_handler(request: Request, exc: DNSProviderException):
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "detail": str(exc),
+            "code": "DNS_PROVIDER_UNAVAILABLE",
         },
     )
 

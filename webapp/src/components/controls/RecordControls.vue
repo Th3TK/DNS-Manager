@@ -28,6 +28,7 @@ const props = defineProps<{
 }>();
 
 const records = toRef(props, "records");
+const singularRecord = computed(() => [props.records].flat()?.[0] as DNSRecord | undefined);
 
 const { deleteModalOpened, createModalOpened, editModalOpened, onDelete, onNavigate } = useRecordActions(
     records,
@@ -89,7 +90,7 @@ const numberOfExternalRecords = computed(() => [records.value].flat().filter((r)
             </NText>
             <NText v-else>
                 Selected record will be
-                <NText v-if="[records].flat()[0].origin === 'external'"> permanently deleted. This action cannot be undone.</NText>
+                <NText v-if="singularRecord?.origin === 'external'"> permanently deleted. This action cannot be undone.</NText>
                 <NText v-else> moved to trash.</NText>
             </NText>
         </template>

@@ -1,4 +1,4 @@
-import type { DataTableColumns } from "naive-ui";
+import { NFlex, NIcon, type DataTableColumns } from "naive-ui";
 import type { NameSearchDNSRecord } from "../../../types/api.types";
 import { h } from "vue";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
@@ -72,6 +72,7 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
         render: (row: NameSearchDNSRecord) =>
             h(BadgeField, {
                 value: row.origin,
+                label: _.capitalize(row.origin),
                 variants: {
                     external: {
                         type: "default",
@@ -98,13 +99,13 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
         render: (row: NameSearchDNSRecord) =>
             h(BadgeField, {
                 value: row.location,
-                label: row.location.toLocaleUpperCase(),
+                label: _.capitalize(row.location),
                 variants: {
                     active: {
                         type: "success",
                     },
                     trash: {
-                        type: "warning",
+                        type: "default",
                     },
                 },
                 default: {

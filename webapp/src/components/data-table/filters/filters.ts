@@ -32,7 +32,7 @@ export const formatFilterText = <T>(
     if (!column || !filterConfig[key]) return `${String(key)}: ${value}`;
 
     if (filterConfig[key]?.type === "freetext") {
-        return `${column.title} containing: ${value}`;
+        return `${column.title} matching: ${value}`;
     }
 
     if (filterConfig[key]?.type === "options") {

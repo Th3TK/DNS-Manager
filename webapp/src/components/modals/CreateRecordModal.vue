@@ -22,6 +22,7 @@ import {
     contentPlaceholders,
     contentSanitizationFuncs,
     isValidDnsZoneNameLength,
+    isValidIpv4Address,
     isValidIpv6Address,
     isValidMxContent,
     isValidSrvContent,
@@ -68,14 +69,12 @@ const rules: FormRules = {
             required: true,
             validator: (_rule, value: string) => {
                 switch (form.type) {
-                    // handled by field sanitization
-                    case "A":
-                    // handled by field sanitization
                     case "CNAME":
-                    //
                     case "TXT":
                         break;
 
+                    case "A":
+                        return isValidIpv4Address(value) || new Error("Invalid IPv4 address");
                     case "AAAA":
                         return isValidIpv6Address(value) || new Error("Invalid IPv6 address");
                     case "MX":
@@ -132,10 +131,12 @@ const onSubmit = async () => {
         close();
         props.onSubmit?.(record);
     } catch (error) {
-        if (isAxiosError(error) && error.response?.status === 409) {
-            keyError.value = "A record with this name and type already exists.";
+        if (isAxiosError(error)) {
+            if (error.response?.status === 409) {
+                keyError.value = "A record with this name and type already exists.";
+            }
+            handleError(error as AxiosError);
         }
-        handleError(error as AxiosError);
     }
 };
 

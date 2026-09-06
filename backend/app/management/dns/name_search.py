@@ -46,7 +46,7 @@ def fqdn_name_search_with_wildcards(db: Session, query: str) -> list[DNSRecordSe
 
     db_pattern = wildcards_to_sql_like(query)
 
-    active_records_properties = provider.query_records(query)
+    active_records_properties = provider.query_records(query.rstrip("."))
     active_records = expand_records_properties_with_metadata(db, active_records_properties)
 
     matching_trash_entries = db.scalars(
@@ -106,7 +106,7 @@ def hostname_search(db: Session, hostname: str, zones: list[DNSZoneProperties]) 
 def record_name_search(db: Session, query: str) -> list[DNSRecordSearchResult]:
     validate_search_query(query)
 
-    query = query.rstrip(".")
+    query = f"{query.rstrip('.')}."
     has_wildcards = "*" in query or "?" in query
 
     # wildcard search

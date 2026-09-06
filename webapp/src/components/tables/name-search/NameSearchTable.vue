@@ -2,7 +2,7 @@
 import { ListSearch, Search } from "@vicons/tabler";
 import { columns } from "./columns.ts";
 import { NButton, NDataTable, NFlex, NForm, NIcon, NInput, NText, type PaginationInfo } from "naive-ui";
-import { h, ref } from "vue";
+import { ref } from "vue";
 import { nameSearch } from "../../../services/api.ts";
 import type { NameSearchDNSRecord } from "../../../types/api.types.ts";
 import { sanitizeNameSearchValue } from "../../../services/dns.ts";
@@ -10,34 +10,31 @@ import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
 import type { AxiosError } from "axios";
 import type { TableRow } from "../../../types/table.types.ts";
 import _ from "lodash";
-import TextField from "../../data-table/fields/TextField.vue";
 
 const { handleError } = useErrorHandler();
 
 const data = ref<TableRow<NameSearchDNSRecord>[]>([]);
 const error = ref(false);
 const loading = ref(false);
+const searched = ref<boolean>(false);
 
-const lastSearch = ref<string | null>(null);
 const input = ref<string>("");
 
 const onChange = (value: string) => {
-    console.log(value, sanitizeNameSearchValue(value));
     input.value = sanitizeNameSearchValue(value);
 };
 
 const search = async () => {
-    if (!input.value || input.value === lastSearch.value) return;
+    if (!input.value) return;
     loading.value = true;
     error.value = false;
+    searched.value = true;
 
     nameSearch(input.value)
         .then((val) => {
             data.value = _.map(val, (r: NameSearchDNSRecord, i) => ({ ...r, key: `${i}` }));
-            lastSearch.value = input.value;
         })
         .catch((err: AxiosError) => {
-            lastSearch.value = null;
             error.value = true;
             data.value = [];
             handleError(err);
@@ -85,21 +82,25 @@ const search = async () => {
             </NFlex>
         </NForm>
         <NText
+            v-if="error"
             depth="3"
-            v-if="loading"
+        >
+            Result:
+            <NText type="error">Error</NText>
+        </NText>
+        <NText
+            depth="3"
+            v-else-if="loading"
         >
             Loading...
         </NText>
         <NText
             depth="3"
-            v-if="error || (lastSearch && !loading)"
+            v-else-if="searched"
         >
             Result:
-            <NText
-                depth="1"
-                :type="error ? 'error' : data.length ? 'warning' : 'primary'"
-            >
-                {{ error ? "Error" : data.length ? "Taken" : "Free" }}
+            <NText :type="data.length ? 'warning' : 'primary'">
+                {{ data.length ? "Taken" : "Free" }}
             </NText>
         </NText>
         <NDataTable
@@ -110,7 +111,7 @@ const search = async () => {
             :pagination="{
                 showSizePicker: true,
                 pageSizes: [10, 25, 50, 100],
-                prefix: ({ itemCount }: PaginationInfo) => `Found ${itemCount} records`,
+                prefix: ({ itemCount }: PaginationInfo) => `Found ${itemCount ?? 0} record${itemCount && itemCount > 1 ? 's' : ''}`,
             }"
             striped
             flex-height

@@ -31,12 +31,19 @@ export const isValidDnsZoneNameLength = (value: string): boolean => {
     return `${name}.`.length <= 253;
 };
 
-export const sanitazeIpv4Address = (value: string) =>
-    value
+export const sanitizeIpv4Address = (value: string) =>
+    _.trimStart(value, ".")
+        .replace(/\.{2,}/g, ".")
         .replace(/[^0-9.]/g, "")
         .split(".")
         .map((octet) => (_.parseInt(octet) > 255 ? "255" : octet))
         .slice(0, 4)
+        .join(".");
+
+export const normalizeIpv4Address = (value: string) =>
+    value
+        .split(".")
+        .map((octet) => _.parseInt(octet, 10).toString())
         .join(".");
 
 export const sanitizeIpv6Address = (value: string): string => value.replace(/[^0-9a-fA-F:]/g, "").slice(0, 39);
@@ -91,6 +98,8 @@ export const isValidDnsName = (value: string) => {
     return normalized.length <= 255;
 };
 
+export const isValidIpv4Address = (value: string): boolean => ipaddr.IPv4.isValid(value);
+
 export const isValidIpv6Address = (value: string): boolean => ipaddr.IPv6.isValid(value);
 
 export const isValidMxContent = (value: string) => {
@@ -120,7 +129,7 @@ export const isValidSrvContent = (value: string) => {
 };
 
 export const contentSanitizationFuncs: Record<SupportedDNSRecordTypes, (val: string) => string> = {
-    A: sanitazeIpv4Address,
+    A: sanitizeIpv4Address,
     AAAA: sanitizeIpv6Address,
     CNAME: sanitizeDnsName,
     MX: sanitizeMxContent,
@@ -129,7 +138,7 @@ export const contentSanitizationFuncs: Record<SupportedDNSRecordTypes, (val: str
 };
 
 export const contentNormalizationFuncs: Record<SupportedDNSRecordTypes, (val: string) => string> = {
-    A: (v) => v,
+    A: normalizeIpv4Address,
     AAAA: (v) => v,
     CNAME: normalizeDnsName,
     MX: normalizeMxContent,

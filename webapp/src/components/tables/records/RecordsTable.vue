@@ -35,8 +35,6 @@ const getData = async () => {
     }
     return await getRecords(props.zoneName);
 };
-
-watch([() => table.value?.selectedRows, selectedKeys], () => console.log(table.value?.selectedRows, selectedKeys.value));
 </script>
 
 <template>
