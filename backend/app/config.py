@@ -7,6 +7,8 @@ from app.utils.env import get_env, get_env_boolean, get_env_int, get_env_literal
 class EnvConfig:
     # dns provider selection
     DNS_PROVIDER: str = get_env_literal("DNS_PROVIDER", {"powerdns"})
+    # dns resolver
+    DNS_RESOLVER: str = get_env("DNS_RESOLVER")
     # powerdns options
     POWERDNS_API_URL: str = get_env("POWERDNS_API_URL", "", True)
     POWERDNS_API_KEY: str = get_env("POWERDNS_API_KEY", "", True)

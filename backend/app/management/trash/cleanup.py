@@ -30,7 +30,7 @@ class AutomaticTrashRemoval:
             return
 
         if self._loop is None:
-            raise RuntimeError("AutomaticTrashRemoval has not been initialized")
+            raise RuntimeError("AutomaticTrashRemoval has not been initialized.")
 
         logger.debug("Starting automatic trash removal.")
         self._loop.call_soon_threadsafe(self._schedule)

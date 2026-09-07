@@ -1,7 +1,8 @@
 from collections.abc import Generator
 
-from app.database.connection import session_factory
 from sqlalchemy.orm import DeclarativeBase, Session
+
+from app.database.connection import session_factory
 
 
 class Base(DeclarativeBase):

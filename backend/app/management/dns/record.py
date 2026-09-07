@@ -106,8 +106,6 @@ def expand_records_properties_with_metadata(db: Session, properties: list[DNSRec
 
     records = []
 
-    records = []
-
     for record_properties in properties:
         record_metadata = DNSRecordMetadata.from_db(
             metadata_by_key.get((record_properties.zone_name, record_properties.name, record_properties.type))
@@ -133,6 +131,32 @@ def get_records(db: Session, zone_name: str) -> list[DNSRecord]:
         )
 
     return expand_records_properties_with_metadata(db, properties)
+
+
+def get_all_records(db: Session) -> list[DNSRecord]:
+    properties = provider.query_records("*")
+
+    metadata_records_in_db = db.scalars(select(DNSRecordMetadataInDB)).all()
+
+    metadata_by_key = {
+        (record_metadata.zone_name, record_metadata.name, record_metadata.type): record_metadata
+        for record_metadata in metadata_records_in_db
+    }
+
+    records = []
+
+    for record_properties in properties:
+        record_metadata = DNSRecordMetadata.from_db(
+            metadata_by_key.get((record_properties.zone_name, record_properties.name, record_properties.type))
+        )
+        records.append(
+            DNSRecord(
+                **record_properties.model_dump(),
+                **record_metadata.model_dump(),
+            )
+        )
+
+    return records
 
 
 def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoration: bool = False) -> DNSRecord:

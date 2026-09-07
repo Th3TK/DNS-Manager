@@ -21,6 +21,7 @@ const searched = ref<boolean>(false);
 const input = ref<string>("");
 
 const onChange = (value: string) => {
+    searched.value = false;
     input.value = sanitizeNameSearchValue(value);
 };
 

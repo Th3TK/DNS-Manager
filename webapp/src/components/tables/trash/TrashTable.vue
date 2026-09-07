@@ -29,9 +29,9 @@ const columns = computed(() => getColumns(() => table.value?.refresh()));
 const filterConfig = computed(() => getFilters(users.value ?? []));
 
 const onDelete = () => {
-    if (_.isEmpty(selectedKeys.value)) return;
+    if (!table.value || _.isEmpty(table.value?.selectedRows)) return;
 
-    Promise.all(selectedKeys.value.map((k) => deleteTrashEntry(k as string)))
+    Promise.all(table.value.selectedRows.map((row: TrashEntry) => deleteTrashEntry(row.entry_uuid)))
         .then(() => (selectedKeys.value = []))
         .catch((error) => {
             if (error.response?.status === HttpStatusCode.NotFound) return;

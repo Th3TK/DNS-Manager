@@ -1,8 +1,10 @@
+import datetime
 from typing import Annotated, Literal, cast
+
+from pydantic import BaseModel, Field, field_validator
 
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from app.database.models.enums import ChangeAction
-from pydantic import BaseModel, Field, field_validator
 
 # DNS record types that are supported during record creation via the DNSManager interface
 type SupportedDNSRecordTypes = Literal["A", "AAAA", "CNAME", "TXT", "MX", "SRV"]
@@ -142,3 +144,23 @@ class DNSRecordSearchResult(BaseModel):
     content: str | list[str]
     origin: DNSRecordOrigin
     location: Literal["active", "trash"]
+
+
+type ResolutionStatus = Literal["OK", "MISMATCH", "NO_RESOLUTION"]
+
+type ReachabilityStatus = Literal["REACHABLE", "UNREACHABLE", "NOT_CHECKED"]
+
+
+class RecordStatus(BaseModel):
+    resolution: ResolutionStatus
+    reachability: ReachabilityStatus | None
+
+
+type RecordStatuses = dict[str, dict[str, dict[str, RecordStatus | None]]]
+
+
+class RecordStatusCheckData(BaseModel):
+    # [zone_name, [name, [type, RESULT | None]]]
+    statuses: RecordStatuses | None
+    timestamp: datetime.datetime
+    next_check: datetime.datetime

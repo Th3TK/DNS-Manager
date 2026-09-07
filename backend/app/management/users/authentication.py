@@ -29,6 +29,10 @@ def authenticate_user(db: Session, username: str, password: str) -> User | Liter
     return user
 
 
+def get_authenticated_user_from_token(db: Session, access_token: str) -> User:
+    return validate_user_token(db, access_token, "access")
+
+
 def get_authenticated_user(db: DatabaseSession, tokens: Annotated[Tokens, Depends(get_tokens)]) -> User:
     return validate_user_token(db, tokens.access_token, "access")
 

@@ -15,8 +15,10 @@ from app.endpoints.authentication import router as authentication_router
 from app.endpoints.base import router as base_router
 from app.endpoints.dns import router as dns_router
 from app.endpoints.name_search import router as name_search_router
+from app.endpoints.status_check import router as status_check_router
 from app.endpoints.trash import router as trash_router
 from app.endpoints.user import router as users_router
+from app.management.status_check.status_check import automatic_status_check
 from app.management.trash.cleanup import automatic_trash_removal
 from app.models.exceptions import DNSProviderException, DNSValidationError
 from app.synch import synchronize_database
@@ -43,9 +45,13 @@ async def lifespan(app: FastAPI):
     automatic_trash_removal.start()
     logging.info("Scheduled automatic trash removal.")
 
+    await automatic_status_check.start()
+    logging.info("Scheduled automatic record status check.")
+
     yield
 
     automatic_trash_removal.stop()
+    await automatic_status_check.stop()
 
 
 # Initiate the FastAPI instance
@@ -107,6 +113,7 @@ app.include_router(name_search_router)
 app.include_router(trash_router)
 app.include_router(action_log_router)
 app.include_router(users_router)
+app.include_router(status_check_router)
 
 
 # Add an OAuth2 security scheme to the OpenAPI schema so Swagger UI

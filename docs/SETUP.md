@@ -101,11 +101,7 @@ Follow the same steps as described in the [1. Prepare external dependencies](#1-
 
 ### 2. Configure environment variables
 
-Follow the same steps as described in the [2. Configure environment variables](#2-configure-environment-variables) section of the production setup, but define the environment variables in `.env.dev` instead of `.env`:
-
-```
-cp .env.example .env.dev
-```
+Follow the same steps as described in the [2. Configure environment variables](#2-configure-environment-variables) section of the production setup.
 
 ### 3. Build and run the containers
 
