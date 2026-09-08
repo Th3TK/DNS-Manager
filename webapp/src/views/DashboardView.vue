@@ -1,29 +1,15 @@
 <script setup lang="ts">
-import {
-    NBadge,
-    NButton,
-    NCard,
-    NDivider,
-    NFlex,
-    NGrid,
-    NGridItem,
-    NIcon,
-    NInput,
-    NPopover,
-    NText,
-    NTooltip,
-    useThemeVars,
-} from "naive-ui";
+import { NBadge, NButton, NCard, NFlex, NGrid, NGridItem, NIcon, NPopover, NText, NTime, useThemeVars } from "naive-ui";
 import DashboardLayout from "../layouts/DashboardLayout.vue";
-import { Help, Refresh, Search } from "@vicons/tabler";
+import { Help, Refresh } from "@vicons/tabler";
 import { useRouter } from "vue-router";
 import DatetimeCountdown from "../components/display/DatetimeCountdown.vue";
 import NameSearchTable from "../components/tables/name-search/NameSearchTable.vue";
+import { useRecordsStatusStore } from "../stores/useRecordsStatusStore.ts";
+import { storeToRefs } from "pinia";
 
 const router = useRouter();
 const theme = useThemeVars();
-
-const TIME_5_MINUTES = 300000;
 
 const dependencies = [
     {
@@ -38,21 +24,23 @@ const dependencies = [
     },
 ];
 
-const records = {
-    disabled: 219,
-    ok: 102,
-    error: 32,
-    warning: 192,
-};
+const recordsStatus = useRecordsStatusStore();
+
+const { data: records } = storeToRefs(recordsStatus);
 
 const types = {
-    ok: "success",
-    disabled: "default",
-    error: "error",
-    warning: "warning",
+    OK: "success",
+    WARNING: "warning",
+    ERROR: "error",
+    DISABLED: "default",
 };
 
-const lastCheck = new Date(Date.now());
+const colors = {
+    OK: theme.value.successColorPressed,
+    WARNING: theme.value.warningColorPressed,
+    ERROR: theme.value.errorColorPressed,
+    DISABLED: theme.value.textColor3,
+};
 </script>
 
 <template>
@@ -166,7 +154,7 @@ const lastCheck = new Date(Date.now());
                     </template>
                     <NFlex vertical>
                         <NButton
-                            v-for="status in ['ok', 'warning', 'error', 'disabled']"
+                            v-for="status in ['OK', 'WARNING', 'ERROR', 'DISABLED']"
                             :key="status"
                             quaternary
                             block
@@ -185,19 +173,11 @@ const lastCheck = new Date(Date.now());
                                 >
                                     <NBadge
                                         dot
-                                        :color="
-                                            status === 'ok'
-                                                ? theme.successColorPressed
-                                                : status === 'warning'
-                                                  ? theme.warningColorPressed
-                                                  : status === 'error'
-                                                    ? theme.errorColorPressed
-                                                    : theme.textColor3
-                                        "
+                                        :color="colors[status]"
                                     />
                                     <NText
                                         :type="types[status]"
-                                        :depth="status === 'disabled' ? 3 : 1"
+                                        :depth="status === 'DISABLED' ? 3 : 1"
                                         strong
                                         class="big-text"
                                     >
@@ -208,9 +188,9 @@ const lastCheck = new Date(Date.now());
                                     strong
                                     class="data-list-cell"
                                     :type="types[status]"
-                                    :depth="status === 'disabled' ? 3 : 2"
+                                    :depth="status === 'DISABLED' ? 3 : 2"
                                 >
-                                    {{ records[status] }}
+                                    {{ records?.counts[status] }}
                                 </NText>
                             </div>
                         </NButton>
@@ -221,13 +201,19 @@ const lastCheck = new Date(Date.now());
                                 class="small-text"
                                 depth="3"
                             >
-                                Last check: 2026-09-06 16:20:31
+                                Last check:
+                                <NTime
+                                    v-if="records"
+                                    :time="records.timestamp"
+                                    type="datetime"
+                                />
                             </NText>
                             <DatetimeCountdown
+                                v-if="records"
                                 class="small-text"
                                 depth="3"
                                 label="Next check in: "
-                                :datetime="new Date(lastCheck.getTime() + TIME_5_MINUTES)"
+                                :datetime="records.next_check"
                             />
                         </NFlex>
                     </template>

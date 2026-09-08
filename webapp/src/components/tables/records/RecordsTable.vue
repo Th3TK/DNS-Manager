@@ -5,20 +5,28 @@ import { useRouter } from "vue-router";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
 import { getRecords } from "../../../services/api.ts";
-import type { DNSRecord, User } from "../../../types/api.types";
+import type { DNSRecord, DNSRecordExtended, User } from "../../../types/api.types";
 import type { TableExpose } from "../../../types/table.types.ts";
 import { getFilters } from "./filters.ts";
 import { getColumns } from "./columns.ts";
 import RecordControls from "../../controls/RecordControls.vue";
+import { useRecordsStatusStore } from "../../../stores/useRecordsStatusStore.ts";
+import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
+import { storeToRefs } from "pinia";
+import _ from "lodash";
 
 const props = defineProps<{
     zoneName: string;
 }>();
 
-const { data: users } = useFetch<User[]>("/users");
 const router = useRouter();
+const recordStatus = useRecordsStatusStore();
 
-const table = useTemplateRef<TableExpose<DNSRecord>>("table");
+const { data: users } = useFetch<User[]>("/users");
+const { handleError } = useErrorHandler();
+
+const table = useTemplateRef<TableExpose<DNSRecordExtended>>("table");
+const data = ref<DNSRecordExtended[]>([]);
 const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
@@ -26,20 +34,45 @@ const columns = computed(() => getColumns(props.zoneName, refresh));
 const filterConfig = computed(() => getFilters(users.value ?? []));
 
 const refresh = () => table.value?.refresh();
-const handleClick = (row: DNSRecord) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
+const handleClick = (row: DNSRecordExtended) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
+
+const getRecordStatus = (record: DNSRecord) => recordStatus.data?.statuses?.[record.zone_name]?.[record.name]?.[record.type] ?? null;
+
+const expandRecords = (records: DNSRecord[]) =>
+    records.map((record) => {
+        const status = getRecordStatus(record);
+
+        return {
+            ...record,
+            api_status: status,
+            displayed_status: recordStatus.generateDisplayStatus(status),
+            status_timestamp: status?.timestamp ? new Date(status?.timestamp) : undefined,
+        } as DNSRecordExtended;
+    });
 
 const getData = async () => {
     if (!props.zoneName) {
         loading.value = true;
         return [];
     }
-    return await getRecords(props.zoneName);
+
+    const records = await getRecords(props.zoneName);
+    return expandRecords(records);
 };
+
+watch(
+    () => recordStatus.data,
+    () => {
+        if (_.isEmpty(data.value)) return;
+        data.value = expandRecords(data.value);
+    },
+);
 </script>
 
 <template>
     <ClientDataTable
         ref="table"
+        v-model:data="data"
         v-model:loading="loading"
         v-model:selected-keys="selectedKeys"
         :rowKeys="['name', 'type']"

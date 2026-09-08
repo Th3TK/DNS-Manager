@@ -16,6 +16,33 @@ export interface CreateUserForm {
     disabled: string;
 }
 
+export type ResolutionStatus = "OK" | "MISMATCH" | "NO_RESOLUTION";
+
+export type ReachabilityStatus = "REACHABLE" | "UNREACHABLE" | "NOT_CHECKED";
+
+export interface APIRecordStatus {
+    resolution: ResolutionStatus;
+    reachability: ReachabilityStatus;
+    timestamp: string;
+}
+
+export type APIRecordStatuses = Record<string, Record<string, Record<string, APIRecordStatus | null>>>;
+
+export interface APIRecordStatusCheckData {
+    statuses: APIRecordStatuses | null;
+    timestamp: string;
+    next_check: string;
+}
+
+export type DisplayedRecordStatus = "OK" | "WARNING" | "ERROR" | "DISABLED";
+
+export interface RecordStatusCheckData {
+    statuses: APIRecordStatuses | null;
+    timestamp: Date;
+    next_check: Date;
+    counts: Record<DisplayedRecordStatus, number>;
+}
+
 export interface DNSZone {
     name: string;
     comment: string | null;
@@ -45,6 +72,12 @@ export interface DNSRecord {
     author: string;
     comment: string | null;
     checks_enabled: boolean;
+}
+
+export interface DNSRecordExtended extends DNSRecord {
+    api_status: APIRecordStatus | null;
+    displayed_status: DisplayedRecordStatus;
+    status_timestamp: Date | undefined;
 }
 
 export interface CreateDNSRecordForm {

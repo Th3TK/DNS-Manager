@@ -10,7 +10,11 @@ import dns.asyncresolver
 from app.config import ENV_CONFIG
 from app.database.connection import session_factory
 from app.management.dns.record import get_all_records
-from app.management.status_check.status_check_utils import check_reachability, check_record_resolution, resolve_cname_targets
+from app.management.status_check.status_check_utils import (
+    check_reachability,
+    get_record_resolution_with_timestamp,
+    resolve_cname_targets,
+)
 from app.management.status_check.websocket_manager import status_check_websocket_manager
 from app.models.record import DNSRecord, RecordStatus, RecordStatusCheckData, RecordStatuses
 from fastapi.encoders import jsonable_encoder
@@ -132,7 +136,7 @@ class AutomaticRecordStatusCheck:
         # Resolve DNS for records.
         resolutions = await asyncio.gather(
             *(
-                check_record_resolution(
+                get_record_resolution_with_timestamp(
                     resolver=self._resolver,
                     hostname=record.name,
                     record_type=record.type,
@@ -144,7 +148,7 @@ class AutomaticRecordStatusCheck:
 
         records_with_resolution: list[DNSRecord] = []
 
-        for record, resolution in zip(records_to_check, resolutions):
+        for record, (resolution, timestamp) in zip(records_to_check, resolutions):
             reachability = None
 
             if resolution == "OK":
@@ -154,8 +158,7 @@ class AutomaticRecordStatusCheck:
                     reachability = "NOT_CHECKED"
 
             check_data[record.zone_name][record.name][record.type] = RecordStatus(
-                resolution=resolution,
-                reachability=reachability,
+                resolution=resolution, reachability=reachability, timestamp=timestamp
             )
 
         # Prepare all addresses that need to be pinged.
@@ -181,13 +184,17 @@ class AutomaticRecordStatusCheck:
 
         # Apply results to records.
         for record in records_with_resolution:
-            reachable = any(address_reachability[address] for address in record_addresses[id(record)])
+            r_addresses = record_addresses[id(record)]
+            last_address = r_addresses[-1]
+
+            reachable = any(address_reachability[address][0] for address in r_addresses)
 
             record_status = check_data[record.zone_name][record.name][record.type]
 
             assert record_status is not None
 
             record_status.reachability = "REACHABLE" if reachable else "UNREACHABLE"
+            record_status.timestamp = address_reachability[last_address][1]
 
         return check_data
 

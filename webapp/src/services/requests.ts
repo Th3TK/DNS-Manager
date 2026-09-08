@@ -1,8 +1,8 @@
-import type { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import type { AxiosRequestConfig } from "axios";
 import type { RequestMethod } from "../types/api.types";
 import axios, { HttpStatusCode, isAxiosError } from "axios";
 import _ from "lodash";
-import { useErrorHandler } from "../composables/useErrorHandler";
+import { combinePaths } from "../utils/url";
 
 // const sendFetch = async () : Promise<AxiosResponse> => await axios({})
 
@@ -15,15 +15,11 @@ const BASE_REQUEST_CONFIG = {
     withCredentials: true,
 };
 
-const errorHandler = useErrorHandler();
-
-const combinePaths = (...paths: string[]) => `${paths.map((p) => _.trim(p, "/")).join("/")}`;
-
 export const sendRequest = async <T = any>(
     method: RequestMethod,
     path: string,
     config: AxiosRequestConfig = {},
-    refreshTokensOnUnathorized: boolean = true,
+    refreshTokensOnUnauthorized: boolean = true,
 ): Promise<T> => {
     const fullPath = combinePaths(API_URL, path);
 
@@ -40,7 +36,7 @@ export const sendRequest = async <T = any>(
             throw error;
         }
 
-        if (error.response?.status === HttpStatusCode.Unauthorized && refreshTokensOnUnathorized) {
+        if (error.response?.status === HttpStatusCode.Unauthorized && refreshTokensOnUnauthorized) {
             try {
                 await axios.post(combinePaths(API_URL, "/auth/refresh"), undefined, BASE_REQUEST_CONFIG);
             } catch (refreshError) {

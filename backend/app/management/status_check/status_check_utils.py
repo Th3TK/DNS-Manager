@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import time
+from datetime import datetime
 
 import dns.asyncresolver
 import dns.exception
@@ -57,6 +57,15 @@ async def check_record_resolution(
     return "MISMATCH"
 
 
+async def get_record_resolution_with_timestamp(
+    resolver: dns.asyncresolver.Resolver,
+    hostname: str,
+    record_type: str,
+    expected_content: str | list[str],
+) -> tuple[ResolutionStatus, datetime]:
+    return (await check_record_resolution(resolver, hostname, record_type, expected_content), datetime.now())
+
+
 async def resolve_cname_targets(resolver: dns.asyncresolver.Resolver, target: str | list[str]) -> list[str]:
     targets = [target] if isinstance(target, str) else target
 
@@ -91,36 +100,22 @@ async def resolve_cname_targets(resolver: dns.asyncresolver.Resolver, target: st
     return [address for result in results for address in result]
 
 
-async def check_reachability(addresses: list[str]) -> dict[str, bool]:
+async def ping_batch(batch: list[str]) -> dict[str, tuple[bool, datetime]]:
+
+    async with reachability_semaphore:
+        try:
+            hosts = await async_multiping(batch, count=1, timeout=CHECKS_TIMEOUT_SECONDS)
+        except Exception:
+            raise
+
+    results = {address: (host.is_alive, datetime.now()) for address, host in zip(batch, hosts)}
+
+    return results
+
+
+async def check_reachability(addresses: list[str]) -> dict[str, tuple[bool, datetime]]:
     if not addresses:
         return {}
-
-    async def ping_batch(
-        batch_number: int,
-        batch: list[str],
-    ) -> dict[str, bool]:
-        logger.debug("Starting reachability batch %d (%d addresses)", batch_number, len(batch))
-
-        start = time.perf_counter()
-
-        async with reachability_semaphore:
-            semaphore_acquired = time.perf_counter()
-
-            logger.debug("Reachability batch %d acquired semaphore after %.3fs", batch_number, semaphore_acquired - start)
-
-            try:
-                hosts = await async_multiping(batch, count=1, timeout=CHECKS_TIMEOUT_SECONDS)
-            except Exception:
-                logger.exception("Reachability batch %d failed after %.3fs", batch_number, time.perf_counter() - start)
-                raise
-
-        duration = time.perf_counter() - start
-
-        results = {address: host.is_alive for address, host in zip(batch, hosts)}
-
-        logger.debug("Finished reachability batch %d in %.3fs", batch_number, duration)
-
-        return results
 
     batches = [
         addresses[index : index + REACHABILITY_BATCH_SIZE]
@@ -131,12 +126,6 @@ async def check_reachability(addresses: list[str]) -> dict[str, bool]:
         )
     ]
 
-    logger.debug("Starting reachability check: %d addresses in %d batches", len(addresses), len(batches))
+    results = await asyncio.gather(*(ping_batch(batch) for batch in batches))
 
-    overall_start = time.perf_counter()
-
-    results = await asyncio.gather(*(ping_batch(batch_number, batch) for batch_number, batch in enumerate(batches, start=1)))
-
-    logger.debug("Finished all reachability batches in %.3fs", time.perf_counter() - overall_start)
-
-    return {address: is_alive for result in results for address, is_alive in result.items()}
+    return {address: (is_alive, timestamp) for result in results for address, (is_alive, timestamp) in result.items()}

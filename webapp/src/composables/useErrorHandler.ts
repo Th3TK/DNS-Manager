@@ -3,12 +3,15 @@ import { useNotification } from "naive-ui";
 import { AXIOS_ERROR_NOTIFICATIONS, DEFAULT_ERROR_NOTIFICATION, HTTP_ERROR_NOTIFICATIONS } from "../assets/notifications";
 import _ from "lodash";
 import { useRouter } from "vue-router";
+import { useAuthenticationStore } from "../stores/useAuthenticationStore";
+import { logout } from "../services/api";
 
 type ErrorResponse = {
     detail: string;
 };
 
 export const useErrorHandler = () => {
+    const authentication = useAuthenticationStore();
     const notification = useNotification();
     const router = useRouter();
 
@@ -39,7 +42,31 @@ export const useErrorHandler = () => {
         });
     };
 
+    const handleUnauthorized = () => {
+        router.push("/login");
+        logout();
+
+        displayErrorNotification(
+            authentication.initialized ? "Session Expired" : "Unauthorized",
+            authentication.initialized ? "Log in again to continue." : "Log in to continue.",
+        );
+
+        authentication.refresh();
+    };
+
+    const handleForbidden = () => {
+        displayErrorNotification("Forbidden", "You do not have permission to perform this action.");
+        authentication.refresh();
+    };
+
     const handleError = (error: AxiosError, title?: string, message?: string) => {
+        if (error.response?.status === HttpStatusCode.Unauthorized) {
+            return handleUnauthorized();
+        }
+        if (error.response?.status === HttpStatusCode.Forbidden) {
+            return handleForbidden();
+        }
+
         const httpErrorDetails = getHttpErrorDetails(error);
         const axiosErrorDetails = getAxiosErrorDetails(error);
 
@@ -51,11 +78,7 @@ export const useErrorHandler = () => {
         }
 
         displayErrorNotification(title ?? notificationConfig.title, message ?? notificationConfig.message);
-
-        if (error?.response?.status === HttpStatusCode.Unauthorized) {
-            router.push("/login");
-        }
     };
 
-    return { handleError, displayErrorNotification };
+    return { handleError, displayErrorNotification, handleUnauthorized, handleForbidden };
 };

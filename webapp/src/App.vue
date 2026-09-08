@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { darkTheme, lightTheme, NConfigProvider, NNotificationProvider } from "naive-ui";
+import { useAuthenticationStore } from "./stores/useAuthenticationStore";
+import { useRecordsStatusStore } from "./stores/useRecordsStatusStore";
 
 const isDark = ref(true);
 
@@ -14,6 +16,14 @@ const themeOverrides = {
         fontWeightStrong: "600",
     },
 };
+
+const authentication = useAuthenticationStore();
+const recordsStatus = useRecordsStatusStore();
+
+onMounted(() => {
+    authentication.refresh();
+    recordsStatus.connect();
+});
 </script>
 
 <template>

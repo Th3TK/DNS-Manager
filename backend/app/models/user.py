@@ -1,7 +1,8 @@
 from typing import Annotated
 
-from app.database.models.user import UserInDB
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.database.models.user import UserInDB
 
 
 class User(BaseModel):
@@ -26,7 +27,6 @@ class CreateUserForm(BaseModel):
 
 
 class ModifyUserForm(BaseModel):
-    password: Annotated[str, Field(min_length=6, max_length=128)] | None = None
     full_name: Annotated[str, Field(max_length=128)] | None = None
     is_admin: bool | None = None
     disabled: bool | None = None

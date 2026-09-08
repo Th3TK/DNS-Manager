@@ -57,6 +57,8 @@ export const login = (username: string, password: string) =>
 
 export const logout = () => sendRequest("POST", "/auth/logout");
 
+export const refreshTokens = () => sendRequest("POST", "/auth/refresh", undefined, false);
+
 /* ------------------------------------------------------------------------- */
 /* USERS                                                                     */
 /* ------------------------------------------------------------------------- */

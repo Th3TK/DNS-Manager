@@ -1,12 +1,14 @@
 import type { DataTableColumns } from "naive-ui";
-import type { DNSRecord } from "../../../types/api.types";
+import type { APIRecordStatus, DisplayedRecordStatus, DNSRecordExtended } from "../../../types/api.types";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
-import TextField from "../../data-table/fields/TextField.vue";
 import _ from "lodash";
 import { h } from "vue";
 import RecordControls from "../../controls/RecordControls.vue";
+import StatusField from "../../data-table/fields/StatusField.vue";
+import TextField from "../../data-table/fields/TextField.vue";
+import DateField from "../../data-table/fields/DateField.vue";
 
-export const getColumns = (zoneName: string, refresh: () => void): DataTableColumns<DNSRecord> => [
+export const getColumns = (zoneName: string, refresh: () => void): DataTableColumns<DNSRecordExtended> => [
     {
         type: "selection",
         multiple: true,
@@ -15,7 +17,7 @@ export const getColumns = (zoneName: string, refresh: () => void): DataTableColu
         title: "Name",
         key: "name",
         sorter: "default",
-        render: (row: DNSRecord) =>
+        render: (row: DNSRecordExtended) =>
             h(TextField, {
                 value: row.name,
                 monospace: true,
@@ -27,7 +29,7 @@ export const getColumns = (zoneName: string, refresh: () => void): DataTableColu
         title: "Type",
         key: "type",
         sorter: "default",
-        render: (row: DNSRecord) =>
+        render: (row: DNSRecordExtended) =>
             h(BadgeField, {
                 value: row.type,
                 variants: {
@@ -51,7 +53,7 @@ export const getColumns = (zoneName: string, refresh: () => void): DataTableColu
         title: "Content",
         key: "content",
         sorter: "default",
-        render: (row: DNSRecord) =>
+        render: (row: DNSRecordExtended) =>
             h(TextField, {
                 value: _.isArray(row.content) ? row.content.join("\n") : row.content,
                 monospace: true,
@@ -63,7 +65,7 @@ export const getColumns = (zoneName: string, refresh: () => void): DataTableColu
         title: "Origin",
         key: "origin",
         sorter: "default",
-        render: (row: DNSRecord) =>
+        render: (row: DNSRecordExtended) =>
             h(BadgeField, {
                 value: row.origin,
                 variants: {
@@ -92,9 +94,33 @@ export const getColumns = (zoneName: string, refresh: () => void): DataTableColu
         width: 100,
     },
     {
+        title: "Status",
+        key: "displayed_status",
+        sorter: "default",
+        render: (row: DNSRecordExtended) =>
+            h(StatusField, {
+                displayed_status: row.displayed_status,
+                api_status: row.api_status,
+            }),
+        width: 220,
+    },
+    {
+        title: "Last status check",
+        key: "status_timestamp",
+        sorter: "default",
+        render: (row: DNSRecordExtended) =>
+            row.status_timestamp
+                ? h(DateField, {
+                      value: row.status_timestamp,
+                  })
+                : "-",
+        width: 180,
+    },
+
+    {
         title: "",
         key: "controls",
-        render: (row: DNSRecord) =>
+        render: (row: DNSRecordExtended) =>
             h(RecordControls, {
                 records: row,
                 zoneName: zoneName,

@@ -22,7 +22,7 @@ def __get_me__(
 def __change_own_password__(
     user: Annotated[User, Depends(get_authenticated_user)], db: Annotated[Session, Depends(get_db)], form: ChangePasswordForm
 ) -> None:
-    return change_password(db, user, form.password)
+    change_password(db, user, form.password)
 
 
 @router.get("", response_model=list[User])
@@ -67,6 +67,24 @@ def __modify_user__(
     username: str,
 ) -> User:
     return modify_user(db, username, form)
+
+
+@router.patch("/{username}/password", response_model=None, status_code=204)
+def __change_user_password__(
+    user: Annotated[User, Depends(get_authenticated_administrator)],
+    db: Annotated[Session, Depends(get_db)],
+    form: ChangePasswordForm,
+    username: str,
+) -> None:
+    target_user = get_user(db, username)
+
+    if target_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with username='{username}' could not be found.",
+        )
+
+    change_password(db, target_user, form.password)
 
 
 @router.delete("/{username}", response_model=None, status_code=204)

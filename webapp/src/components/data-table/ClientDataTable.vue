@@ -20,7 +20,7 @@ const { handleError } = useErrorHandler();
 
 const table = useTemplateRef<BaseDataTableExpose<T>>("table");
 
-const data = ref<T[]>([]);
+const data = defineModel<T[]>("data", { default: () => [] });
 const loading = defineModel<boolean>("loading", { default: false });
 const selectedKeys = defineModel<DataTableRowKey[]>("selectedKeys", { default: () => [] });
 

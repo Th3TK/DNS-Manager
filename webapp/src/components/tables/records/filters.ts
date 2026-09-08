@@ -1,8 +1,8 @@
 import _ from "lodash";
-import type { DNSRecord, User } from "../../../types/api.types";
+import type { DNSRecordExtended, User } from "../../../types/api.types";
 import type { FilterConfig } from "../../../types/table.types";
 
-export const getFilters = (users: User[]): FilterConfig<DNSRecord> => ({
+export const getFilters = (users: User[]): FilterConfig<DNSRecordExtended> => ({
     zone_name: { type: "freetext" },
     name: { type: "freetext" },
     content: { type: "freetext" },
@@ -23,5 +23,14 @@ export const getFilters = (users: User[]): FilterConfig<DNSRecord> => ({
     author: {
         type: "options",
         options: _.map(users, (user: User) => ({ label: user.full_name || user.username, value: user.username })),
+    },
+    displayed_status: {
+        type: "options",
+        options: [
+            { label: "Ok", value: "OK" },
+            { label: "Warning", value: "WARNING" },
+            { label: "Error", value: "ERROR" },
+            { label: "Disabled", value: "Disabled" },
+        ],
     },
 });

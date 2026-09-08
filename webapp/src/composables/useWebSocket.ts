@@ -1,0 +1,66 @@
+import { ref } from "vue";
+import { logout, refreshTokens } from "../services/api";
+import { combinePaths } from "../utils/url";
+import { useRouter } from "vue-router";
+import { useAuthenticationStore } from "../stores/useAuthenticationStore";
+
+const API_URL = `ws://${window.location.hostname}:9000/api`;
+
+export function useWebSocket<T>(path: string) {
+    const authentication = useAuthenticationStore();
+    const router = useRouter();
+
+    const socket = ref<WebSocket | null>(null);
+    const connected = ref(false);
+    const lastMessage = ref<T | null>(null);
+
+    const onUnauthorized = () => {
+        router.push("/login");
+        authentication.refresh();
+
+        logout();
+    };
+
+    function connect(refreshTokensOnDisconnect: boolean = true) {
+        if (connected.value) return;
+
+        socket.value = new WebSocket(combinePaths(API_URL, path));
+
+        socket.value.onopen = () => {
+            connected.value = true;
+        };
+
+        socket.value.onmessage = (event) => {
+            lastMessage.value = JSON.parse(event.data);
+        };
+
+        socket.value.onclose = (event: CloseEvent) => {
+            connected.value = false;
+
+            if (event.code !== 1008) return;
+
+            if (!refreshTokensOnDisconnect) return onUnauthorized();
+
+            refreshTokens()
+                .then(() => connect(false))
+                .catch(onUnauthorized);
+        };
+    }
+
+    function send(data: unknown) {
+        socket.value?.send(JSON.stringify(data));
+    }
+
+    function disconnect() {
+        socket.value?.close();
+    }
+
+    return {
+        socket,
+        connected,
+        connect,
+        send,
+        lastMessage,
+        disconnect,
+    };
+}

@@ -72,6 +72,12 @@ def modify_user(db: Session, username: str, modification_form: ModifyUserForm) -
             detail=f"User with username='{username}' could not be found.",
         )
 
+    if get_active_admin_count(db) == 1 and user_in_db.is_admin and not modification_form.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot demote the last active administrator.",
+        )
+
     updates = modification_form.model_dump(exclude_none=True)
 
     for field, value in updates.items():
@@ -116,6 +122,6 @@ def delete_user(db: Session, username: str) -> None:
     db.commit()
 
 
-def change_password(db: Session, logged_in_user: User, new_password: str) -> None:
-    db.execute(update(UserInDB).where(UserInDB.username == logged_in_user.username).values(password=hash_password(new_password)))
+def change_password(db: Session, target_user: User, new_password: str) -> None:
+    db.execute(update(UserInDB).where(UserInDB.username == target_user.username).values(password=hash_password(new_password)))
     db.commit()

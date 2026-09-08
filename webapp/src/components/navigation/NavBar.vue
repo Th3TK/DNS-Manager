@@ -1,24 +1,15 @@
 <script setup lang="ts">
 import { NButton, NCard, NFlex, NIcon, NText } from "naive-ui";
-import { computed, watch } from "vue";
+import { computed } from "vue";
 import { routes } from "../../router";
 import { useRouter } from "vue-router";
 import { User as IconUser } from "@vicons/tabler";
-import useFetch from "../../composables/useFetch";
-import { type User } from "../../types/api.types";
-import { useErrorHandler } from "../../composables/useErrorHandler";
+import { useAuthenticationStore } from "../../stores/useAuthenticationStore";
 
-const { handleError } = useErrorHandler();
-
-const { data: user, error, loading } = useFetch<User>("/users/me");
-
-watch(error, (err) => {
-    if (err) handleError(err);
-});
-
+const authentication = useAuthenticationStore();
 const router = useRouter();
 
-const filteredRoutes = computed(() => routes.filter((e) => !e.meta?.hide));
+const filteredRoutes = computed(() => routes.filter((e) => !e.meta?.hide && (!e.meta.adminRequired || authentication.isAdmin)));
 
 const isRouteActive = (routeName: string) => router.currentRoute.value.name === routeName;
 </script>
@@ -93,15 +84,15 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
                         class="full-name"
                         ellipsis
                     >
-                        {{ user?.full_name || `${user?.username}` }}
+                        {{ authentication.user?.full_name || `${authentication.user?.username}` }}
                     </NText>
                     <NText
                         class="username"
                         depth="3"
                         ellipsis
-                        v-if="user?.full_name"
+                        v-if="authentication.user?.full_name"
                     >
-                        {{ `${user?.username}` }}
+                        {{ `${authentication.user?.username}` }}
                     </NText>
                 </NFlex>
             </NFlex>
