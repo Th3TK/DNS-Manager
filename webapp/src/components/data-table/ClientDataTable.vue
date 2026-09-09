@@ -29,6 +29,7 @@ const loadData = async () => {
 
     try {
         data.value = await props.getData();
+        selectedKeys.value = [];
     } catch (error) {
         if (isAxiosError(error)) handleError(error);
         throw error;
@@ -74,6 +75,12 @@ defineExpose({
     >
         <template #header>
             <slot name="header" />
+        </template>
+        <template #header-filters>
+            <slot name="header-filters" />
+        </template>
+        <template #description>
+            <slot name="description" />
         </template>
         <template #controls>
             <slot name="controls" />

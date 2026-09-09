@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NFlex, NText, type DataTableRowKey } from "naive-ui";
+import { type DataTableRowKey } from "naive-ui";
 import { computed, ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import type { TrashEntry, User } from "../../../types/api.types";
@@ -35,24 +35,11 @@ const refresh = () => table.value?.refresh();
         :onCellClick="handleClick"
         v-model:selected-keys="selectedKeys"
     >
-        <template #header>
-            <NFlex
-                vertical
-                :size="0"
-                class="header"
-            >
-                <NText
-                    tag="h1"
-                    class="title"
-                >
-                    Trash -
-                    <NText depth="3"> {{ table?.total ?? 0 }} Entries </NText>
-                </NText>
-                <NText depth="3">
-                    Contains deleted DNS zones and records. Items are permanently deleted after 30 days. Double click on a table row to view
-                    item's full details.</NText
-                >
-            </NFlex>
+        <template #header> Trash Items </template>
+        <template #header-filters> Filtered Trash Items </template>
+        <template #description>
+            Contains deleted DNS zones and records. Items are permanently deleted after 30 days. Double click on a table row to view item's
+            full details.
         </template>
         <template #controls>
             <TrashControls
@@ -67,22 +54,4 @@ const refresh = () => table.value?.refresh();
     </RemoteDataTable>
 </template>
 
-<style lang="css" scoped>
-:deep(.clickable-row) {
-    cursor: pointer !important;
-}
-
-:deep(.clickable-row td > *) {
-    cursor: initial !important;
-}
-
-.header {
-    padding-bottom: var(--spacing-md);
-}
-
-.title {
-    line-height: normal;
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-</style>
+<style lang="css" scoped></style>

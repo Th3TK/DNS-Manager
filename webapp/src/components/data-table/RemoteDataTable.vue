@@ -53,6 +53,7 @@ const loadData = async () => {
 
         data.value = result.items;
         total.value = result.total;
+        selectedKeys.value = [];
     } catch (error) {
         if (isAxiosError(error)) handleError(error);
         else throw error;
@@ -97,6 +98,13 @@ defineExpose({
     >
         <template #header>
             <slot name="header" />
+        </template>
+
+        <template #header-filters>
+            <slot name="header-filters" />
+        </template>
+        <template #description>
+            <slot name="description" />
         </template>
         <template #controls>
             <slot name="controls" />

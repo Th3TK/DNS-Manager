@@ -28,43 +28,12 @@ const filterConfig = computed(() => getFilters(users.value ?? []));
         :filterConfig="filterConfig"
         :onCellClick="handleClick"
     >
-        <template #header>
-            <NFlex
-                vertical
-                :size="0"
-                class="header"
-            >
-                <NText
-                    tag="h1"
-                    class="title"
-                >
-                    Change History -
-                    <NText depth="3"> {{ table?.total ?? 0 }} Entries </NText>
-                </NText>
-                <NText depth="3">
-                    Full action log of changes made to DNS objects through the application. Double click on a row to view action details.
-                </NText>
-            </NFlex>
+        <template #header> Change History Logs </template>
+        <template #header-filters> Filtered Logs </template>
+        <template #description>
+            Full action log of changes made to DNS objects through the application. Double click on a row to view action details.
         </template>
     </RemoteDataTable>
 </template>
 
-<style lang="css" scoped>
-:deep(.clickable-row) {
-    cursor: pointer !important;
-}
-
-:deep(.clickable-row td > *) {
-    cursor: initial !important;
-}
-
-.header {
-    padding-bottom: var(--spacing-md);
-}
-
-.title {
-    line-height: normal;
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-</style>
+<style lang="css" scoped></style>

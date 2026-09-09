@@ -84,36 +84,9 @@ watch(
         :onCellClick="handleClick"
         :filter-config="filterConfig"
     >
-        <template #header>
-            <NFlex>
-                <NFlex
-                    vertical
-                    :size="0"
-                    class="header"
-                >
-                    <NText
-                        :tag="global ? 'h1' : 'h2'"
-                        class="title"
-                    >
-                        {{ global ? "Records List" : "Zone Records" }}
-                        <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
-                    </NText>
-                    <NText
-                        depth="3"
-                        v-if="!selectedKeys.length"
-                    >
-                        Double click on a record to view its full details.
-                    </NText>
-                    <NText
-                        v-else
-                        type="primary"
-                    >
-                        Selected {{ selectedKeys.length }}
-                    </NText>
-                </NFlex>
-                <slot name="header" />
-            </NFlex>
-        </template>
+        <template #header> {{ global ? "Records List" : "Zone Records" }} </template>
+        <template #header-filters> Filtered Zones </template>
+        <template #description> Double click on a record to view its full details. </template>
         <template #controls>
             <RecordControls
                 v-if="!global"
@@ -128,23 +101,3 @@ watch(
         </template>
     </ClientDataTable>
 </template>
-
-<style lang="css" scoped>
-:deep(.clickable-cell) {
-    cursor: pointer !important;
-}
-
-:deep(.clickable-cell td > *) {
-    cursor: initial !important;
-}
-
-.header {
-    padding-bottom: var(--spacing-md);
-}
-
-.title {
-    line-height: normal;
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-</style>

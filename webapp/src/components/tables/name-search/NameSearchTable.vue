@@ -129,6 +129,7 @@ const search = async () => {
         </NText>
         <BaseDataTable
             v-if="data.length"
+            hide-header
             :data="data"
             :row-keys="['zone_name', 'name', 'type', 'trash_entry_uuid']"
             :columns="columns"
@@ -161,13 +162,5 @@ const search = async () => {
 }
 .data-table {
     flex: 1;
-}
-
-:deep(.n-pagination) {
-    width: 100%;
-}
-:deep(.n-pagination-prefix) {
-    flex: 1 !important;
-    font-size: 15px;
 }
 </style>

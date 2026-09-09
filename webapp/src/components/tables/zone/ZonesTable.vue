@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type User, type DNSZone } from "../../../types/api.types.ts";
-import { type DataTableRowKey, NFlex, NText } from "naive-ui";
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { type DataTableRowKey } from "naive-ui";
+import { computed, ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import useFetch from "../../../composables/useFetch.ts";
 import { getColumns } from "./columns.ts";
@@ -35,22 +35,9 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
         :onCellClick="handleClick"
         :filterConfig="filterConfig"
     >
-        <template #header>
-            <NFlex
-                vertical
-                :size="0"
-                class="header"
-            >
-                <NText
-                    tag="h1"
-                    class="title"
-                >
-                    Zone List
-                    <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
-                </NText>
-                <NText depth="3"> Double click on a zone to view its full details and records. </NText>
-            </NFlex>
-        </template>
+        <template #header> Zone List </template>
+        <template #header-filters> Filtered Zones </template>
+        <template #description> Double click on a zone to view its full details and records. </template>
         <template #controls>
             <ZoneControls
                 type="table"
@@ -63,14 +50,4 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
     </ClientDataTable>
 </template>
 
-<style lang="css" scoped>
-.header {
-    padding-bottom: var(--spacing-md);
-}
-
-.title {
-    line-height: normal;
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-</style>
+<style lang="css" scoped></style>

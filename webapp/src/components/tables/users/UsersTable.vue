@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type User } from "../../../types/api.types.ts";
-import { type DataTableRowKey, NFlex, NText } from "naive-ui";
+import { type DataTableRowKey } from "naive-ui";
 import { computed, ref, useTemplateRef } from "vue";
 import { getColumns } from "./columns.ts";
 import { getUsers } from "../../../services/api.ts";
@@ -8,9 +8,7 @@ import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import type { TableExpose } from "../../../types/table.types.ts";
 import { filters } from "./filters.ts";
 import UserControls from "../../controls/UserControls.vue";
-import { useAuthenticationStore } from "../../../stores/useAuthenticationStore.ts";
 
-const authentication = useAuthenticationStore();
 const table = useTemplateRef<TableExpose<User>>("table");
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
@@ -29,22 +27,9 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
         :columns="columns"
         :filterConfig="filters"
     >
-        <template #header>
-            <NFlex
-                vertical
-                :size="0"
-                class="header"
-            >
-                <NText
-                    tag="h1"
-                    class="title"
-                >
-                    Users List
-                    <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
-                </NText>
-                <NText depth="3"> Displays all accounts in the applicaton </NText>
-            </NFlex>
-        </template>
+        <template #header> Users List </template>
+        <template #header-filters> Filtered Users </template>
+        <template #description> Displays all accounts in the applicaton. </template>
         <template #controls>
             <UserControls
                 type="table"
@@ -57,14 +42,4 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
     </ClientDataTable>
 </template>
 
-<style lang="css" scoped>
-.header {
-    padding-bottom: var(--spacing-md);
-}
-
-.title {
-    line-height: normal;
-    margin-top: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-</style>
+<style lang="css" scoped></style>

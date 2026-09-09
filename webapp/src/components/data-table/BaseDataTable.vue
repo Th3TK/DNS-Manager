@@ -5,6 +5,7 @@ import {
     NFlex,
     NIcon,
     NTag,
+    NText,
     type DataTableColumns,
     type DataTableRowKey,
     type PaginationInfo,
@@ -15,8 +16,9 @@ import AddFilterButton from "./filters/AddFilterButton.vue";
 import { Refresh } from "@vicons/tabler";
 import { useDataTable } from "../../composables/useDataTable.ts";
 import { formatFilterText } from "./filters/filters.ts";
-import { computed, type VNodeChild } from "vue";
+import { computed, h, watch, type VNodeChild } from "vue";
 import _ from "lodash";
+import type { VNode } from "vue";
 
 defineOptions({
     inheritAttrs: false,
@@ -26,6 +28,7 @@ const props = defineProps<{
     columns: DataTableColumns<T>;
     rowKeys: (keyof T)[];
     filterConfig?: FilterConfig<T>;
+    hideHeader?: boolean;
     refresh?: () => void;
     onCellClick?: (row: T) => any;
     paginationPrefix?: (info: PaginationInfo) => VNodeChild;
@@ -62,6 +65,21 @@ const keyedData = computed(() =>
 
 const selectedRows = computed(() => keyedData.value.filter((row) => selectedKeys.value.includes(row.key as DataTableRowKey)));
 
+const defaultPaginationPrefix = computed(
+    () => (): VNode =>
+        h(
+            NText,
+            {
+                type: "primary",
+                depth: 3,
+                strong: true,
+            },
+            {
+                default: () => (selectedKeys.value.length ? `Selected rows:  ${selectedKeys.value.length ?? 0}` : ""),
+            },
+        ),
+);
+
 const pagination = computed(
     () =>
         ({
@@ -72,9 +90,13 @@ const pagination = computed(
             pageSizes: [10, 25, 50, 100],
             onUpdatePage: handlePageChange,
             onUpdatePageSize: handlePageSizeChange,
-            prefix: props.paginationPrefix,
+            prefix: props.paginationPrefix ?? defaultPaginationPrefix.value,
         }) as PaginationProps,
 );
+
+watch(filters, () => {
+    selectedKeys.value = [];
+});
 
 defineExpose({
     page,
@@ -90,7 +112,33 @@ defineExpose({
         class="container"
         vertical
     >
-        <slot name="header" />
+        <NFlex
+            v-if="!hideHeader"
+            vertical
+            :size="0"
+            class="header"
+        >
+            <NText
+                class="title"
+                :type="filtersActive.length ? 'primary' : undefined"
+            >
+                <slot
+                    v-if="filtersActive.length"
+                    name="header-filters"
+                />
+                <slot
+                    v-else
+                    name="header"
+                />
+                <NText
+                    depth="3"
+                    :type="filtersActive.length ? 'primary' : undefined"
+                >
+                    ({{ data.length || 0 }})
+                </NText>
+            </NText>
+            <NText depth="3"> <slot name="description" /> </NText>
+        </NFlex>
         <NFlex
             :vertical="false"
             class="full-controls"
@@ -171,5 +219,23 @@ defineExpose({
 
 .controls {
     margin-left: auto;
+}
+
+.header {
+    padding-bottom: var(--spacing-md);
+}
+
+.title {
+    font-size: 32px;
+    line-height: normal;
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+:deep(.n-pagination) {
+    width: 100%;
+}
+:deep(.n-pagination-prefix) {
+    flex: 1 !important;
+    font-size: 16px;
 }
 </style>
