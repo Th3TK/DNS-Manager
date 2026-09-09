@@ -56,6 +56,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
         render: (row: DNSZone) =>
             h(ZoneControls, {
                 zones: row,
+                type: "dropdown",
                 dropdown: true,
                 onDeleteError: refresh,
                 onDeleteSuccess: refresh,

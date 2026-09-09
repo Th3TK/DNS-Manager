@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ArrowBackUp, TrashX } from "@vicons/tabler";
 import { NButton, NFlex, NIcon } from "naive-ui";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const emit = defineEmits<{
     restore: [];
     delete: [];
 }>();
+
+const authentication = useAuthenticationStore();
 </script>
 
 <template>
@@ -15,6 +18,7 @@ const emit = defineEmits<{
             tertiary
             strong
             @click="emit('restore')"
+            :disabled="!authentication.isAdmin"
         >
             <template #icon>
                 <NIcon :component="ArrowBackUp" />
@@ -28,6 +32,7 @@ const emit = defineEmits<{
             tertiary
             strong
             @click="emit('delete')"
+            :disabled="!authentication.isAdmin"
         >
             <template #icon>
                 <NIcon :component="TrashX" />

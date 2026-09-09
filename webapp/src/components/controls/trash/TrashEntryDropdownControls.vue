@@ -3,12 +3,15 @@ import { ArrowBackUp, ChevronRight, DotsVertical, FileText, Link, TrashX } from 
 import { h } from "vue";
 import { NButton, NDropdown, NIcon, type DropdownOption } from "naive-ui";
 import _ from "lodash";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const emit = defineEmits<{
     navigate: [];
     restore: [];
     delete: [];
 }>();
+
+const authentication = useAuthenticationStore();
 
 const options: DropdownOption[] = [
     {
@@ -20,11 +23,13 @@ const options: DropdownOption[] = [
         label: "Restore",
         key: "restore",
         icon: () => h(NIcon, { component: ArrowBackUp }),
+        disabled: !authentication.isAdmin,
     },
     {
         label: "Delete permanently",
         key: "delete",
         icon: () => h(NIcon, { component: TrashX }),
+        disabled: !authentication.isAdmin,
     },
 ];
 

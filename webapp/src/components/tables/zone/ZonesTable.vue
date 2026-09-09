@@ -53,6 +53,7 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
         </template>
         <template #controls>
             <ZoneControls
+                type="table"
                 :zones="selectedRows"
                 @delete-error="refresh"
                 @delete-success="refresh"

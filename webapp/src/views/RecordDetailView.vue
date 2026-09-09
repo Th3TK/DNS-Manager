@@ -78,6 +78,7 @@ watch(error, () => {
                     {{ record.name }}
                 </NText>
                 <RecordControls
+                    type="current"
                     :records="record"
                     :zone-name="record.zone_name"
                     @edit-success="onEdit"

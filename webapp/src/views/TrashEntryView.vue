@@ -47,7 +47,8 @@ const handleControlsError = (error: AxiosError) => {
                     Deleted item
                 </NText>
                 <TrashControls
-                    :entry="item"
+                    type="current"
+                    :entries="item"
                     @delete-success="navigateToTable"
                     @restore-success="navigateToTable"
                     @delete-error="handleControlsError"

@@ -120,7 +120,7 @@ const search = async () => {
         </NText>
         <NText
             depth="3"
-            v-else-if="searched"
+            v-else-if="searched || data.length"
         >
             Result:
             <NText :type="data.length ? 'warning' : 'primary'">

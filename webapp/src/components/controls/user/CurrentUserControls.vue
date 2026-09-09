@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import { ChevronRight, Key, Logout, User as UserIcon, UserCircle } from "@vicons/tabler";
-import { NBadge, NButton, NDropdown, NFlex, NIcon, NTag, NText, type DropdownOption } from "naive-ui";
-import { h, ref } from "vue";
+import { ChevronRight, Key, Logout, User as UserIcon } from "@vicons/tabler";
+import { NButton, NDropdown, NFlex, NIcon, NText, type DropdownOption } from "naive-ui";
+import { h } from "vue";
 import type { User } from "../../../types/api.types";
-import { logout } from "../../../services/api";
-import { useRouter } from "vue-router";
-import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const props = defineProps<{
     user: User;
 }>();
 
 const emit = defineEmits(["change-password", "logout"]);
-
-const authentication = useAuthenticationStore();
-const router = useRouter();
 
 const userMenuOptions: DropdownOption[] = [
     {

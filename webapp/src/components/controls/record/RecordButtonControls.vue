@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Edit, Trash } from "@vicons/tabler";
 import { NButton, NFlex, NIcon } from "naive-ui";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const emit = defineEmits(["delete", "edit"]);
+
+const authentication = useAuthenticationStore();
 
 const props = defineProps<{
     showEdit: boolean;
@@ -16,6 +19,7 @@ const props = defineProps<{
             type="warning"
             strong
             @click="emit('edit')"
+            :disabled="!authentication.isAdmin"
         >
             <template #icon>
                 <NIcon
@@ -29,6 +33,7 @@ const props = defineProps<{
             type="error"
             strong
             @click="emit('delete')"
+            :disabled="!authentication.isAdmin"
         >
             <template #icon>
                 <NIcon

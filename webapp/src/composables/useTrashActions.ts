@@ -6,7 +6,6 @@ import { useErrorHandler } from "./useErrorHandler";
 import { useRouter } from "vue-router";
 
 export const useTrashActions = (
-    entry: TrashEntry,
     onRestoreSuccess?: () => void,
     onRestoreError?: (error: AxiosError) => void,
     onDeleteSuccess?: () => void,
@@ -19,11 +18,11 @@ export const useTrashActions = (
 
     const router = useRouter();
 
-    const onNavigate = () => {
+    const onNavigate = (entry: TrashEntry) => {
         router.push({ name: "TrashEntryDetails", params: { uuid: entry.entry_uuid } });
     };
 
-    const restore = async () => {
+    const restore = async (entry: TrashEntry) => {
         await restoreTrashEntry(entry.entry_uuid)
             .then(onRestoreSuccess)
             .catch((error: AxiosError) => {
@@ -42,13 +41,13 @@ export const useTrashActions = (
             });
     };
 
-    const onRestore = () => {
+    const onRestore = (entry: TrashEntry) => {
         if (entry.object_type !== "record") {
-            return restore();
+            return restore(entry);
         }
 
         getZone(entry.object_data.zone_name)
-            .then(restore)
+            .then(() => restore(entry))
             .catch((error: AxiosError) => {
                 if (error.response?.status === HttpStatusCode.NotFound) {
                     showCreateZoneConfirmation.value = true;
@@ -59,19 +58,19 @@ export const useTrashActions = (
             });
     };
 
-    const onCreateZoneAndRestore = () => {
+    const onCreateZoneAndRestore = (entry: TrashEntry) => {
         showCreateZoneConfirmation.value = false;
 
         createZone({
             name: (entry.object_data as RestoreDNSRecordForm).zone_name,
             comment: "Automatically created during record restoration.",
         })
-            .then(restore)
+            .then(() => restore(entry))
             .catch(handleError);
     };
 
-    const onDelete = () => {
-        deleteTrashEntry(entry.entry_uuid)
+    const onDelete = (entries: TrashEntry[]) => {
+        Promise.all(entries.map((e) => deleteTrashEntry(e.entry_uuid)))
             .then(onDeleteSuccess)
             .catch((error: AxiosError) => {
                 if (error.response?.status !== HttpStatusCode.NotFound) {

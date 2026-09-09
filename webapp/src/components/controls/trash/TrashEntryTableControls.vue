@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Trash } from "@vicons/tabler";
+import { TrashX } from "@vicons/tabler";
 import { NButton, NFlex, NIcon } from "naive-ui";
 import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
@@ -7,10 +7,7 @@ const props = defineProps<{
     showDelete: boolean;
 }>();
 
-const emit = defineEmits<{
-    delete: [];
-    create: [];
-}>();
+const emit = defineEmits(["delete"]);
 
 const authentication = useAuthenticationStore();
 </script>
@@ -26,26 +23,11 @@ const authentication = useAuthenticationStore();
         >
             <template #icon>
                 <NIcon
-                    :component="Trash"
+                    :component="TrashX"
                     size="16"
                 />
             </template>
             Delete Selected
-        </NButton>
-
-        <NButton
-            type="primary"
-            strong
-            @click="emit('create')"
-            :disabled="!authentication.isAdmin"
-        >
-            <template #icon>
-                <NIcon
-                    :component="Plus"
-                    size="16"
-                />
-            </template>
-            Create Record
         </NButton>
     </NFlex>
 </template>

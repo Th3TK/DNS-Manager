@@ -61,6 +61,7 @@ watch(error, () => {
                 </NText>
                 <ZoneControls
                     v-if="zone"
+                    type="current"
                     :zones="zone"
                     class="controls"
                     @delete-success="navigateToTable"
@@ -89,6 +90,7 @@ watch(error, () => {
         <template #portal>
             <NCard class="tableCard">
                 <RecordsTable
+                    v-if="route.params.name"
                     :zone-name="String(route.params.name)"
                     :global="false"
                 >

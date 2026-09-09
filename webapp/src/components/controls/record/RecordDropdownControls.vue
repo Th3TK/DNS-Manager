@@ -1,34 +1,47 @@
 <script setup lang="ts">
 import { DotsVertical, Edit, FileText, Trash } from "@vicons/tabler";
-import { h } from "vue";
+import { computed, h } from "vue";
 import { NButton, NDropdown, NIcon, type DropdownOption } from "naive-ui";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const emit = defineEmits(["navigate", "edit", "delete"]);
 
-const options: DropdownOption[] = [
+const props = defineProps<{
+    showEdit: boolean;
+}>();
+
+const authentication = useAuthenticationStore();
+
+const options = computed<DropdownOption[]>(() => [
     {
         label: "View record details",
         key: "navigate",
         icon: () => h(NIcon, { component: FileText }),
     },
-    {
-        label: "Edit",
-        key: "Edit",
-        icon: () => h(NIcon, { component: Edit }),
-    },
+    ...(props.showEdit
+        ? [
+              {
+                  label: "Edit",
+                  key: "edit",
+                  icon: () => h(NIcon, { component: Edit }),
+                  disabled: !authentication.isAdmin,
+              },
+          ]
+        : []),
     {
         label: "Delete",
         key: "delete",
         icon: () => h(NIcon, { component: Trash }),
+        disabled: !authentication.isAdmin,
     },
-];
+]);
 
 const onSelect = (key: string) => {
     switch (key) {
         case "navigate":
             emit("navigate");
             break;
-        case "navigate":
+        case "edit":
             emit("edit");
             break;
         case "delete":

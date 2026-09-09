@@ -33,7 +33,7 @@ const data = ref<DNSRecordExtended[]>([]);
 const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
-const columns = computed(() => (props.global ? getColumnsForAllRecordsTable() : getColumns(props.zoneName, refresh)));
+const columns = computed(() => (props.global ? getColumnsForAllRecordsTable() : getColumns(refresh)));
 const filterConfig = computed(() => getFilters(users.value ?? []));
 
 const refresh = () => table.value?.refresh();
@@ -117,6 +117,7 @@ watch(
         <template #controls>
             <RecordControls
                 v-if="!global"
+                type="table"
                 :records="table?.selectedRows ?? []"
                 :zoneName="zoneName"
                 @delete-error="refresh"

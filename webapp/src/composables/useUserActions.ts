@@ -6,7 +6,7 @@ import { deleteUser, logout } from "../services/api";
 import { useRouter } from "vue-router";
 import { useAuthenticationStore } from "../stores/useAuthenticationStore";
 
-export const useUserActions = (users: Ref<User | User[]>, onDeleteSuccess?: () => void, onDeleteError?: (error: AxiosError) => void) => {
+export const useUserActions = (onDeleteSuccess?: () => void, onDeleteError?: (error: AxiosError) => void) => {
     const authentication = useAuthenticationStore();
     const { handleError } = useErrorHandler();
     const router = useRouter();
@@ -16,8 +16,8 @@ export const useUserActions = (users: Ref<User | User[]>, onDeleteSuccess?: () =
     const createModalOpened = ref(false);
     const editModalOpened = ref(false);
 
-    const onDelete = () => {
-        Promise.all([users.value].flat().map((u) => deleteUser(u.username)))
+    const onDelete = (users: User | User[]) => {
+        Promise.all([users].flat().map((u) => deleteUser(u.username)))
             .then(onDeleteSuccess)
             .catch((error: AxiosError) => {
                 // skip default error handling for 401 and 409

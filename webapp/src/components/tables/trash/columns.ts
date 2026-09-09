@@ -59,7 +59,8 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
         key: "controls",
         render: (row: TrashEntry) =>
             h(TrashControls, {
-                entry: row,
+                entries: row,
+                type: "dropdown",
                 onDeleteError: refresh,
                 onDeleteSuccess: refresh,
                 onRestoreError: refresh,

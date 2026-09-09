@@ -3,6 +3,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocketDisconnect
+from uvicorn.protocols.utils import ClientDisconnected
 
 if TYPE_CHECKING:
     from app.management.status_check.websocket_handler import StatusCheckWebSocketHandler
@@ -33,7 +34,7 @@ class StatusCheckWebSocketManager:
             )
 
             for handler, result in zip(handlers, results):
-                if isinstance(result, WebSocketDisconnect):
+                if isinstance(result, WebSocketDisconnect) or isinstance(result, ClientDisconnected):
                     self._connections.discard(handler)
                 if isinstance(result, Exception):
                     logger.exception(

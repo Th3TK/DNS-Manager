@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, Trash } from "@vicons/tabler";
 import { NButton, NFlex, NIcon } from "naive-ui";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const props = defineProps<{
     showDelete: boolean;
@@ -10,6 +11,8 @@ const emit = defineEmits<{
     delete: [];
     create: [];
 }>();
+
+const authentication = useAuthenticationStore();
 </script>
 
 <template>
@@ -19,6 +22,7 @@ const emit = defineEmits<{
             strong
             v-if="showDelete"
             @click="emit('delete')"
+            :disabled="!authentication.isAdmin"
         >
             <template #icon>
                 <NIcon
@@ -33,6 +37,7 @@ const emit = defineEmits<{
             type="primary"
             strong
             @click="emit('create')"
+            :disabled="!authentication.isAdmin"
         >
             <template #icon>
                 <NIcon

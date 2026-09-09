@@ -6,11 +6,7 @@ import { deleteRecord } from "../services/api";
 import { useRouter } from "vue-router";
 import _ from "lodash";
 
-export const useRecordActions = (
-    records: Ref<DNSRecord | DNSRecord[]>,
-    onDeleteSuccess?: () => void,
-    onDeleteError?: (error: AxiosError) => void,
-) => {
+export const useRecordActions = (onDeleteSuccess?: () => void, onDeleteError?: (error: AxiosError) => void) => {
     const { handleError } = useErrorHandler();
     const router = useRouter();
 
@@ -18,16 +14,15 @@ export const useRecordActions = (
     const createModalOpened = ref(false);
     const editModalOpened = ref(false);
 
-    const onNavigate = () => {
-        if (_.isArray(records.value)) return;
+    const onNavigate = (record: DNSRecord) => {
         router.push({
             name: "RecordDetails",
-            params: { name: records.value.zone_name, record_name: records.value.name, record_type: records.value.type },
+            params: { name: record.zone_name, record_name: record.name, record_type: record.type },
         });
     };
 
-    const onDelete = () => {
-        Promise.all([records.value].flat().map((z) => deleteRecord(z.zone_name, z.name, z.type)))
+    const onDelete = (records: DNSRecord[]) => {
+        Promise.all(records.map((z) => deleteRecord(z.zone_name, z.name, z.type)))
             .then(onDeleteSuccess)
             .catch((error: AxiosError) => {
                 if (error.response?.status !== HttpStatusCode.NotFound) {

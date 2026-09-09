@@ -30,48 +30,46 @@ const props = defineProps<{
 
 const users = toRef(props, "users");
 const { createModalOpened, deleteModalOpened, editModalOpened, changePasswordModalOpened, onDelete, onLogout } = useUserActions(
-    users,
     props.onDeleteSuccess,
     props.onDeleteError,
 );
 
-const isSingleUser = computed(() => !_.isArray(users.value) || users.value.length === 1);
-const userList = computed(() => [users.value].flat());
-const user = computed(() => (isSingleUser.value ? userList.value[0] : null));
+const usersList = computed(() => [users.value].flat());
+const user = computed(() => (_.isArray(users.value) ? null : users.value));
 </script>
 <template>
     <UserDropdownControls
-        v-if="type === 'dropdown' && isSingleUser"
+        v-if="type === 'dropdown' && user"
         v-bind="$attrs"
         @edit="editModalOpened = true"
         @delete="deleteModalOpened = true"
         @change-password="changePasswordModalOpened = true"
     />
-
-    <UserTableControls
-        v-if="type === 'table' && _.isArray(users)"
-        v-bind="$attrs"
-        :show-delete="Boolean(users.length)"
-        @delete="deleteModalOpened = true"
-        @create="createModalOpened = true"
-    />
     <CurrentUserControls
-        v-if="type === 'current' && user"
+        v-else-if="type === 'current' && user"
         v-bind="$attrs"
         :user="user"
         @logout="onLogout"
         @change-password="changePasswordModalOpened = true"
     />
+
+    <UserTableControls
+        v-else-if="type === 'table'"
+        v-bind="$attrs"
+        :show-delete="Boolean(usersList.length)"
+        @delete="deleteModalOpened = true"
+        @create="createModalOpened = true"
+    />
     <ConfirmationModal
         type="error"
         v-model:show="deleteModalOpened"
-        @submit="onDelete"
+        @submit="() => onDelete(usersList)"
     >
-        <template #title> User{{ isSingleUser ? "" : "s" }} deletion </template>
+        <template #title> User{{ user ? "" : "s" }} deletion </template>
 
         <template #description>
-            <NText v-if="!isSingleUser">
-                Selected users ({{ userList.length }}) will be
+            <NText v-if="!user">
+                Selected users ({{ usersList.length }}) will be
                 <NText>permanently deleted. This action cannot be undone.</NText>
             </NText>
             <NText v-else> Selected user will be permanently deleted. This action cannot be undone. </NText>

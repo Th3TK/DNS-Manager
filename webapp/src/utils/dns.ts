@@ -43,7 +43,7 @@ export const sanitizeIpv4Address = (value: string) =>
 export const normalizeIpv4Address = (value: string) =>
     value
         .split(".")
-        .map((octet) => _.parseInt(octet, 10).toString())
+        .map((octet) => (octet ? _.parseInt(octet, 10).toString() : ""))
         .join(".");
 
 export const sanitizeIpv6Address = (value: string): string => value.replace(/[^0-9a-fA-F:]/g, "").slice(0, 39);

@@ -1,44 +1,28 @@
 <script setup lang="ts">
-import { NButton, NFlex, NIcon, NText, type DataTableRowKey } from "naive-ui";
+import { NFlex, NText, type DataTableRowKey } from "naive-ui";
 import { computed, ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import type { TrashEntry, User } from "../../../types/api.types";
-import type { FilterConfig, TableExpose } from "../../../types/table.types.ts";
+import type { TableExpose } from "../../../types/table.types.ts";
 import { getColumns } from "./columns.ts";
-import { deleteTrashEntry, getTrash } from "../../../services/api.ts";
+import { getTrash } from "../../../services/api.ts";
 import RemoteDataTable from "../../data-table/RemoteDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
-import _ from "lodash";
-import ConfirmationModal from "../../modals/ConfirmationModal.vue";
 import { getFilters } from "./filters.ts";
-import { Trash as IconTrash } from "@vicons/tabler";
-import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
-import { HttpStatusCode } from "axios";
+import TrashControls from "../../controls/TrashControls.vue";
 
 const { data: users } = useFetch<User[]>("/users");
-const { handleError } = useErrorHandler();
 
 const table = useTemplateRef<TableExpose<TrashEntry>>("table");
 const router = useRouter();
-const handleClick = (row: TrashEntry) => router.push(`/trash/${row.entry_uuid}`);
 
 const selectedKeys = ref<DataTableRowKey[]>([]);
-const openedDeleteModal = ref(false);
 
 const columns = computed(() => getColumns(() => table.value?.refresh()));
 const filterConfig = computed(() => getFilters(users.value ?? []));
 
-const onDelete = () => {
-    if (!table.value || _.isEmpty(table.value?.selectedRows)) return;
-
-    Promise.all(table.value.selectedRows.map((row: TrashEntry) => deleteTrashEntry(row.entry_uuid)))
-        .then(() => (selectedKeys.value = []))
-        .catch((error) => {
-            if (error.response?.status === HttpStatusCode.NotFound) return;
-            handleError(error);
-        })
-        .finally(() => table.value?.refresh?.());
-};
+const handleClick = (row: TrashEntry) => router.push(`/trash/${row.entry_uuid}`);
+const refresh = () => table.value?.refresh();
 </script>
 
 <template>
@@ -51,32 +35,6 @@ const onDelete = () => {
         :onCellClick="handleClick"
         v-model:selected-keys="selectedKeys"
     >
-        <template #controls>
-            <NButton
-                type="error"
-                strong
-                v-if="selectedKeys.length"
-                @click="openedDeleteModal = true"
-            >
-                <template #icon>
-                    <NIcon
-                        :component="IconTrash"
-                        size="16"
-                    />
-                </template>
-                Delete Selected
-            </NButton>
-            <ConfirmationModal
-                type="error"
-                v-model:show="openedDeleteModal"
-                @submit="onDelete"
-            >
-                <template #title> Permanent deletion </template>
-                <template #description>
-                    Selected items ({{ selectedKeys.length }}) will be permanently deleted. This action cannot be undone.
-                </template>
-            </ConfirmationModal>
-        </template>
         <template #header>
             <NFlex
                 vertical
@@ -95,6 +53,16 @@ const onDelete = () => {
                     item's full details.</NText
                 >
             </NFlex>
+        </template>
+        <template #controls>
+            <TrashControls
+                type="table"
+                :entries="table?.selectedRows ?? []"
+                @delete-error="refresh"
+                @delete-success="refresh"
+                @restore-error="refresh"
+                @restore-success="refresh"
+            />
         </template>
     </RemoteDataTable>
 </template>

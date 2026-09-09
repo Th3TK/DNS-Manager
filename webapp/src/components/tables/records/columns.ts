@@ -8,7 +8,7 @@ import StatusField from "../../data-table/fields/StatusField.vue";
 import TextField from "../../data-table/fields/TextField.vue";
 import DateField from "../../data-table/fields/DateField.vue";
 
-export const getColumns = (zoneName: string, refresh: () => void): DataTableColumns<DNSRecordExtended> => [
+export const getColumns = (refresh: () => void): DataTableColumns<DNSRecordExtended> => [
     {
         type: "selection",
         multiple: true,
@@ -122,9 +122,9 @@ export const getColumns = (zoneName: string, refresh: () => void): DataTableColu
         key: "controls",
         render: (row: DNSRecordExtended) =>
             h(RecordControls, {
+                zoneName: row.zone_name,
                 records: row,
-                zoneName: zoneName,
-                dropdown: true,
+                type: "dropdown",
                 onDeleteError: refresh,
                 onDeleteSuccess: refresh,
                 onEditSuccess: refresh,

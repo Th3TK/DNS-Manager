@@ -20,7 +20,7 @@ defineOptions({
 const props = defineProps<{
     zoneName: string;
     records: DNSRecord | DNSRecord[];
-    dropdown?: boolean;
+    type: "dropdown" | "current" | "table";
     onDeleteError?: (error: AxiosError) => void;
     onDeleteSuccess?: () => void;
     onCreateSuccess?: (record: DNSRecord) => void;
@@ -31,62 +31,55 @@ const records = toRef(props, "records");
 const singularRecord = computed(() => [props.records].flat()?.[0] as DNSRecord | undefined);
 
 const { deleteModalOpened, createModalOpened, editModalOpened, onDelete, onNavigate } = useRecordActions(
-    records,
     props.onDeleteSuccess,
     props.onDeleteError,
 );
 
 const numberOfInternalRecords = computed(() => [records.value].flat().filter((r) => r.origin !== "external").length);
 const numberOfExternalRecords = computed(() => [records.value].flat().filter((r) => r.origin === "external").length);
+
+const recordsList = computed(() => [records.value].flat());
+const record = computed(() => (_.isArray(records.value) ? null : records.value));
 </script>
 <template>
     <RecordDropdownControls
-        v-if="dropdown && !_.isArray(records)"
+        v-if="type === 'dropdown' && record"
         v-bind="$attrs"
-        @navigate="onNavigate"
-        @delete="deleteModalOpened = true"
-    />
-    <RecordButtonControls
-        v-else-if="!_.isArray(records)"
-        v-bind="$attrs"
+        :show-edit="record.origin !== 'external'"
+        @navigate="() => onNavigate(record as DNSRecord)"
         @delete="deleteModalOpened = true"
         @edit="editModalOpened = true"
-        :show-edit="records.origin !== 'external'"
+    />
+    <RecordButtonControls
+        v-else-if="type === 'current' && record"
+        v-bind="$attrs"
+        :show-edit="record.origin !== 'external'"
+        @delete="deleteModalOpened = true"
+        @edit="editModalOpened = true"
     />
     <RecordTableControls
-        v-else
+        v-else-if="type === 'table'"
         v-bind="$attrs"
         @delete="deleteModalOpened = true"
         @create="createModalOpened = true"
-        :show-delete="Boolean(records.length)"
+        :show-delete="Boolean(recordsList.length)"
     />
     <ConfirmationModal
         type="error"
         v-model:show="deleteModalOpened"
-        @submit="onDelete"
+        @submit="() => onDelete(recordsList)"
     >
-        <template
-            #title
-            v-if="_.isArray(records) && records.length > 1"
-        >
-            Records deletion
-        </template>
-        <template
-            #title
-            v-else
-        >
-            Record deletion
-        </template>
+        <template #title> Record{{ recordsList.length > 1 ? "s" : "" }} deletion </template>
         <template #description>
-            <NText v-if="_.isArray(records) && records.length > 1">
-                Selected records ({{ records.length }}) will be
+            <NText v-if="recordsList.length > 1">
+                Selected records ({{ recordsList.length }}) will be
                 <NText v-if="!numberOfInternalRecords">permanently deleted. This action cannot be undone.</NText>
                 <NText v-else-if="!numberOfExternalRecords">moved to trash.</NText>
                 <NText v-else>
                     deleted. Internal records ({{ numberOfInternalRecords }}) will be moved to trash, while external records ({{
                         numberOfExternalRecords
-                    }}) will be permanently deleted.</NText
-                >
+                    }}) will be permanently deleted.
+                </NText>
             </NText>
             <NText v-else>
                 Selected record will be
@@ -101,10 +94,10 @@ const numberOfExternalRecords = computed(() => [records.value].flat().filter((r)
         v-model:show="createModalOpened"
     />
     <CreateRecordModal
-        v-if="!_.isArray(records)"
+        v-if="record"
         @submit="onEditSuccess"
         :zone-name="zoneName"
-        :modifying="records"
+        :modifying="record"
         v-model:show="editModalOpened"
     />
 </template>

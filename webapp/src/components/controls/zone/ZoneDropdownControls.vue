@@ -2,11 +2,14 @@
 import { DotsVertical, FileText, Trash } from "@vicons/tabler";
 import { h } from "vue";
 import { NButton, NDropdown, NIcon, type DropdownOption } from "naive-ui";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore";
 
 const emit = defineEmits<{
     navigate: [];
     delete: [];
 }>();
+
+const authentication = useAuthenticationStore();
 
 const options: DropdownOption[] = [
     {
@@ -18,6 +21,7 @@ const options: DropdownOption[] = [
         label: "Delete",
         key: "delete",
         icon: () => h(NIcon, { component: Trash }),
+        disabled: !authentication.isAdmin,
     },
 ];
 
