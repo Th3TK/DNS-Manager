@@ -4,7 +4,7 @@ WORKDIR /backend
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY pyproject.toml uv.lock alembic.ini init.sh ./
+COPY pyproject.toml uv.lock alembic.ini ./
 
 RUN uv sync --no-dev
 

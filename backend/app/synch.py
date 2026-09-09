@@ -8,6 +8,48 @@ from app.database.connection import session_factory
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from app.management.dns.record import cleanup_record_metadata
 from app.management.dns.zone import cleanup_zone_metadata
+from app.management.users.users import create_user, get_active_admin_count
+from app.models.user import CreateUserForm
+from app.utils.env import get_env
+
+
+def create_first_account():
+    """
+    Creates initial user if there are no active administrators in the users table is empty.
+    """
+
+    with session_factory() as db:
+        logging.info("Checking for existing accounts.")
+
+        active_administrators_count = get_active_admin_count(db)
+
+        if active_administrators_count:
+            logging.info(
+                "Found %d active administrative accounts. Skipping initial account creation.", active_administrators_count
+            )
+            return
+
+        logging.info(
+            "Found no active administrative accounts. Creating an initial administrator account from the ENV configuration."
+        )
+
+        username = get_env("ADMIN_USERNAME")
+        password = get_env("ADMIN_PASSWORD")
+
+        try:
+            create_user(
+                db,
+                CreateUserForm(
+                    username=username,
+                    password=password,
+                    full_name="",
+                    is_admin=True,
+                    disabled=False,
+                ),
+            )
+            logging.info("Admin account '%s' created successfully.", username)
+        except Exception:
+            logging.error("Error occurred while creating the admin account. %s")
 
 
 def synchronize_database():

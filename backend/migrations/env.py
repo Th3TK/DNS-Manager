@@ -6,7 +6,7 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-# ! keep import models 
+# ! keep import models
 from app.database import models  # noqa
 from app.database.database import Base
 
@@ -14,14 +14,9 @@ from app.database.database import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-    
-    
+
 target_metadata = Base.metadata
-    
+
 # Load DATABASE_URL from environment variables
 
 env_file = Path(__file__).resolve().parents[2] / ".env"
@@ -38,6 +33,7 @@ if database_url.startswith("postgresql://"):
 
 config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
+
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -49,6 +45,7 @@ def run_migrations_offline() -> None:
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)

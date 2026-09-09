@@ -67,25 +67,13 @@ And replace the placeholders with your configuration.
 
 ### 3. Build and run the containers
 
+On backend startup, database migrations are applied automatically and the initial administrator account is created.
+
 ```bash
 docker compose up -d --build
 ```
 
-### 4. Initialize the database
-
-Run the migrations and create the initial administrator. The administrator will only be created if no administrator already exists.
-
-```bash
-docker exec dns-manager-backend ./init.sh
-```
-
-To create the initial administrator even if an administrator already exists, use the `--force` parameter:
-
-```bash
-docker exec dns-manager-backend uv run python -m app.scripts.init_admin --force
-```
-
-### 5. Connect to the app
+### 4. Connect to the app
 
 DNS Manager runs at [0.0.0.0:3000](http://0.0.0.0:3000) (available at http://127.0.0.1:3000).
 
@@ -95,39 +83,11 @@ DNS Manager runs at [0.0.0.0:3000](http://0.0.0.0:3000) (available at http://127
 
 ## Development - Main instance build
 
-### 1. Prepare external dependencies
-
-Follow the same steps as described in the [1. Prepare external dependencies](#1-prepare-external-dependencies) section of the production setup.
-
-### 2. Configure environment variables
-
-Follow the same steps as described in the [2. Configure environment variables](#2-configure-environment-variables) section of the production setup.
-
-### 3. Build and run the containers
+Follow the same steps as described in the [production setup](#production---main-instance-build), but use the `docker-compose.dev.yml` compose file during build:
 
 ```bash
 docker compose -f "docker-compose.dev.yml" up -d --build
 ```
-
-### 4. Initialize the database
-
-Run the migrations and create the initial administrator. The administrator will only be created if no administrator already exists.
-
-```bash
-docker exec dns-manager-backend-dev ./init.sh
-```
-
-To create the initial administrator even if an administrator already exists, use the `--force` parameter:
-
-```bash
-docker exec dns-manager-backend uv run python -m app.scripts.init_admin --force
-```
-
-### 5. Connect to the app
-
-DNS Manager runs at [0.0.0.0:3000](http://0.0.0.0:3000) (available at http://127.0.0.1:3000).
-
-API Docs Swagger runs at [0.0.0.0:9000/docs](http://0.0.0.0:9000/docs) (available at http://127.0.0.1:9000/docs).
 
 ## Development - Watcher build
 
