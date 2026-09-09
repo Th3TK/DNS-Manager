@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { NCard, NFlex, NGrid, NGridItem, NIcon, NPopover, NText, useThemeVars } from "naive-ui";
+import { NGrid, NGridItem } from "naive-ui";
 import DashboardLayout from "../layouts/DashboardLayout.vue";
-import { Help } from "@vicons/tabler";
-import NameSearchTable from "../components/tables/name-search/NameSearchTable.vue";
 import DashboardRecordStatusCard from "../components/display/DashboardRecordStatusCard.vue";
 import DashboardDependencyStatusCard from "../components/display/DashboardDependencyStatusCard.vue";
 import DashboardNameSearchCard from "../components/display/DashboardNameSearchCard.vue";

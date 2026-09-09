@@ -4,5 +4,5 @@ import MainLayout from "../layouts/MainLayout.vue";
 </script>
 
 <template>
-    <MainLayout><TrashTable /></MainLayout>
+    <MainLayout fill-height><TrashTable /></MainLayout>
 </template>

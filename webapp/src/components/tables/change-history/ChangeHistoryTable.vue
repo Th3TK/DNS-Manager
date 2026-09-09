@@ -28,8 +28,8 @@ const filterConfig = computed(() => getFilters(users.value ?? []));
         :filterConfig="filterConfig"
         :onCellClick="handleClick"
     >
-        <template #header> Change History Logs </template>
-        <template #header-filters> Filtered Logs </template>
+        <template #title> Change History Logs </template>
+        <template #title-filters> Filtered Logs </template>
         <template #description>
             Full action log of changes made to DNS objects through the application. Double click on a row to view action details.
         </template>

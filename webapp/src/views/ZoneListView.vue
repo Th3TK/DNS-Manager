@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout.vue";
 </script>
 
 <template>
-    <MainLayout>
+    <MainLayout fill-height>
         <ZonesTable />
     </MainLayout>
 </template>

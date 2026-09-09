@@ -27,8 +27,8 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
         :columns="columns"
         :filterConfig="filters"
     >
-        <template #header> Users List </template>
-        <template #header-filters> Filtered Users </template>
+        <template #title> Users List </template>
+        <template #title-filters> Filtered Users </template>
         <template #description> Displays all accounts in the applicaton. </template>
         <template #controls>
             <UserControls

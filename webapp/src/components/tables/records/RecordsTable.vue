@@ -84,8 +84,8 @@ watch(
         :onCellClick="handleClick"
         :filter-config="filterConfig"
     >
-        <template #header> {{ global ? "Records List" : "Zone Records" }} </template>
-        <template #header-filters> Filtered Zones </template>
+        <template #title> {{ global ? "Records List" : "Zone Records" }} </template>
+        <template #title-filters> Filtered Zones </template>
         <template #description> Double click on a record to view its full details. </template>
         <template #controls>
             <RecordControls

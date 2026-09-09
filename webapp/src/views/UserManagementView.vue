@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout.vue";
 </script>
 
 <template>
-    <MainLayout> <UsersTable /></MainLayout>
+    <MainLayout fill-height> <UsersTable /></MainLayout>
 </template>
 
 <style scoped></style>

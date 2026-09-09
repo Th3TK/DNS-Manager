@@ -3,7 +3,11 @@ defineOptions({
     inheritAttrs: false,
 });
 
-import { NCard, NLayout, NLayoutContent, NLayoutSider } from "naive-ui";
+defineProps<{
+    fillHeight?: boolean;
+}>();
+
+import { NCard, NLayout, NLayoutContent, NLayoutSider, NScrollbar } from "naive-ui";
 
 import AutoBreadcrumbs from "../components/navigation/AutoBreadcrumbs.vue";
 import NavBar from "../components/navigation/NavBar.vue";
@@ -23,12 +27,18 @@ import NavBar from "../components/navigation/NavBar.vue";
         </NLayoutSider>
         <NLayoutContent content-class="content">
             <AutoBreadcrumbs />
+
             <NCard
                 class="content-card"
                 content-class="content-card-content"
                 v-bind="$attrs"
             >
-                <slot />
+                <NScrollbar
+                    class="content-scrollbar"
+                    :content-class="`content-scrollbar-content ${fillHeight ? 'content-scrollbar-content-fill-height' : ''}`"
+                >
+                    <slot />
+                </NScrollbar>
             </NCard>
             <slot name="portal" />
         </NLayoutContent>
@@ -48,7 +58,6 @@ import NavBar from "../components/navigation/NavBar.vue";
     box-sizing: border-box;
     display: flex !important;
     flex-direction: column;
-
     padding: var(--spacing-md);
     gap: var(--spacing-md);
 }
@@ -59,8 +68,22 @@ import NavBar from "../components/navigation/NavBar.vue";
 }
 
 :deep(.content-card-content) {
+    flex: 1;
+    min-height: 0;
     box-sizing: border-box;
     display: flex !important;
     flex-direction: column;
+    padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md) var(--spacing-lg);
+}
+
+.content-scrollbar {
+    height: 100%;
+}
+
+:deep(.content-scrollbar-content) {
+    padding-right: var(--spacing-md);
+}
+:deep(.content-scrollbar-content-fill-height) {
+    height: 100%;
 }
 </style>

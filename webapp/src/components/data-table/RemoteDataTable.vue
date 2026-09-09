@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import { type DataTableColumns, type DataTableRowKey } from "naive-ui";
+import { NText, type DataTableColumns, type DataTableRowKey } from "naive-ui";
 import { computed, ref, shallowRef, useTemplateRef, watch } from "vue";
 import {
     type BaseDataTableExpose,
@@ -96,12 +96,24 @@ defineExpose({
         ref="table"
         remote
     >
-        <template #header>
-            <slot name="header" />
+        <template #title>
+            <slot name="title" />
+            <NText
+                v-if="!loading"
+                depth="3"
+            >
+                ({{ total }})
+            </NText>
         </template>
-
-        <template #header-filters>
-            <slot name="header-filters" />
+        <template #title-filters>
+            <slot name="title-filters" />
+            <NText
+                v-if="!loading"
+                depth="3"
+                type="primary"
+            >
+                ({{ total }})
+            </NText>
         </template>
         <template #description>
             <slot name="description" />

@@ -35,8 +35,8 @@ const refresh = () => table.value?.refresh();
         :onCellClick="handleClick"
         v-model:selected-keys="selectedKeys"
     >
-        <template #header> Trash Items </template>
-        <template #header-filters> Filtered Trash Items </template>
+        <template #title> Trash Items </template>
+        <template #title-filters> Filtered Trash Items </template>
         <template #description>
             Contains deleted DNS zones and records. Items are permanently deleted after 30 days. Double click on a table row to view item's
             full details.

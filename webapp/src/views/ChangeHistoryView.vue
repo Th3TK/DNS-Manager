@@ -4,5 +4,5 @@ import MainLayout from "../layouts/MainLayout.vue";
 </script>
 
 <template>
-    <MainLayout><ChangeHistoryTable /></MainLayout>
+    <MainLayout fill-height><ChangeHistoryTable /></MainLayout>
 </template>

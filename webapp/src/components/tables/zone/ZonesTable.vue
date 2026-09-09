@@ -35,8 +35,8 @@ const selectedRows = computed(() => table.value?.selectedRows ?? []);
         :onCellClick="handleClick"
         :filterConfig="filterConfig"
     >
-        <template #header> Zone List </template>
-        <template #header-filters> Filtered Zones </template>
+        <template #title> Zone List </template>
+        <template #title-filters> Filtered Zones </template>
         <template #description> Double click on a zone to view its full details and records. </template>
         <template #controls>
             <ZoneControls

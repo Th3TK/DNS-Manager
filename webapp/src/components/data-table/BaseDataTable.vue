@@ -124,18 +124,12 @@ defineExpose({
             >
                 <slot
                     v-if="filtersActive.length"
-                    name="header-filters"
+                    name="title-filters"
                 />
                 <slot
                     v-else
-                    name="header"
+                    name="title"
                 />
-                <NText
-                    depth="3"
-                    :type="filtersActive.length ? 'primary' : undefined"
-                >
-                    ({{ data.length || 0 }})
-                </NText>
             </NText>
             <NText depth="3"> <slot name="description" /> </NText>
         </NFlex>
