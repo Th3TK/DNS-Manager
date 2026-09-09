@@ -150,7 +150,7 @@ export const contentPlaceholders: Record<SupportedDNSRecordTypes, string> = {
     A: "e.g. 192.168.1.1",
     AAAA: "e.g. 2001:db8::1",
     CNAME: "e.g. target.example.com.",
-    TXT: 'e.g. "v=spf1 include:example.com ~all"',
+    TXT: 'e.g. "lorem ipsum"',
     MX: "e.g. 10 mail.example.com.",
     SRV: "e.g. 10 5 5060 sip.example.com.",
 };
@@ -160,3 +160,72 @@ export const sanitizeNameSearchValue = (value: string) =>
         .toLowerCase()
         .replace(/[^a-z0-9.*?_-]/g, "")
         .replace(/\.{2,}/g, ".");
+
+export function validateTxtRecord(value: string): true | Error {
+    if (!value) {
+        return new Error("TXT record cannot be empty");
+    }
+
+    let i = 0;
+
+    while (i < value.length) {
+        if (value[i] !== '"') {
+            return new Error(`Expected " at position ${i + 1}. Each TXT string must be enclosed in double quotes.`);
+        }
+
+        i++;
+
+        let closed = false;
+
+        while (i < value.length) {
+            const char = value[i];
+
+            if (char === '"') {
+                i++;
+                closed = true;
+                break;
+            }
+
+            if (char === "\\") {
+                if (i + 1 >= value.length) {
+                    return new Error(`Invalid escape at position ${i + 1}. A backslash must be followed by a character.`);
+                }
+
+                i += 2;
+                continue;
+            }
+
+            const code = char.charCodeAt(0);
+
+            if (code < 0x20 || code === 0x7f) {
+                return new Error(`Invalid control character at position ${i + 1}.`);
+            }
+
+            i++;
+        }
+
+        if (!closed) {
+            return new Error(`Missing closing " for TXT string.`);
+        }
+
+        if (i === value.length) {
+            return true;
+        }
+
+        if (value[i] !== " ") {
+            return new Error(`TXT strings must be separated by exactly one space at position ${i + 1}.`);
+        }
+
+        i++;
+
+        if (i >= value.length) {
+            return new Error("Expected another TXT string after the separator.");
+        }
+
+        if (value[i] !== '"') {
+            return new Error(`Expected " after the separator at position ${i + 1}.`);
+        }
+    }
+
+    return true;
+}

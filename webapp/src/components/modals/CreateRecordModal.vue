@@ -28,6 +28,7 @@ import {
     isValidSrvContent,
     normalizeDnsRecordName,
     sanitizeDnsName,
+    validateTxtRecord,
 } from "../../utils/dns";
 import { AxiosError, isAxiosError } from "axios";
 import { createRecord, modifyRecord } from "../../services/api";
@@ -66,12 +67,13 @@ const rules: FormRules = {
             trigger: ["blur", "input"],
         },
         {
-            required: true,
             validator: (_rule, value: string) => {
                 switch (form.type) {
                     case "CNAME":
-                    case "TXT":
+                        // handled by the field sanitization
                         break;
+                    case "TXT":
+                        return validateTxtRecord(value);
 
                     case "A":
                         return isValidIpv4Address(value) || new Error("Invalid IPv4 address");
