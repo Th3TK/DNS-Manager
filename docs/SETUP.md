@@ -48,6 +48,7 @@ And replace the placeholders with your configuration.
 | Variable                         | Required                   | Description                                                                                                                                                                   | Default (if not set) |
 | -------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `DNS_PROVIDER`                   | Yes                        | DNS provider to use. Currently supported: `powerdns`.                                                                                                                         | -                    |
+| `DNS_RESOLVER`                   | Yes                        | Hostname or address and port (default: 53) of the DNS resolver used for DNS resolution checks.                                                                                | -                    |
 | `POWERDNS_API_URL`               | If `DNS_PROVIDER=powerdns` | URL of the PowerDNS REST API.                                                                                                                                                 | -                    |
 | `POWERDNS_API_KEY`               | If `DNS_PROVIDER=powerdns` | Private key used to authenticate with the PowerDNS REST API.                                                                                                                  | -                    |
 | `POWERDNS_SERVER_ID`             | If `DNS_PROVIDER=powerdns` | ID of the PowerDNS server to manage.                                                                                                                                          | -                    |
@@ -63,7 +64,7 @@ And replace the placeholders with your configuration.
 | `ACCESS_TOKEN_LIFETIME_SECONDS`  | No                         | Lifetime of an access token, in seconds.                                                                                                                                      | `3600`               |
 | `REFRESH_TOKEN_LIFETIME_SECONDS` | No                         | Lifetime of a refresh token, in seconds.                                                                                                                                      | `259200`             |
 | `AUTHENTICATION_ALGORITHM`       | No                         | Algorithm used to sign JWT access tokens.                                                                                                                                     | `HS256`              |
-| `HTTPS_ENABLED`                  | No                         | Whether the application is served over HTTPS. If TRUE, authentication cookies will have the Secure attribute set.                                                             | `TRUE`               |
+| `HTTPS_ENABLED`                  | No                         | Whether the application is served over HTTPS (and WSS). If TRUE, authentication cookies will have the Secure attribute set.                                                   | `TRUE`               |
 
 ### 3. Build and run the containers
 
