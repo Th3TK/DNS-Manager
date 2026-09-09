@@ -4,7 +4,7 @@ import { NButton, NCard, NFlex, NForm, NFormItem, NIcon, NInput, NModal, NText, 
 import type { CreateDNSZoneForm, DNSZone } from "../../types/api.types";
 import { onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import _ from "lodash";
-import { isValidDnsZoneNameLength, normalizeDnsName, sanitizeDnsName } from "../../services/dns";
+import { isValidDnsZoneNameLength, normalizeDnsName, sanitizeDnsName } from "../../utils/dns";
 import { AxiosError, isAxiosError } from "axios";
 import { createZone } from "../../services/api";
 import { useErrorHandler } from "../../composables/useErrorHandler";
@@ -45,6 +45,11 @@ const close = () => {
 const onSubmit = async () => {
     try {
         await formRef.value?.validate();
+    } catch {
+        return;
+    }
+
+    try {
         const zone = await createZone(form);
 
         close();

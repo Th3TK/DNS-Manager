@@ -1,46 +1,12 @@
 <script setup lang="ts">
-import { NBadge, NButton, NCard, NFlex, NGrid, NGridItem, NIcon, NPopover, NText, NTime, useThemeVars } from "naive-ui";
+import { NCard, NFlex, NGrid, NGridItem, NIcon, NPopover, NText, useThemeVars } from "naive-ui";
 import DashboardLayout from "../layouts/DashboardLayout.vue";
-import { Help, Refresh } from "@vicons/tabler";
-import { useRouter } from "vue-router";
-import DatetimeCountdown from "../components/display/DatetimeCountdown.vue";
+import { Help } from "@vicons/tabler";
 import NameSearchTable from "../components/tables/name-search/NameSearchTable.vue";
-import { useRecordsStatusStore } from "../stores/useRecordsStatusStore.ts";
-import { storeToRefs } from "pinia";
+import DashboardRecordStatusCard from "../components/display/DashboardRecordStatusCard.vue";
+import DashboardDependencyStatusCard from "../components/display/DashboardDependencyStatusCard.vue";
 
-const router = useRouter();
 const theme = useThemeVars();
-
-const dependencies = [
-    {
-        name: "DNS Provider",
-        status: "ok",
-        lastCheck: "2026-09-06 16:20:31",
-    },
-    {
-        name: "PostgreSQL",
-        status: "error",
-        lastCheck: "2026-09-06 16:20:30",
-    },
-];
-
-const recordsStatus = useRecordsStatusStore();
-
-const { data: records } = storeToRefs(recordsStatus);
-
-const types = {
-    OK: "success",
-    WARNING: "warning",
-    ERROR: "error",
-    DISABLED: "default",
-};
-
-const colors = {
-    OK: theme.value.successColorPressed,
-    WARNING: theme.value.warningColorPressed,
-    ERROR: theme.value.errorColorPressed,
-    DISABLED: theme.value.textColor3,
-};
 </script>
 
 <template>
@@ -52,185 +18,24 @@ const colors = {
             class="grid"
         >
             <NGridItem>
-                <NCard class="content-card">
-                    <template #header>
-                        <NFlex class="header">
-                            <NFlex
-                                vertical
-                                :size="4"
-                            >
-                                <NText
-                                    tag="h2"
-                                    class="title"
-                                >
-                                    Dependencies
-                                </NText>
-                                <NText
-                                    class="small-text"
-                                    depth="3"
-                                >
-                                    Shows the current status and last check time of each dependency. Hover over a dependency for more
-                                    details.
-                                </NText>
-                            </NFlex>
-                            <NButton
-                                class="refresh-button"
-                                quaternary
-                            >
-                                <NIcon
-                                    :component="Refresh"
-                                    :size="20"
-                                />
-                            </NButton>
-                        </NFlex>
-                    </template>
-                    <NFlex vertical>
-                        <div
-                            v-for="dependency in dependencies"
-                            :key="dependency.name"
-                            class="data-list-row"
-                            :cols="3"
-                        >
-                            <div class="data-list-cell">
-                                <NText class="big-text dependency-cell">
-                                    {{ dependency.name }}
-                                </NText>
-                            </div>
-
-                            <div class="data-list-cell">
-                                <NFlex
-                                    align="center"
-                                    :size="8"
-                                >
-                                    <NBadge
-                                        :color="dependency.status === 'ok' ? theme.successColorPressed : theme.errorColorPressed"
-                                        dot
-                                    />
-                                    <NText
-                                        :type="dependency.status === 'ok' ? 'success' : 'error'"
-                                        strong
-                                    >
-                                        {{ dependency.status === "ok" ? "OK" : "ERROR" }}
-                                    </NText>
-                                </NFlex>
-                            </div>
-
-                            <div class="data-list-cell">
-                                <NText
-                                    depth="3"
-                                    class="small-text"
-                                >
-                                    {{ dependency.lastCheck }}
-                                </NText>
-                            </div>
-                        </div>
-                    </NFlex>
-                </NCard>
+                <DashboardDependencyStatusCard class="content-card" />
             </NGridItem>
 
             <NGridItem>
-                <NCard class="content-card">
-                    <template #header>
-                        <NFlex class="header">
-                            <NFlex
-                                vertical
-                                :size="4"
-                            >
-                                <NText
-                                    tag="h2"
-                                    class="title"
-                                >
-                                    Records status
-                                </NText>
-                                <NText
-                                    class="small-text"
-                                    depth="3"
-                                >
-                                    Shows the reachability status of DNS records. Click on a status to navigate to the filtered records
-                                    page.
-                                </NText>
-                            </NFlex>
-                        </NFlex>
-                    </template>
-                    <NFlex vertical>
-                        <NButton
-                            v-for="status in ['OK', 'WARNING', 'ERROR', 'DISABLED']"
-                            :key="status"
-                            quaternary
-                            block
-                            class="data-list-button"
-                            @click="
-                                router.push({
-                                    path: '/records',
-                                    query: { status },
-                                })
-                            "
-                        >
-                            <div class="data-list-row">
-                                <NFlex
-                                    class="data-list-cell"
-                                    align="center"
-                                >
-                                    <NBadge
-                                        dot
-                                        :color="colors[status]"
-                                    />
-                                    <NText
-                                        :type="types[status]"
-                                        :depth="status === 'DISABLED' ? 3 : 1"
-                                        strong
-                                        class="big-text"
-                                    >
-                                        {{ status.toUpperCase() }}
-                                    </NText>
-                                </NFlex>
-                                <NText
-                                    strong
-                                    class="data-list-cell"
-                                    :type="types[status]"
-                                    :depth="status === 'DISABLED' ? 3 : 2"
-                                >
-                                    {{ records?.counts[status] }}
-                                </NText>
-                            </div>
-                        </NButton>
-                    </NFlex>
-                    <template #footer>
-                        <NFlex justify="space-between">
-                            <NText
-                                class="small-text"
-                                depth="3"
-                            >
-                                Last check:
-                                <NTime
-                                    v-if="records"
-                                    :time="records.timestamp"
-                                    type="datetime"
-                                />
-                            </NText>
-                            <DatetimeCountdown
-                                v-if="records"
-                                class="small-text"
-                                depth="3"
-                                label="Next check in: "
-                                :datetime="records.next_check"
-                            />
-                        </NFlex>
-                    </template>
-                </NCard>
+                <DashboardRecordStatusCard class="content-card" />
             </NGridItem>
 
             <NGridItem :span="2">
                 <NCard class="content-card">
                     <template #header>
-                        <NFlex class="header">
+                        <NFlex class="dashboard-card-header">
                             <NFlex
                                 vertical
                                 :size="4"
                             >
                                 <NText
                                     tag="h2"
-                                    class="title"
+                                    class="dashboard-card-title"
                                 >
                                     Record name search
                                 </NText>
@@ -323,58 +128,42 @@ const colors = {
 </template>
 
 <style lang="css" scoped>
-.title {
-    margin: var(--spacing-xs) 0;
-}
-
-.header {
-    align-items: center;
-}
-
-.refresh-button {
-    margin-left: auto;
-    padding: 0;
-    aspect-ratio: 1/1;
-}
-
 .grid {
     height: 100%;
     box-sizing: border-box;
     grid-template-rows: auto 1fr;
 }
-.content-card {
+:deep(.content-card) {
     height: 100%;
     box-sizing: border-box;
 }
-
-.big-text {
-    font-size: 18px;
+:deep(.dashboard-card-title) {
+    margin: var(--spacing-xs) 0;
 }
 
-.small-text {
+:deep(.dashboard-card-header) {
+    align-items: start;
+    flex-wrap: nowrap !important;
+}
+
+:deep(.big-text) {
+    font-size: 18px;
+}
+:deep(.medium-text) {
+    font-size: 16px;
+}
+
+:deep(.small-text) {
     font-size: 14px;
 }
 
 .data-list-row {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+
     align-items: center;
 }
-.data-list-cell {
-    min-width: 0 !important;
-}
-.data-list-button {
-    justify-content: flex-start;
-    text-align: left;
-    width: 100%;
-    padding-top: var(--spacing-md);
-    padding-bottom: var(--spacing-md);
-}
-.data-list-button :deep(.n-button__content) {
-    width: 100%;
-    justify-content: flex-start;
-}
+
 .search-help {
     max-width: 360px;
     font-size: 14px;

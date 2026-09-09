@@ -28,7 +28,7 @@ import {
     isValidSrvContent,
     normalizeDnsRecordName,
     sanitizeDnsName,
-} from "../../services/dns";
+} from "../../utils/dns";
 import { AxiosError, isAxiosError } from "axios";
 import { createRecord, modifyRecord } from "../../services/api";
 import { useErrorHandler } from "../../composables/useErrorHandler";
@@ -123,7 +123,11 @@ const close = () => {
 const onSubmit = async () => {
     try {
         await formRef.value?.validate();
+    } catch {
+        return;
+    }
 
+    try {
         const record = props.modifying
             ? await modifyRecord(props.zoneName, props.modifying?.name, props.modifying?.type, form)
             : await createRecord(props.zoneName, form);

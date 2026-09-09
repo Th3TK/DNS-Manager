@@ -9,6 +9,8 @@ import type {
     ModifyDNSRecordForm,
     CreateUserForm,
     NameSearchDNSRecord,
+    ModifyUserForm,
+    ChangePasswordForm,
 } from "../types/api.types";
 import { sendRequest } from "./requests";
 import type { DataPaginated, Filters } from "../types/table.types";
@@ -73,7 +75,14 @@ export const getUser = (username: string) => sendRequest<User>("GET", `/users/${
 
 export const createUser = (form: CreateUserForm) => sendRequest<User>("POST", "/users", { data: form });
 
+export const modifyUser = (username: string, form: ModifyUserForm) => sendRequest<User>("PATCH", `/users/${username}`, { data: form });
+
 export const deleteUser = (username: string) => sendRequest<null>("DELETE", `/users/${username}`);
+
+export const changeOwnPassword = (form: ChangePasswordForm) => sendRequest<null>("PATCH", `/users/me/change-password`, { data: form });
+
+export const changeUserPassword = (username: string, form: ChangePasswordForm) =>
+    sendRequest<null>("PATCH", `/users/${username}/change-password`, { data: form });
 
 /* ------------------------------------------------------------------------- */
 /* DNS ZONES                                                                 */
@@ -93,10 +102,12 @@ export const nameSearch = (query: string) => sendRequest<NameSearchDNSRecord[]>(
 /* DNS RECORDS                                                               */
 /* ------------------------------------------------------------------------- */
 
+export const getAllRecords = () => sendRequest<DNSRecord[]>("GET", `/all-records`);
+
 export const getRecords = (zoneName: string) => sendRequest<DNSRecord[]>("GET", `/zones/${zoneName}/records`);
 
 export const getRecord = (zoneName: string, recordName: string, recordType: string) =>
-    sendRequest<DNSRecord>("GET", `/zones/${zoneName}/records?record_name=${recordName}&record_type=${recordType}`);
+    sendRequest<DNSRecord>("GET", `/zones/${zoneName}/record?record_name=${recordName}&record_type=${recordType}`);
 
 export const createRecord = (zoneName: string, form: CreateDNSRecordForm) =>
     sendRequest<DNSRecord>("POST", `/zones/${zoneName}/record`, { data: form });

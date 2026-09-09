@@ -45,7 +45,7 @@ const colors = {
                     :depth="displayed_status === 'DISABLED' ? 3 : 1"
                     strong
                 >
-                    {{ _.capitalize(displayed_status) }}
+                    {{ displayed_status === "OK" ? "OK" : _.capitalize(displayed_status) }}
                 </NText>
             </NFlex>
         </template>

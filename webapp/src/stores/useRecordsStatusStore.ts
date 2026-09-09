@@ -16,11 +16,7 @@ export const useRecordsStatusStore = defineStore("records-status", () => {
         return "OK";
     };
 
-    watch(data, () => console.log(data.value));
-
     watch([connected, lastMessage], () => {
-        console.log(connected.value, lastMessage.value);
-
         if (!connected.value) {
             return;
         }
@@ -54,5 +50,5 @@ export const useRecordsStatusStore = defineStore("records-status", () => {
         };
     });
 
-    return { data, generateDisplayStatus, connect };
+    return { data, generateDisplayStatus, connect, connected };
 });

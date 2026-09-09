@@ -12,8 +12,17 @@ export interface CreateUserForm {
     username: string;
     password: string;
     full_name: string;
-    is_admin: string;
-    disabled: string;
+    is_admin: boolean;
+    disabled: boolean;
+}
+export interface ModifyUserForm {
+    full_name: string;
+    is_admin: boolean;
+    disabled: boolean;
+}
+
+export interface ChangePasswordForm {
+    password: string;
 }
 
 export type ResolutionStatus = "OK" | "MISMATCH" | "NO_RESOLUTION";

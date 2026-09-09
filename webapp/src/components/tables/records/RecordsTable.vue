@@ -4,37 +4,40 @@ import { computed, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
-import { getRecords } from "../../../services/api.ts";
+import { getAllRecords, getRecords } from "../../../services/api.ts";
 import type { DNSRecord, DNSRecordExtended, User } from "../../../types/api.types";
 import type { TableExpose } from "../../../types/table.types.ts";
 import { getFilters } from "./filters.ts";
-import { getColumns } from "./columns.ts";
+import { getColumns, getColumnsForAllRecordsTable } from "./columns.ts";
 import RecordControls from "../../controls/RecordControls.vue";
 import { useRecordsStatusStore } from "../../../stores/useRecordsStatusStore.ts";
-import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
-import { storeToRefs } from "pinia";
 import _ from "lodash";
 
-const props = defineProps<{
-    zoneName: string;
-}>();
+const props = defineProps<
+    | {
+          global: true;
+      }
+    | {
+          zoneName: string;
+          global: boolean;
+      }
+>();
 
 const router = useRouter();
 const recordStatus = useRecordsStatusStore();
 
 const { data: users } = useFetch<User[]>("/users");
-const { handleError } = useErrorHandler();
 
 const table = useTemplateRef<TableExpose<DNSRecordExtended>>("table");
 const data = ref<DNSRecordExtended[]>([]);
 const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
-const columns = computed(() => getColumns(props.zoneName, refresh));
+const columns = computed(() => (props.global ? getColumnsForAllRecordsTable() : getColumns(props.zoneName, refresh)));
 const filterConfig = computed(() => getFilters(users.value ?? []));
 
 const refresh = () => table.value?.refresh();
-const handleClick = (row: DNSRecordExtended) => router.push(`/zones/${props.zoneName}/record/${row.name}/${row.type}`);
+const handleClick = (row: DNSRecordExtended) => router.push(`/zones/${row.zone_name}/record/${row.name}/${row.type}`);
 
 const getRecordStatus = (record: DNSRecord) => recordStatus.data?.statuses?.[record.zone_name]?.[record.name]?.[record.type] ?? null;
 
@@ -51,12 +54,12 @@ const expandRecords = (records: DNSRecord[]) =>
     });
 
 const getData = async () => {
-    if (!props.zoneName) {
+    if (!props.global && !props.zoneName) {
         loading.value = true;
         return [];
     }
 
-    const records = await getRecords(props.zoneName);
+    const records = props.global ? await getAllRecords() : await getRecords(props.zoneName);
     return expandRecords(records);
 };
 
@@ -89,10 +92,10 @@ watch(
                     class="header"
                 >
                     <NText
-                        tag="h2"
+                        :tag="global ? 'h1' : 'h2'"
                         class="title"
                     >
-                        Zone Records
+                        {{ global ? "Records List" : "Zone Records" }}
                         <NText depth="3"> ({{ table?.total ?? 0 }}) </NText>
                     </NText>
                     <NText
@@ -113,6 +116,7 @@ watch(
         </template>
         <template #controls>
             <RecordControls
+                v-if="!global"
                 :records="table?.selectedRows ?? []"
                 :zoneName="zoneName"
                 @delete-error="refresh"

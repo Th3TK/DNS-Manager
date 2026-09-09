@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { NButton, NCard, NFlex, NIcon, NText } from "naive-ui";
-import { computed } from "vue";
+import { NButton, NCard, NFlex, NIcon, NText, type DropdownOption } from "naive-ui";
+import { computed, h } from "vue";
 import { routes } from "../../router";
 import { useRouter } from "vue-router";
-import { User as IconUser } from "@vicons/tabler";
+import { ChevronRight, User as IconUser, Key, Logout, UserCircle } from "@vicons/tabler";
 import { useAuthenticationStore } from "../../stores/useAuthenticationStore";
+import UserControls from "../controls/UserControls.vue";
 
 const authentication = useAuthenticationStore();
 const router = useRouter();
@@ -23,7 +24,11 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
             class="app-name"
             :bordered="false"
         >
-            <NText tag="h2">DNS Manager</NText>
+            <NText
+                tag="h2"
+                class="title"
+            >
+            </NText>
         </NCard>
 
         <NFlex
@@ -63,7 +68,7 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
         </NFlex>
 
         <NFlex
-            class="segment user"
+            class="segment user-segment"
             vertical
         >
             <NText
@@ -72,30 +77,10 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
             >
                 Logged in as
             </NText>
-            <NFlex class="user-card">
-                <NIcon size="24">
-                    <IconUser />
-                </NIcon>
-                <NFlex
-                    class="user-details"
-                    vertical
-                >
-                    <NText
-                        class="full-name"
-                        ellipsis
-                    >
-                        {{ authentication.user?.full_name || `${authentication.user?.username}` }}
-                    </NText>
-                    <NText
-                        class="username"
-                        depth="3"
-                        ellipsis
-                        v-if="authentication.user?.full_name"
-                    >
-                        {{ `${authentication.user?.username}` }}
-                    </NText>
-                </NFlex>
-            </NFlex>
+            <UserControls
+                :users="authentication.user ?? { username: '', full_name: '', disabled: false, is_admin: false }"
+                type="current"
+            />
         </NFlex>
     </NFlex>
 </template>
@@ -109,8 +94,14 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
 }
 
 .app-name :deep(.n-card-content) {
-    padding-top: 0;
-    padding-bottom: 0;
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    display: flex !important;
+    align-items: center;
+}
+
+.title {
+    margin: 0 !important;
 }
 
 .segment {
@@ -145,48 +136,12 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
     color: inherit;
 }
 
-.user {
+.user-segment {
     margin-top: auto;
     min-width: 0;
     width: 100%;
     display: flex;
 
     box-sizing: border-box;
-}
-
-.user-card {
-    display: flex;
-    padding: var(--spacing-sm) var(--spacing-xs) var(--spacing-sm) var(--spacing-md);
-    gap: var(--spacing-sm) !important;
-    align-items: center;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.user-details {
-    min-width: 0;
-    flex: 1;
-    gap: 0px !important;
-}
-
-.full-name,
-.username {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.2;
-}
-
-.full-name {
-    font-size: 16px;
-    text-overflow: ellipsis;
-}
-
-.user-button {
-    justify-content: flex-start;
-    padding: var(--spacing-xs) var(--spacing-md);
-    margin-left: auto;
 }
 </style>

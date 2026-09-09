@@ -1,25 +1,23 @@
 <script setup lang="ts">
 import { type User } from "../../../types/api.types.ts";
-import { type DataTableRowKey, NButton, NFlex, NIcon, NText } from "naive-ui";
-import { ref, useTemplateRef } from "vue";
-import { Trash as IconTrash, UserPlus as IconUserPlus } from "@vicons/tabler";
-import { columns } from "./columns.ts";
+import { type DataTableRowKey, NFlex, NText } from "naive-ui";
+import { computed, ref, useTemplateRef } from "vue";
+import { getColumns } from "./columns.ts";
 import { getUsers } from "../../../services/api.ts";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
-import CreateZoneModal from "../../modals/CreateZoneModal.vue";
-import ConfirmationModal from "../../modals/ConfirmationModal.vue";
 import type { TableExpose } from "../../../types/table.types.ts";
-import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
 import { filters } from "./filters.ts";
+import UserControls from "../../controls/UserControls.vue";
+import { useAuthenticationStore } from "../../../stores/useAuthenticationStore.ts";
 
-const { handleError } = useErrorHandler();
-
+const authentication = useAuthenticationStore();
 const table = useTemplateRef<TableExpose<User>>("table");
 const selectedKeys = ref<DataTableRowKey[]>([]);
-const openedCreateModal = ref(false);
-const openedDeleteModal = ref(false);
 
-const deleteSelected = async () => {};
+const refresh = () => table.value?.refresh();
+
+const columns = computed(() => getColumns(refresh));
+const selectedRows = computed(() => table.value?.selectedRows ?? []);
 </script>
 
 <template>
@@ -48,47 +46,12 @@ const deleteSelected = async () => {};
             </NFlex>
         </template>
         <template #controls>
-            <NButton
-                type="error"
-                strong
-                v-if="selectedKeys.length"
-                @click="openedDeleteModal = true"
-            >
-                <template #icon>
-                    <NIcon
-                        :component="IconTrash"
-                        size="16"
-                    />
-                </template>
-                Delete User
-            </NButton>
-            <ConfirmationModal
-                type="error"
-                v-model:show="openedDeleteModal"
-                @submit="deleteSelected"
-            >
-                <template #title> User deletion </template>
-                <template #description>
-                    <NText> Selected users ({{ selectedKeys.length }}) will be permanently deleted. This action cannot be undone. </NText>
-                </template>
-            </ConfirmationModal>
-
-            <NButton
-                type="primary"
-                strong
-                @click="openedCreateModal = true"
-            >
-                <template #icon>
-                    <NIcon
-                        :component="IconUserPlus"
-                        size="16"
-                    />
-                </template>
-                Create User
-            </NButton>
-            <CreateZoneModal
-                v-model:show="openedCreateModal"
-                @submit="table?.refresh"
+            <UserControls
+                type="table"
+                :users="selectedRows"
+                @create-success="refresh"
+                @delete-error="refresh"
+                @delete-success="refresh"
             />
         </template>
     </ClientDataTable>

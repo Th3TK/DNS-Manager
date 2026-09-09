@@ -3,7 +3,7 @@ defineOptions({
     inheritAttrs: false,
 });
 
-import { NCard, NLayout, NLayoutContent, NLayoutSider } from "naive-ui";
+import { NLayout, NLayoutContent, NLayoutSider } from "naive-ui";
 
 import NavBar from "../components/navigation/NavBar.vue";
 </script>

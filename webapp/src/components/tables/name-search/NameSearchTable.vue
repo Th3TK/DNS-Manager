@@ -5,7 +5,7 @@ import { NButton, NDataTable, NFlex, NForm, NIcon, NInput, NText, type Paginatio
 import { ref } from "vue";
 import { nameSearch } from "../../../services/api.ts";
 import type { NameSearchDNSRecord } from "../../../types/api.types.ts";
-import { sanitizeNameSearchValue } from "../../../services/dns.ts";
+import { sanitizeNameSearchValue } from "../../../utils/dns.ts";
 import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
 import type { AxiosError } from "axios";
 import type { TableRow } from "../../../types/table.types.ts";

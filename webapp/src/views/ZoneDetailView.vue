@@ -88,7 +88,10 @@ watch(error, () => {
 
         <template #portal>
             <NCard class="tableCard">
-                <RecordsTable :zone-name="String(route.params.name)">
+                <RecordsTable
+                    :zone-name="String(route.params.name)"
+                    :global="false"
+                >
                     <template #header>
                         <NButton
                             class="expandButton"

@@ -7,10 +7,14 @@ import { useNotification } from "naive-ui";
 import { useErrorHandler } from "../../composables/useErrorHandler.ts";
 import { HttpStatusCode } from "axios";
 import { login } from "../../services/api.ts";
+import { useRecordsStatusStore } from "../../stores/useRecordsStatusStore.ts";
+import { useAuthenticationStore } from "../../stores/useAuthenticationStore.ts";
 
 const notification = useNotification();
 const errorHandler = useErrorHandler();
 
+const authentication = useAuthenticationStore();
+const recordsStatus = useRecordsStatusStore();
 const router = useRouter();
 
 const usernameInput = useTemplateRef<InstanceType<typeof NInput>>("username-input");
@@ -53,7 +57,11 @@ const onLogin = async () => {
         return false;
     });
 
-    if (success) router.push({ name: "Dashboard" });
+    if (!success) return;
+
+    router.push({ name: "Dashboard" });
+    recordsStatus.connect();
+    authentication.refresh();
 };
 
 onMounted(() => usernameInput.value?.focus());

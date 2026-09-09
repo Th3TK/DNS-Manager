@@ -4,8 +4,9 @@ import TextField from "../../data-table/fields/TextField.vue";
 import { h } from "vue";
 import BooleanField from "../../data-table/fields/BooleanField.vue";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
+import UserControls from "../../controls/UserControls.vue";
 
-export const columns: DataTableColumns<User> = [
+export const getColumns = (refresh: () => void): DataTableColumns<User> => [
     {
         type: "selection",
     },
@@ -56,5 +57,18 @@ export const columns: DataTableColumns<User> = [
             h(BooleanField, {
                 value: row.disabled,
             }),
+    },
+    {
+        title: "",
+        key: "controls",
+        render: (row: User) =>
+            h(UserControls, {
+                users: row,
+                type: "dropdown",
+                onDeleteError: refresh,
+                onDeleteSuccess: refresh,
+                onEditSuccess: refresh,
+            }),
+        width: 60,
     },
 ];

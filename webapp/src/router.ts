@@ -7,10 +7,13 @@ import ZoneDetailView from "./views/ZoneDetailView.vue";
 import ChangeHistoryView from "./views/ChangeHistoryView.vue";
 import UserManagementView from "./views/UserManagementView.vue";
 import { getAuthenticatedUser } from "./services/api.ts";
-import { LayoutBoard, World, History, Trash, Users } from "@vicons/tabler";
+import { LayoutBoard, World, History, Trash, Users, ListDetails } from "@vicons/tabler";
 import ChangeHistoryEntryView from "./views/ChangeHistoryEntryView.vue";
 import TrashEntryView from "./views/TrashEntryView.vue";
 import RecordDetailView from "./views/RecordDetailView.vue";
+import { useAuthenticationStore } from "./stores/useAuthenticationStore.ts";
+import { pinia } from "./pinia.ts";
+import RecordListView from "./views/RecordListView.vue";
 
 export const routes = [
     {
@@ -44,6 +47,14 @@ export const routes = [
         component: ZoneDetailView,
         meta: {
             hide: true,
+        },
+    },
+    {
+        name: "Records",
+        path: "/records",
+        component: RecordListView,
+        meta: {
+            icon: ListDetails,
         },
     },
     {
@@ -99,21 +110,23 @@ export const routes = [
     },
 ];
 
+const authentication = useAuthenticationStore(pinia);
+
 const router = createRouter({ history: createWebHistory(), routes });
 
 router.beforeEach(async (to, from) => {
     if (to.meta.public) return;
 
-    let user = await getAuthenticatedUser();
+    await authentication.refresh();
 
     // send unauthenticated sessions straight to login page
-    if (!user) return to.name !== "Login";
+    if (!authentication.user) return { name: "Login" };
 
     // send authenticated users to dashboard
     if (to.name === "Login") return { name: "Dashboard" };
 
     // forbid not authorized users to view admin only routes
-    if (to.meta.adminRequired && !user.is_admin) return { name: "Dashboard" };
+    if (to.meta.adminRequired && !authentication.user.is_admin) return { name: "Dashboard" };
 });
 
 export default router;
