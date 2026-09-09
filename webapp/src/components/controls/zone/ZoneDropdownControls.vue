@@ -44,7 +44,7 @@ const onSelect = (key: string | number) => {
             quaternary
             square
             class="icon-button"
-            @dblclick.stop
+            @click.stop
         >
             <NIcon
                 :component="DotsVertical"

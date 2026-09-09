@@ -1,5 +1,6 @@
 import datetime
 from typing import Annotated, Literal, cast
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -144,6 +145,7 @@ class DNSRecordSearchResult(BaseModel):
     content: str | list[str]
     origin: DNSRecordOrigin
     location: Literal["active", "trash"]
+    trash_entry_uuid: UUID | None = None  # if applicable - uuid of the trash entry
 
 
 type ResolutionStatus = Literal["OK", "MISMATCH", "NO_RESOLUTION"]

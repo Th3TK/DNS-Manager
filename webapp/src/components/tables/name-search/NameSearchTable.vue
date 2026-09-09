@@ -10,10 +10,14 @@ import { useErrorHandler } from "../../../composables/useErrorHandler.ts";
 import type { AxiosError } from "axios";
 import type { TableRow } from "../../../types/table.types.ts";
 import _ from "lodash";
+import { useRouter } from "vue-router";
+import BaseDataTable from "../../data-table/BaseDataTable.vue";
+import { h } from "vue";
 
 const { handleError } = useErrorHandler();
+const router = useRouter();
 
-const data = ref<TableRow<NameSearchDNSRecord>[]>([]);
+const data = ref<NameSearchDNSRecord[]>([]);
 const error = ref(false);
 const loading = ref(false);
 const searched = ref<boolean>(false);
@@ -25,6 +29,25 @@ const onChange = (value: string) => {
     input.value = sanitizeNameSearchValue(value);
 };
 
+const handleClick = (row: NameSearchDNSRecord) =>
+    router.push(
+        row.location === "active"
+            ? {
+                  name: "RecordDetails",
+                  params: {
+                      name: row.zone_name,
+                      record_name: row.name,
+                      record_type: row.type,
+                  },
+              }
+            : {
+                  name: "TrashEntryDetails",
+                  params: {
+                      uuid: row.trash_entry_uuid,
+                  },
+              },
+    );
+
 const search = async () => {
     if (!input.value) return;
     loading.value = true;
@@ -33,7 +56,7 @@ const search = async () => {
 
     nameSearch(input.value)
         .then((val) => {
-            data.value = _.map(val, (r: NameSearchDNSRecord, i) => ({ ...r, key: `${i}` }));
+            data.value = val;
         })
         .catch((err: AxiosError) => {
             error.value = true;
@@ -104,19 +127,27 @@ const search = async () => {
                 {{ data.length ? "Taken" : "Free" }}
             </NText>
         </NText>
-        <NDataTable
+        <BaseDataTable
             v-if="data.length"
-            :columns="columns"
             :data="data"
+            :row-keys="['zone_name', 'name', 'type', 'trash_entry_uuid']"
+            :columns="columns"
             :loading="loading"
-            :pagination="{
-                showSizePicker: true,
-                pageSizes: [10, 25, 50, 100],
-                prefix: ({ itemCount }: PaginationInfo) => `Found ${itemCount ?? 0} record${itemCount && itemCount > 1 ? 's' : ''}`,
-            }"
-            striped
-            flex-height
-            class="data-table"
+            :pagination-prefix="
+                ({ itemCount }: PaginationInfo) =>
+                    h(
+                        NText,
+                        {
+                            depth: 3,
+                            strong: true,
+                        },
+                        {
+                            default: () => `Found ${itemCount ?? 0} record${itemCount && itemCount > 1 ? 's' : ''}`,
+                        },
+                    )
+            "
+            ,
+            @cell-click="handleClick"
         />
     </NFlex>
 </template>
@@ -132,11 +163,11 @@ const search = async () => {
     flex: 1;
 }
 
-.data-table :deep(.n-pagination) {
+:deep(.n-pagination) {
     width: 100%;
 }
-.data-table :deep(.n-pagination-prefix) {
+:deep(.n-pagination-prefix) {
     flex: 1 !important;
-    font-size: 16px;
+    font-size: 15px;
 }
 </style>

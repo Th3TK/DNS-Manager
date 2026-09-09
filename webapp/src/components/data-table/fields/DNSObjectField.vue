@@ -22,7 +22,7 @@ const props = defineProps<
         <NText
             class="key"
             v-if="type === 'zone'"
-            @dblclick.stop
+            @click.stop
         >
             {{ data.name }}
         </NText>
@@ -30,7 +30,7 @@ const props = defineProps<
             v-else
             :size="12"
             align="center"
-            @dblclick.stop
+            @click.stop
         >
             <NText class="key">{{ data.name }}</NText>
             <NText class="key">{{ data.type }}</NText>
@@ -41,7 +41,6 @@ const props = defineProps<
             @click.stop
             depth="3"
             class="comment"
-            @dblclick.stop
         >
             Comment: {{ data.comment }}
         </NText>

@@ -28,7 +28,7 @@ const colors = {
 <template>
     <NPopover
         :disabled="!api_status"
-        @dblclick.stop
+        @click.stop
     >
         <template #trigger>
             <NFlex

@@ -7,7 +7,7 @@ const props = defineProps<{
 </script>
 
 <template>
-    <NText @dblclick.stop>
+    <NText @click.stop>
         <NTime
             :time="value"
             type="datetime"

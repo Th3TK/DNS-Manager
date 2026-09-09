@@ -1,11 +1,21 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import { NButton, NDataTable, NFlex, NIcon, NTag, type DataTableColumns, type DataTableRowKey } from "naive-ui";
+import {
+    NButton,
+    NDataTable,
+    NFlex,
+    NIcon,
+    NTag,
+    type DataTableColumns,
+    type DataTableRowKey,
+    type PaginationInfo,
+    type PaginationProps,
+} from "naive-ui";
 import { type FilterConfig, type TableRow } from "../../types/table.types.ts";
 import AddFilterButton from "./filters/AddFilterButton.vue";
 import { Refresh } from "@vicons/tabler";
 import { useDataTable } from "../../composables/useDataTable.ts";
 import { formatFilterText } from "./filters/filters.ts";
-import { computed } from "vue";
+import { computed, type VNodeChild } from "vue";
 import _ from "lodash";
 
 defineOptions({
@@ -18,6 +28,7 @@ const props = defineProps<{
     filterConfig?: FilterConfig<T>;
     refresh?: () => void;
     onCellClick?: (row: T) => any;
+    paginationPrefix?: (info: PaginationInfo) => VNodeChild;
 }>();
 
 const {
@@ -50,6 +61,20 @@ const keyedData = computed(() =>
 );
 
 const selectedRows = computed(() => keyedData.value.filter((row) => selectedKeys.value.includes(row.key as DataTableRowKey)));
+
+const pagination = computed(
+    () =>
+        ({
+            page: page.value,
+            pageSize: pageSize.value,
+            itemCount: total.value,
+            showSizePicker: true,
+            pageSizes: [10, 25, 50, 100],
+            onUpdatePage: handlePageChange,
+            onUpdatePageSize: handlePageSizeChange,
+            prefix: props.paginationPrefix,
+        }) as PaginationProps,
+);
 
 defineExpose({
     page,
@@ -114,15 +139,7 @@ defineExpose({
             :data="keyedData"
             :loading="loading"
             :row-key="(row) => row.key"
-            :pagination="{
-                page: page,
-                pageSize: pageSize,
-                itemCount: total,
-                showSizePicker: true,
-                pageSizes: [10, 25, 50, 100],
-                onUpdatePage: handlePageChange,
-                onUpdatePageSize: handlePageSizeChange,
-            }"
+            :pagination="pagination"
             striped
             flex-height
             class="data-table"

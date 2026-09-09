@@ -19,7 +19,7 @@ const copy = () => {
             container: true,
             monospace: monospace,
         }"
-        @dblclick.stop
+        @click.stop
     >
         {{ value }}
         <NButton

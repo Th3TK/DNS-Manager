@@ -52,7 +52,7 @@ export function useDataTable<T extends Record<string, any>>(columns: DataTableCo
                         ...props,
                         ...(onCellClick && {
                             class: [props?.class, "data-table-clickable-cell"],
-                            onDblclick: (event) => {
+                            onClick: (event) => {
                                 onCellClick(row);
                                 props?.onDblclick?.(event);
                             },

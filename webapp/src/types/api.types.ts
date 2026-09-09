@@ -124,6 +124,7 @@ export interface NameSearchDNSRecord {
     content: string | string[];
     origin: DNSRecordOrigin;
     location: "active" | "trash";
+    trash_entry_uuid: string | null;
 }
 
 export type ChangeHistoryAction = "created" | "changed" | "deleted" | "restored" | "permanently_deleted";

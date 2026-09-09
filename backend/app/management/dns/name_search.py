@@ -17,21 +17,27 @@ def wildcards_to_sql_like(pattern: str) -> str:
     return pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_").replace("*", "%").replace("?", "_")
 
 
+def prepare_trash_entry_search_results(trash_entries: Sequence[DNSTrashInDB]):
+    results = []
+
+    for entry in trash_entries:
+        trash_entry = TrashEntry.from_db(entry)
+
+        results.append(
+            DNSRecordSearchResult(
+                **cast(DNSRecord, trash_entry.object_data).model_dump(),
+                location="trash",
+                trash_entry_uuid=trash_entry.entry_uuid,
+            )
+        )
+
+    return results
+
+
 def prepare_search_results(active_records: list[DNSRecord], trash_entries: Sequence[DNSTrashInDB]):
     return [
         *[DNSRecordSearchResult(**record.model_dump(), location="active") for record in active_records],
-        *[
-            DNSRecordSearchResult(
-                **cast(
-                    DNSRecord,
-                    TrashEntry.from_db(
-                        entry,
-                    ).object_data,
-                ).model_dump(),
-                location="trash",
-            )
-            for entry in trash_entries
-        ],
+        *prepare_trash_entry_search_results(trash_entries),
     ]
 
 

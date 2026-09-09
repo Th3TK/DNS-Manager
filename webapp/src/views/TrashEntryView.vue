@@ -8,6 +8,7 @@ import { useErrorHandler } from "../composables/useErrorHandler.ts";
 import TimeToLiveField from "../components/data-table/fields/TimeToLiveField.vue";
 import ActorField from "../components/data-table/fields/ActorField.vue";
 import { AxiosError, HttpStatusCode } from "axios";
+import TrashControls from "../components/controls/TrashControls.vue";
 
 const route = useRoute();
 const router = useRouter();

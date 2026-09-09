@@ -81,7 +81,7 @@ onBeforeUnmount(() => {
     <NFlex
         :size="6"
         align="center"
-        @dblclick.stop
+        @click.stop
     >
         <NTooltip trigger="hover">
             <template #trigger>
