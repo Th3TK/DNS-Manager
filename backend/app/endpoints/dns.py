@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.management.dns.record import create_record, delete_record, get_record, get_records, modify_record
+from app.management.dns.record import create_record, delete_record, get_all_records, get_record, get_records, modify_record
 from app.management.dns.zone import create_zone, delete_zone, get_zone, get_zones
 from app.management.users.authentication import get_authenticated_administrator, get_authenticated_user
 from app.models.record import (
@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="/zones",
+    prefix="",
     tags=["DNS Management"],
 )
 
 
-@router.get("", response_model=list[DNSZone])
+@router.get("/zones", response_model=list[DNSZone])
 def __get_all_zones__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -37,14 +37,14 @@ def __get_all_zones__(
     return get_zones(db)
 
 
-@router.get("/{zone_name}", response_model=DNSZone)
+@router.get("/zones/{zone_name}", response_model=DNSZone)
 def __get_singular_zone__(
     user: Annotated[User, Depends(get_authenticated_user)], db: Annotated[Session, Depends(get_db)], zone_name: str
 ) -> DNSZone:
     return get_zone(db, zone_name)
 
 
-@router.post("", response_model=DNSZone, status_code=201)
+@router.post("/zones", response_model=DNSZone, status_code=201)
 def __create_zone__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -53,7 +53,7 @@ def __create_zone__(
     return create_zone(db, CreateDNSZoneArgs(**form.model_dump(), author=user.username))
 
 
-@router.delete("/{zone_name}", response_model=DNSZoneRemovalResult, status_code=200)
+@router.delete("/zones/{zone_name}", response_model=DNSZoneRemovalResult, status_code=200)
 def __delete_zone__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -62,7 +62,15 @@ def __delete_zone__(
     return delete_zone(db, zone_name, user)
 
 
-@router.get("/{zone_name}/records", response_model=list[DNSRecord])
+@router.get("/all-records", response_model=list[DNSRecord])
+def __get_all_records__(
+    user: Annotated[User, Depends(get_authenticated_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[DNSRecord]:
+    return get_all_records(db)
+
+
+@router.get("/zones/{zone_name}/records", response_model=list[DNSRecord])
 def __get_all_zone_records__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -71,7 +79,7 @@ def __get_all_zone_records__(
     return get_records(db, zone_name)
 
 
-@router.get("/{zone_name}/record", response_model=DNSRecord)
+@router.get("/zones/{zone_name}/record", response_model=DNSRecord)
 def __get_singular_record_details__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -82,7 +90,7 @@ def __get_singular_record_details__(
     return get_record(db, zone_name=zone_name, name=record_name, type_=record_type)
 
 
-@router.post("/{zone_name}/record", response_model=DNSRecord, status_code=201)
+@router.post("/zones/{zone_name}/record", response_model=DNSRecord, status_code=201)
 def __create_record__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -100,7 +108,7 @@ def __create_record__(
     )
 
 
-@router.patch("/{zone_name}/record", response_model=DNSRecord)
+@router.patch("/zones/{zone_name}/record", response_model=DNSRecord)
 def __modify_record__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -118,7 +126,7 @@ def __modify_record__(
     )
 
 
-@router.delete("/{zone_name}/record", response_model=DNSRecordRemovalResult, status_code=200)
+@router.delete("/zones/{zone_name}/record", response_model=DNSRecordRemovalResult, status_code=200)
 def __delete_record__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],

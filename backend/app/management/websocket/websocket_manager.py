@@ -24,8 +24,7 @@ class _WebSocketManager:
                     del self._connections[username]
 
     async def disconnect_user(self, username: str, code: int = status.WS_1008_POLICY_VIOLATION, reason: str = "Account deleted"):
-        async with self._lock:
-            handlers = list(self._connections.get(username, []))
+        handlers = list(self._connections.get(username, []))
 
         for handler in handlers:
             await handler.close(code, reason)

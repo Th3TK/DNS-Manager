@@ -1,6 +1,7 @@
-from app.config import ENV_CONFIG
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.config import ENV_CONFIG
 
 
 def get_sqlalchemy_database_url(url: str) -> str:

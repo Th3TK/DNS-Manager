@@ -12,15 +12,15 @@ from sqlalchemy.exc import OperationalError
 from app.config import ENV_CONFIG
 from app.endpoints.action_log import router as action_log_router
 from app.endpoints.authentication import router as authentication_router
-from app.endpoints.base import router as base_router
 from app.endpoints.dns import router as dns_router
+from app.endpoints.health import router as base_router
 from app.endpoints.name_search import router as name_search_router
 from app.endpoints.status_check import router as status_check_router
 from app.endpoints.trash import router as trash_router
 from app.endpoints.user import router as users_router
 from app.management.status_check.status_check import automatic_status_check
 from app.management.trash.cleanup import automatic_trash_removal
-from app.models.exceptions import DNSProviderException, DNSValidationError
+from app.models.exceptions import DependencyExceptionCodes, DNSProviderException, DNSValidationError
 from app.synch import synchronize_database
 
 logging.basicConfig(
@@ -76,7 +76,7 @@ async def sqlalchemy_connection_error_handler(request: Request, exc: Operational
                 "database is running and that the database connection settings "
                 "in the environment variables are correctly configured."
             ),
-            "code": "DATABASE_UNAVAILABLE",
+            "code": DependencyExceptionCodes.DATABASE,
         },
     )
 
@@ -87,7 +87,7 @@ async def dns_provider_error_handler(request: Request, exc: DNSProviderException
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
             "detail": str(exc),
-            "code": "DNS_PROVIDER_UNAVAILABLE",
+            "code": DependencyExceptionCodes.DNS_PROVIDER,
         },
     )
 

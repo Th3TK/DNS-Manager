@@ -7,7 +7,7 @@ from app.models.zone import DNSZoneProperties
 class DNSProvider(Protocol):
     def health_check(self) -> None:
         """
-        Checks whether the provider is reachable. Must raise `HTTP 503` if any error occurs; no other status codes are permitted.
+        Checks whether the provider is reachable. Must raise `DNSProviderException` if any error occurs.
         Returns `None` on success.
         """
         ...

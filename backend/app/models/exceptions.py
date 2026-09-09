@@ -1,3 +1,5 @@
+from enum import Enum
+
 from fastapi import status
 
 
@@ -10,3 +12,8 @@ class DNSValidationError(ValueError):
 
 class DNSProviderException(Exception):
     """Raised when the DNS provider cannot fulfill a request."""
+
+
+class DependencyExceptionCodes(str, Enum):
+    DATABASE = "DATABASE_UNAVAILABLE"
+    DNS_PROVIDER = "DNS_PROVIDER_UNAVAILABLE"

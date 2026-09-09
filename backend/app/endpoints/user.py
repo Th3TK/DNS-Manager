@@ -18,13 +18,6 @@ def __get_me__(
     return user
 
 
-@router.patch("/me/change-password", response_model=None, status_code=204)
-def __change_own_password__(
-    user: Annotated[User, Depends(get_authenticated_user)], db: Annotated[Session, Depends(get_db)], form: ChangePasswordForm
-) -> None:
-    change_password(db, user, form.password)
-
-
 @router.get("", response_model=list[User])
 def __get_users__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
@@ -60,16 +53,32 @@ def __create_user__(
 
 
 @router.patch("/{username}", response_model=User)
-def __modify_user__(
+async def __modify_user__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
     form: ModifyUserForm,
     username: str,
 ) -> User:
-    return modify_user(db, username, form)
+    return await modify_user(db, username, form)
 
 
-@router.patch("/{username}/password", response_model=None, status_code=204)
+@router.delete("/{username}", response_model=None, status_code=204)
+async def __delete_user__(
+    user: Annotated[User, Depends(get_authenticated_administrator)],
+    db: Annotated[Session, Depends(get_db)],
+    username: str,
+) -> None:
+    return await delete_user(db, username)
+
+
+@router.patch("/me/change-password", response_model=None, status_code=204)
+def __change_own_password__(
+    user: Annotated[User, Depends(get_authenticated_user)], db: Annotated[Session, Depends(get_db)], form: ChangePasswordForm
+) -> None:
+    change_password(db, user, form.password)
+
+
+@router.patch("/{username}/change-password", response_model=None, status_code=204)
 def __change_user_password__(
     user: Annotated[User, Depends(get_authenticated_administrator)],
     db: Annotated[Session, Depends(get_db)],
@@ -85,12 +94,3 @@ def __change_user_password__(
         )
 
     change_password(db, target_user, form.password)
-
-
-@router.delete("/{username}", response_model=None, status_code=204)
-def __delete_user__(
-    user: Annotated[User, Depends(get_authenticated_administrator)],
-    db: Annotated[Session, Depends(get_db)],
-    username: str,
-) -> None:
-    return delete_user(db, username)

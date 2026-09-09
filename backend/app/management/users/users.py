@@ -1,8 +1,10 @@
+import asyncio
 import logging
 
 from app.database.models.user import UserInDB
 from app.management.users.passwords import hash_password
 from app.management.users.validation import validate_username
+from app.management.websocket.websocket_manager import global_websocket_manager
 from app.models.user import CreateUserForm, ModifyUserForm, User
 from fastapi import HTTPException, status
 from sqlalchemy import func, select, update
@@ -63,7 +65,7 @@ def create_user(db: Session, creation_form: CreateUserForm) -> User:
     return User.from_db(user_in_db)
 
 
-def modify_user(db: Session, username: str, modification_form: ModifyUserForm) -> User:
+async def modify_user(db: Session, username: str, modification_form: ModifyUserForm) -> User:
     user_in_db = get_raw_user(db, username)
 
     if user_in_db is None:
@@ -72,10 +74,18 @@ def modify_user(db: Session, username: str, modification_form: ModifyUserForm) -
             detail=f"User with username='{username}' could not be found.",
         )
 
-    if get_active_admin_count(db) == 1 and user_in_db.is_admin and not modification_form.is_admin:
+    is_last_active_admin = user_in_db.is_admin and not user_in_db.disabled and get_active_admin_count(db) == 1
+
+    if is_last_active_admin and modification_form.is_admin is False:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Cannot demote the last active administrator.",
+        )
+
+    if is_last_active_admin and modification_form.disabled is True:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot disable the last active administrator.",
         )
 
     updates = modification_form.model_dump(exclude_none=True)
@@ -85,6 +95,9 @@ def modify_user(db: Session, username: str, modification_form: ModifyUserForm) -
 
     if updates:
         db.commit()
+
+    if modification_form.disabled:
+        asyncio.create_task(global_websocket_manager.disconnect_user(user_in_db.username))
 
     return User.from_db(user_in_db)
 
@@ -103,7 +116,7 @@ def get_active_admin_count(db: Session) -> int:
     )
 
 
-def delete_user(db: Session, username: str) -> None:
+async def delete_user(db: Session, username: str) -> None:
     user_in_db = get_raw_user(db, username)
 
     if user_in_db is None:
@@ -112,11 +125,13 @@ def delete_user(db: Session, username: str) -> None:
             detail=f"User with username='{username}' could not be found.",
         )
 
-    if user_in_db.is_admin and get_active_admin_count(db) == 1:
+    if user_in_db.is_admin and not user_in_db.disabled and get_active_admin_count(db) == 1:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Cannot delete the last active administrator.",
         )
+
+    asyncio.create_task(global_websocket_manager.disconnect_user(username))
 
     db.delete(user_in_db)
     db.commit()

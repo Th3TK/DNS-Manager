@@ -16,8 +16,10 @@ from app.management.status_check.status_check_utils import (
     resolve_cname_targets,
 )
 from app.management.status_check.websocket_manager import status_check_websocket_manager
+from app.models.exceptions import DNSProviderException
 from app.models.record import DNSRecord, RecordStatus, RecordStatusCheckData, RecordStatuses
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +106,12 @@ class AutomaticRecordStatusCheck:
                 logger.debug("Successfully retrieved record statuses.")
             except asyncio.CancelledError:
                 raise
+            except DNSProviderException:
+                statuses = None
+                logger.error("Automatic record status check failed - could not reach the DNS provider.")
+            except OperationalError:
+                statuses = None
+                logger.error("Automatic record status check failed - could not reach the database.")
             except Exception:
                 statuses = None
                 logger.exception("Automatic record status check failed.")
@@ -121,6 +129,7 @@ class AutomaticRecordStatusCheck:
             await asyncio.sleep(ENV_CONFIG.CHECK_INTERVAL_SECONDS)
 
     async def _check_records(self) -> RecordStatuses:
+
         with session_factory() as db:
             all_records = get_all_records(db)
 

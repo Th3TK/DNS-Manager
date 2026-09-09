@@ -82,3 +82,31 @@ async def __refresh_tokens__(
     )
 
     return True
+
+
+@router.post(
+    path="/logout",
+    response_model=None,
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Clear authentication coookies",
+    description="Clears HttpOnly authentication cookies.",
+)
+async def __logout__(
+    response: Response,
+):
+
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=ENV_CONFIG.HTTPS_ENABLED,
+        samesite="lax",
+        path="/",
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=ENV_CONFIG.HTTPS_ENABLED,
+        samesite="lax",
+        path="/",
+    )
