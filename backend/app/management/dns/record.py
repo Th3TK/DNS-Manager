@@ -159,25 +159,42 @@ def get_all_records(db: Session) -> list[DNSRecord]:
     return records
 
 
+def validate_no_duplicate(zone_name: str, name: str, type_: str):
+    """
+    Raises HTTP 409 if record with provided (name, type) already exists.
+    If duplicate is from a different zone than provided in `zone_name`, returns an according detail
+    explaining that DNS records with the same name and type across zones are not allowed.
+    """
+
+    # querying records with the same name across zones
+    records_with_equal_name = provider.query_records(name_query=name)
+    # filtering out records of different type
+    duplicate = next(
+        (record for record in records_with_equal_name if record.type == type_),
+        None,
+    )
+
+    if duplicate:
+        detail = "DNS record with the same name and type already exists. "
+
+        if duplicate.zone_name != zone_name:
+            detail = detail + (
+                f'An existing "{duplicate.type}" record named "{duplicate.name}" already exists in zone "{duplicate.zone_name}". '
+                "DNS records with the same name and type across zones are not allowed to prevent unexpected errors."
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=detail,
+        )
+
+
 def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoration: bool = False) -> DNSRecord:
     # remove metadata for records within the zone that were deleted outside of the application
     cleanup_record_metadata(db, creation_args.zone_name)
 
     validate_dns_record_name(creation_args.name, creation_args.zone_name)
     validate_record_content(creation_args.content, creation_args.type)
-
-    # the API does not allow creating records with the same (name, type) key
-    duplicate = provider.get_record(
-        zone_name=creation_args.zone_name,
-        name=creation_args.name,
-        type_=creation_args.type,
-    )
-
-    if duplicate is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="DNS record with the same name and type already exists.",
-        )
 
     zone = provider.get_zone(creation_args.zone_name)
 
@@ -186,6 +203,8 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"DNS zone with name='{creation_args.zone_name}' could not be found.",
         )
+
+    validate_no_duplicate(creation_args.zone_name, creation_args.name, creation_args.type)
 
     properties = provider.create_record(
         zone_name=creation_args.zone_name,
@@ -246,27 +265,18 @@ def modify_record(
     if modification_args.name:
         validate_dns_record_name(modification_args.name, zone_name)
 
+    # validate content
     if modification_args.content:
         validate_record_content(modification_args.content, modification_args.type or type_)
 
-    # get the existing record; raises 404 if it does not exist.
-    record_old: DNSRecord = get_record(db, zone_name, name, type_)
+    properties_old = provider.get_record(zone_name, name, type_)
 
-    # if we're modifying name or type, then check for existing duplicates
-    if (modification_args.name and modification_args.name != name) or (
-        modification_args.type and modification_args.type != type_
-    ):
-        duplicate = provider.get_record(
-            zone_name=zone_name,
-            name=modification_args.name or name,
-            type_=modification_args.type or type_,
+    # check if zone and record exists
+    if properties_old is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(f"DNS record with zone_id='{zone_name}', name='{name}', type='{type_}' could not be found."),
         )
-
-        if duplicate is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="DNS record with the same name and type already exists.",
-            )
 
     # get the ORM object from the database
     record_metadata_in_db = db.scalar(
@@ -277,38 +287,33 @@ def modify_record(
         )
     )
 
+    # validate origin
     if not record_metadata_in_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The API does not support modifying DNS records created outside the application.",
         )
 
-    zone = provider.get_zone(zone_name)
+    updates = modification_args.model_dump(exclude_unset=True)
 
-    if zone is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"DNS zone with name='{zone_name}' could not be found.",
-        )
+    record_old = DNSRecord(**properties_old.model_dump(), **DNSRecordMetadata.from_db(record_metadata_in_db).model_dump())
 
-    record_old_content_normalized = record_old.content[0] if isinstance(record_old.content, list) else record_old.content
-
-    # prepare a new record
     record_new = DNSRecord(
-        zone_name=zone_name,
-        name=modification_args.name or name,
-        type=modification_args.type or type_,
-        content=modification_args.content or record_old_content_normalized,
-        comment=modification_args.comment or record_old.comment,
-        checks_enabled=modification_args.checks_enabled or record_old.checks_enabled,
-        ttl=modification_args.ttl or record_old.ttl,
-        author=modification_args.author,
-        origin="manual",
+        **{
+            **record_old.model_dump(),
+            **updates,
+            "author": modification_args.author,
+            "origin": "manual",
+        }
     )
 
     # if there are no changes to be made, return
     if record_old == record_new:
         return record_old
+
+    # if we're modifying name or type, then check for existing duplicates
+    if record_old.name != record_new.name or record_old.type != record_new.type:
+        validate_no_duplicate(record_new.zone_name, record_new.name, record_new.type)
 
     # modify record in the DNS provider
     properties = provider.modify_record(

@@ -37,8 +37,8 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSRecordExten
                     AAAA: { type: "primary" },
                     CNAME: { type: "error" },
                     TXT: { type: "info" },
-                    MX: { type: "success" },
-                    SRV: { type: "success" },
+                    MX: { type: "warning" },
+                    SRV: { type: "warning" },
                 },
                 default: {
                     bordered: false,
@@ -168,8 +168,8 @@ export const getColumnsForAllRecordsTable = (): DataTableColumns<DNSRecordExtend
                     AAAA: { type: "primary" },
                     CNAME: { type: "error" },
                     TXT: { type: "info" },
-                    MX: { type: "success" },
-                    SRV: { type: "success" },
+                    MX: { type: "warning" },
+                    SRV: { type: "warning" },
                 },
                 default: {
                     bordered: false,

@@ -30,8 +30,8 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
                     AAAA: { type: "primary" },
                     CNAME: { type: "error" },
                     TXT: { type: "info" },
-                    MX: { type: "success" },
-                    SRV: { type: "success" },
+                    MX: { type: "warning" },
+                    SRV: { type: "warning" },
                 },
                 default: {
                     bordered: false,

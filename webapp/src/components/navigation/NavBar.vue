@@ -39,7 +39,7 @@ const isRouteActive = (routeName: string) => router.currentRoute.value.name === 
                 depth="3"
                 class="segment-text"
             >
-                Views
+                Panel Views
             </NText>
 
             <NFlex
