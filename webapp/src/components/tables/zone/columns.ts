@@ -5,6 +5,7 @@ import type { DataTableColumns } from "naive-ui";
 import ActorField from "../../data-table/fields/ActorField.vue";
 import ZoneControls from "../../controls/ZoneControls.vue";
 import { naturalCompare, compareNumbers } from "../../../utils/sorters.ts";
+import ZoneStatusField from "../../data-table/fields/ZoneStatusField.vue";
 
 export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
@@ -50,6 +51,16 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
             h(TextField, {
                 value: row.record_count === null ? "-" : String(row.record_count),
             }),
+        width: 250,
+    },
+    {
+        title: "Zone status",
+        key: "zone_status",
+        render: (row: DNSZone) =>
+            h(ZoneStatusField, {
+                zoneName: row.name,
+            }),
+        width: 250,
     },
     {
         title: "",

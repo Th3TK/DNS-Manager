@@ -5,8 +5,6 @@ import _ from "lodash";
 import { combinePaths } from "../utils/url";
 import APP_CONFIG from "../config/app.config";
 
-// const sendFetch = async () : Promise<AxiosResponse> => await axios({})
-
 const BASE_REQUEST_CONFIG = {
     transitional: { clarifyTimeoutError: true },
     timeout: 60_000,
