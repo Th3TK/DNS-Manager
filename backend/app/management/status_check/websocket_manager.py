@@ -34,7 +34,11 @@ class StatusCheckWebSocketManager:
             )
 
             for handler, result in zip(handlers, results):
-                if isinstance(result, WebSocketDisconnect) or isinstance(result, ClientDisconnected):
+                if (
+                    isinstance(result, WebSocketDisconnect)
+                    or isinstance(result, ClientDisconnected)
+                    or isinstance(result, RuntimeError)
+                ):
                     self._connections.discard(handler)
                 if isinstance(result, Exception):
                     logger.exception(

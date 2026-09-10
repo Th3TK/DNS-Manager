@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 
-def cleanup_zone_metadata(db: Session) -> int:
+def cleanup_zone_metadata(db: Session):
     """
     # Remove metadata for zones that no longer exist in the provider
     # (i.e. they were deleted outside of the application).
@@ -32,7 +32,7 @@ def cleanup_zone_metadata(db: Session) -> int:
     result = cast(CursorResult[Any], db.execute(delete(DNSZoneMetadataInDB).where(~DNSZoneMetadataInDB.name.in_(zone_names))))
     db.commit()
 
-    return result.rowcount
+    logger.info("Removed %d stale zones from the database.", result.rowcount)
 
 
 def get_zone(db: Session, zone_name: str) -> DNSZone:

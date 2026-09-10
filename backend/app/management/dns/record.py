@@ -25,34 +25,37 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 
-def cleanup_record_metadata(db: Session, *zone_names: str) -> int:
+def cleanup_record_metadata(db: Session, *zone_names: str):
     """
     Remove metadata for records that no longer exist in the provider
+    including record metadata from non existent zones.
     (i.e. they were deleted outside of the application).
     """
-    record_keys: set[tuple[str, str, str]] = set()
+    removed = 0
 
     for zone_name in zone_names:
         records = provider.get_records(zone_name) or []
 
-        record_keys.update((zone_name, record.name, record.type) for record in records)
+        record_keys = {(record.name, record.type) for record in records}
 
-    result = cast(
-        CursorResult[Any],
-        db.execute(
-            delete(DNSRecordMetadataInDB).where(
-                ~tuple_(
-                    DNSRecordMetadataInDB.zone_name,
-                    DNSRecordMetadataInDB.name,
-                    DNSRecordMetadataInDB.type,
-                ).in_(record_keys),
-            )
-        ),
-    )
+        result = cast(
+            CursorResult[Any],
+            db.execute(
+                delete(DNSRecordMetadataInDB).where(
+                    DNSRecordMetadataInDB.zone_name == zone_name,
+                    ~tuple_(
+                        DNSRecordMetadataInDB.name,
+                        DNSRecordMetadataInDB.type,
+                    ).in_(record_keys),
+                )
+            ),
+        )
+
+        removed += result.rowcount
 
     db.commit()
 
-    return result.rowcount
+    logger.info("Removed %d stale records from the database.", removed)
 
 
 def get_record(db: Session, zone_name: str, name: str, type_: str) -> DNSRecord:

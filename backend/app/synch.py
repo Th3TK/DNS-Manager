@@ -61,13 +61,12 @@ def synchronize_database():
         logging.info("Synchronizing database metadata with DNS provider.")
 
         try:
-            removed_zones: int = cleanup_zone_metadata(db)
-            logging.info("Removed %d stale zones from the database.", removed_zones)
+            cleanup_zone_metadata(db)
 
             zone_names = db.scalars(select(DNSRecordMetadataInDB.zone_name).distinct()).all()
 
-            removed_records: int = cleanup_record_metadata(db, *zone_names)
-            logging.info("Removed %d stale records from the database.", removed_records)
+            cleanup_record_metadata(db, *zone_names)
+
             logging.info("Database synchronization with the DNS provider completed.")
 
         except Exception as exc:
