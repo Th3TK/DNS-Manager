@@ -1,4 +1,3 @@
-import { computed } from "vue";
 import type { DNSZone, User } from "../../../types/api.types";
 import type { FilterConfig } from "../../../types/table.types";
 import _ from "lodash";
@@ -13,5 +12,9 @@ export const getFilterConfig = (users: User[]): FilterConfig<DNSZone> => ({
     },
     comment: {
         type: "freetext",
+    },
+    record_count: {
+        type: "range",
+        min: 0,
     },
 });

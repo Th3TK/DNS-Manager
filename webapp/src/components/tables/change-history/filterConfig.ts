@@ -22,4 +22,14 @@ export const getFilters = (users: User[]): FilterConfig<ChangeHistoryEntry> => (
     affected_object_name: {
         type: "freetext",
     },
+    affected_object_type: {
+        type: "options",
+        options: [
+            { label: "Record", value: "record" },
+            { label: "Zone", value: "zone" },
+        ],
+    },
+    action_timestamp: {
+        type: "datetime",
+    },
 });

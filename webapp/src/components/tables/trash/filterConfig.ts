@@ -17,4 +17,8 @@ export const getFilters = (users: User[]): FilterConfig<TrashEntry> => ({
             { label: "Record", value: "record" },
         ],
     },
+    deletion_timestamp: {
+        label: "Deleted timestamp",
+        type: "datetime",
+    },
 });

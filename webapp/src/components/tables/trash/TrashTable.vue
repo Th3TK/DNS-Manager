@@ -8,7 +8,7 @@ import { getColumns } from "./columns.ts";
 import { getTrash } from "../../../services/api.ts";
 import RemoteDataTable from "../../data-table/RemoteDataTable.vue";
 import useFetch from "../../../composables/useFetch.ts";
-import { getFilters } from "./filters.ts";
+import { getFilters } from "./filterConfig.ts";
 import TrashControls from "../../controls/TrashControls.vue";
 
 const { data: users } = useFetch<User[]>("/users");

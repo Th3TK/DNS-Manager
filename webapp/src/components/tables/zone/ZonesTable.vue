@@ -7,7 +7,7 @@ import useFetch from "../../../composables/useFetch.ts";
 import { getColumns } from "./columns.ts";
 import { getZones } from "../../../services/api.ts";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
-import { getFilterConfig } from "./filters.ts";
+import { getFilterConfig } from "./filterConfig.ts";
 import type { TableExpose } from "../../../types/table.types.ts";
 import ZoneControls from "../../controls/ZoneControls.vue";
 

@@ -1,8 +1,20 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import _ from "lodash";
-import { computed, reactive, ref } from "vue";
-import { NButton, NCheckbox, NFlex, NInput, NPopover, NSelect, NTag, NText, type DataTableColumns } from "naive-ui";
-import type { FilterConfig, FilterFieldConfig, Filters } from "../../../types/table.types";
+import { computed, reactive, ref, watch } from "vue";
+import {
+    NButton,
+    NCheckbox,
+    NDatePicker,
+    NFlex,
+    NInput,
+    NInputNumber,
+    NPopover,
+    NSelect,
+    NTag,
+    NText,
+    type DataTableColumns,
+} from "naive-ui";
+import type { FilterConfig, FilterFieldConfig, Filters, RangeValue } from "../../../types/table.types";
 import type { SelectMixedOption } from "naive-ui/es/select/src/interface";
 
 const props = defineProps<{
@@ -22,9 +34,13 @@ const opened = ref<boolean>(false);
 const draft = reactive<{
     freetext: string;
     options: Record<string, boolean>;
+    datetime: RangeValue;
+    range: RangeValue;
 }>({
     freetext: "",
     options: {},
+    datetime: [undefined, undefined],
+    range: [undefined, undefined],
 });
 
 // prettier-ignore
@@ -38,7 +54,7 @@ const fields = computed<SelectMixedOption[]>(() =>
         )
         .map((col) => ({
             // @ts-expect-error
-            label: col.title,
+            label: props.filterConfig[col.key]?.label ?? col.title,
             // @ts-expect-error
             value: col.key,
         })),
@@ -49,13 +65,6 @@ const selectedConfig = computed<FilterFieldConfig | null>(() => {
     if (field.value === null) return null;
     return props.filterConfig[field.value as keyof T] ?? null;
 });
-
-// when field gets selected, reset the state
-const onSelectField = (value: string | null) => {
-    field.value = value;
-    draft.freetext = "";
-    draft.options = {};
-};
 
 // on filter creation
 const submit = () => {
@@ -70,6 +79,8 @@ const submit = () => {
     const getValueToAssign = {
         freetext: () => value,
         options: () => _.keys(_.pickBy(value, Boolean)),
+        datetime: () => value,
+        range: () => value,
     };
 
     filters.value = {
@@ -80,6 +91,26 @@ const submit = () => {
     onSelectField(null);
     opened.value = false;
 };
+
+const draftEmpty = computed(() => ({
+    freetext: !draft.freetext,
+    options: !_.values(draft.options).filter((e) => e).length,
+    datetime: _.isUndefined(draft.datetime[0]) && _.isUndefined(draft.datetime[1]),
+    range: _.isUndefined(draft.range[0]) && _.isUndefined(draft.range[1]),
+}));
+
+const submitDisabled = computed(() => !field || !selectedConfig.value || draftEmpty.value[selectedConfig.value.type]);
+
+// when field gets selected, reset the state
+const onSelectField = (value: string | null) => {
+    field.value = value;
+    draft.freetext = "";
+    draft.options = {};
+    draft.datetime = [undefined, undefined];
+    draft.range = [undefined, undefined];
+};
+
+watch(opened, () => onSelectField(null));
 </script>
 
 <template>
@@ -124,6 +155,7 @@ const submit = () => {
                 Only objects whose field matches this text will be shown. Use <code>*</code> as a wildcard to match any sequence of
                 characters.
             </NText>
+
             <NFlex
                 v-else-if="selectedConfig?.type === 'options'"
                 vertical
@@ -136,11 +168,47 @@ const submit = () => {
                     :label="option.label"
                 />
             </NFlex>
+            <NFlex
+                v-else-if="selectedConfig?.type === 'datetime'"
+                vertical
+                size="small"
+            >
+                <NDatePicker
+                    v-model:value="draft.datetime[0]"
+                    type="datetime"
+                    clearable
+                    placeholder="After (optional)"
+                />
+                <NDatePicker
+                    v-model:value="draft.datetime[1]"
+                    type="datetime"
+                    clearable
+                    placeholder="Before (optional)"
+                />
+            </NFlex>
+            <NFlex
+                v-else-if="selectedConfig?.type === 'range'"
+                vertical
+                size="small"
+            >
+                <NInputNumber
+                    v-model:value="draft.range[0]"
+                    placeholder="Min value (optional)"
+                    :min="selectedConfig.min"
+                    :max="selectedConfig.max"
+                />
+                <NInputNumber
+                    v-model:value="draft.range[1]"
+                    placeholder="Max value (optional)"
+                    :min="selectedConfig.min"
+                    :max="selectedConfig.max"
+                />
+            </NFlex>
 
             <NButton
                 type="primary"
                 block
-                :disabled="!field || !selectedConfig || _.isEmpty(draft[selectedConfig.type])"
+                :disabled="submitDisabled"
                 @click="submit"
             >
                 Submit

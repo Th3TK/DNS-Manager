@@ -13,11 +13,10 @@ const authentication = useAuthenticationStore();
 </script>
 
 <template>
-    <NFlex>
+    <NFlex v-if="showDelete">
         <NButton
             type="error"
             strong
-            v-if="showDelete"
             @click="emit('delete')"
             :disabled="!authentication.isAdmin"
         >

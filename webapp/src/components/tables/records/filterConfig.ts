@@ -33,4 +33,17 @@ export const getFilters = (users: User[]): FilterConfig<DNSRecordExtended> => ({
             { label: "Disabled", value: "Disabled" },
         ],
     },
+    origin: {
+        type: "options",
+        options: [
+            { label: "Manual", value: "manual" },
+            { label: "Automatic", value: "automatic => traefik" },
+            { label: "External", value: "external" },
+        ],
+    },
+    ttl: {
+        type: "range",
+        min: 0,
+        max: 2_147_483_647,
+    },
 });

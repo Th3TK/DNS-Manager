@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -25,9 +25,19 @@ def __get_list_of_action_log_entries__(
     db: Annotated[Session, Depends(get_db)],
     action: ChangeAction | None = Query(None),
     actor: str | None = Query(None),
+    affected_object_type: Literal["record", "zone"] | None = Query(None),
     affected_object_name: str | None = Query(None),
+    action_timestamp_min: int | None = Query(None),
+    action_timestamp_max: int | None = Query(None),
 ):
-    query = get_log_entries_query(db, action=action, actor=actor, affected_object_name=affected_object_name)
+    query = get_log_entries_query(
+        action=action,
+        actor=actor,
+        affected_object_name=affected_object_name,
+        affected_object_type=affected_object_type,
+        action_timestamp_min=action_timestamp_min,
+        action_timestamp_max=action_timestamp_max,
+    )
 
     return paginate(db, query)
 

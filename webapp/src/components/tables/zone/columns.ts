@@ -4,6 +4,7 @@ import type { DNSZone } from "../../../types/api.types.ts";
 import type { DataTableColumns } from "naive-ui";
 import ActorField from "../../data-table/fields/ActorField.vue";
 import ZoneControls from "../../controls/ZoneControls.vue";
+import { naturalCompare, compareNumbers } from "../../../utils/sorters.ts";
 
 export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
@@ -12,7 +13,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
         title: "Name",
         key: "name",
-        sorter: "default",
+        sorter: (a, b) => naturalCompare(a.name, b.name),
         render: (row: DNSZone) =>
             h(TextField, {
                 value: row.name,
@@ -24,7 +25,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
         title: "Comment",
         key: "comment",
-        sorter: "default",
+        sorter: (a, b) => naturalCompare(a.comment ?? "", b.comment ?? ""),
         render: (row: DNSZone) =>
             h(TextField, {
                 value: row.comment || "-",
@@ -33,7 +34,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
         title: "Author",
         key: "author",
-        sorter: "default",
+        sorter: (a, b) => naturalCompare(a.author ?? "", b.author ?? ""),
         render: (row: DNSZone) =>
             h(ActorField, {
                 value: row.author,
@@ -43,7 +44,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
         title: "Number of records",
         key: "record_count",
-        sorter: "default",
+        sorter: (a, b) => compareNumbers(a.record_count ?? 0, b.record_count ?? 0),
         render: (row: DNSZone) =>
             h(TextField, {
                 value: String(row.record_count),

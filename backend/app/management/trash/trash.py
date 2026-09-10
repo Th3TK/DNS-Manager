@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID
 
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 def get_trash_entries_query(
     db: Session,
-    deletion_timestamp_after: datetime | None,
-    deletion_timestamp_before: datetime | None,
+    deletion_timestamp_min: int | None,
+    deletion_timestamp_max: int | None,
     actor: str | None,
     object_type: DNSObjectType | None,
     sort_by: Literal["deletion_timestamp", "actor", "object_type"],
@@ -30,11 +30,15 @@ def get_trash_entries_query(
 ) -> Select:
     query = select(DNSTrashInDB)
 
-    if deletion_timestamp_after is not None:
-        query = query.where(DNSTrashInDB.deletion_timestamp > deletion_timestamp_after)
+    if deletion_timestamp_min is not None:
+        query = query.where(
+            DNSTrashInDB.deletion_timestamp > datetime.fromtimestamp(deletion_timestamp_min / 1000, tz=timezone.utc)
+        )
 
-    if deletion_timestamp_before is not None:
-        query = query.where(DNSTrashInDB.deletion_timestamp < deletion_timestamp_before)
+    if deletion_timestamp_max is not None:
+        query = query.where(
+            DNSTrashInDB.deletion_timestamp < datetime.fromtimestamp(deletion_timestamp_max / 1000, tz=timezone.utc)
+        )
 
     if actor is not None:
         query = query.where(DNSTrashInDB.actor == actor)

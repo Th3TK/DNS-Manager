@@ -15,7 +15,7 @@ import { type FilterConfig, type TableRow } from "../../types/table.types.ts";
 import AddFilterButton from "./filters/AddFilterButton.vue";
 import { Refresh } from "@vicons/tabler";
 import { useDataTable } from "../../composables/useDataTable.ts";
-import { formatFilterText } from "./filters/filters.ts";
+import { formatFilterText } from "../../utils/filters.ts";
 import { computed, h, watch, type VNodeChild } from "vue";
 import _ from "lodash";
 import type { VNode } from "vue";
@@ -45,7 +45,7 @@ const {
     handleSorterChange,
     sorter,
     filters,
-} = useDataTable<T>(props.columns, props.onCellClick);
+} = useDataTable<T>(props.columns, props.filterConfig ?? {}, props.onCellClick);
 
 const data = defineModel<T[]>("data", { default: () => [] });
 const loading = defineModel<boolean>("loading", { default: false });

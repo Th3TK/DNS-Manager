@@ -13,29 +13,26 @@ import type {
     ChangePasswordForm,
 } from "../types/api.types";
 import { sendRequest } from "./requests";
-import type { DataPaginated, Filters } from "../types/table.types";
+import type { DataPaginated, FilterConfig, Filters } from "../types/table.types";
 import _ from "lodash";
+import { convertFiltersToParams } from "../utils/filters";
 
-const prepareTableParams = <T extends Record<string, any>>(
+export const prepareTableParams = <T extends Record<string, any>>(
     page: number,
     pageSize: number,
     filters: Filters<T> = {},
+    filterConfig: FilterConfig<T>,
     sortBy?: keyof T | null,
     sortOrder?: "ascend" | "descend" | null,
 ): URLSearchParams => {
     const params = new URLSearchParams({
+        ...Object.fromEntries(convertFiltersToParams(filters, filterConfig).entries()),
         page: page.toString(),
         size: pageSize.toString(),
     });
 
     if (sortBy) params.append("sort_by", String(sortBy));
     if (sortOrder) params.append("sort_order", sortOrder);
-
-    _.forEach(filters, (value, key) => {
-        if (_.isEmpty(value)) return;
-
-        _.forEach(_.castArray(value), (item) => params.append(key, String(item)));
-    });
 
     return params;
 };
@@ -126,8 +123,9 @@ export const getChangeHistory = async (
     page: number,
     pageSize: number,
     filters: Filters<ChangeHistoryEntry>,
+    filterConfig: FilterConfig<ChangeHistoryEntry>,
 ): Promise<DataPaginated<ChangeHistoryEntry>> => {
-    const params = prepareTableParams(page, pageSize, filters);
+    const params = prepareTableParams(page, pageSize, filters, filterConfig);
     return await sendRequest<DataPaginated<ChangeHistoryEntry>>("GET", `/log?${params.toString()}`);
 };
 
@@ -139,10 +137,11 @@ export const getTrash = (
     page: number,
     pageSize: number,
     filters: Filters<TrashEntry>,
+    filterConfig: FilterConfig<ChangeHistoryEntry>,
     sortBy: keyof TrashEntry | null,
     sortOrder: "ascend" | "descend" | null,
 ) => {
-    const params = prepareTableParams<TrashEntry>(page, pageSize, filters, sortBy, sortOrder);
+    const params = prepareTableParams<TrashEntry>(page, pageSize, filters, filterConfig, sortBy, sortOrder);
     return sendRequest<DataPaginated<TrashEntry>>("GET", `/trash?${params.toString()}`);
 };
 

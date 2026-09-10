@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -32,8 +31,8 @@ router = APIRouter(
 def __get_list_of_action_log_entries__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
-    deletion_timestamp_after: datetime | None = Query(None),
-    deletion_timestamp_before: datetime | None = Query(None),
+    deletion_timestamp_min: int | None = Query(None),
+    deletion_timestamp_max: int | None = Query(None),
     actor: str | None = Query(None),
     object_type: DNSObjectType | None = Query(None),
     sort_by: Literal["deletion_timestamp", "actor", "object_type"] = Query("deletion_timestamp"),
@@ -41,8 +40,8 @@ def __get_list_of_action_log_entries__(
 ) -> Page[TrashEntry]:
     query = get_trash_entries_query(
         db=db,
-        deletion_timestamp_after=deletion_timestamp_after,
-        deletion_timestamp_before=deletion_timestamp_before,
+        deletion_timestamp_min=deletion_timestamp_min,
+        deletion_timestamp_max=deletion_timestamp_max,
         actor=actor,
         object_type=object_type,
         sort_by=sort_by,

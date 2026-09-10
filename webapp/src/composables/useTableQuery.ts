@@ -1,10 +1,12 @@
 import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { DataTableSortState } from "naive-ui";
-import type { Filters } from "../types/table.types";
+import type { FilterConfig, Filters } from "../types/table.types";
 import _, { filter, keyBy } from "lodash";
+import { prepareTableParams } from "../services/api";
+import { getFiltersFromQuery } from "../utils/filters";
 
-export function useTableQuery<T extends Record<string, any>>() {
+export function useTableQuery<T extends Record<string, any>>(filterConfig: FilterConfig<T>) {
     const route = useRoute();
     const router = useRouter();
 
@@ -14,23 +16,12 @@ export function useTableQuery<T extends Record<string, any>>() {
     const pageSize = ref(25);
 
     const loadFromQuery = () => {
-        filters.value = {};
+        route.query;
 
-        _.entries(route.query).forEach(([key, value]) => {
-            if (_.includes(["page", "pageSize", "sortBy", "sortOrder"], key)) return;
-
-            if (_.isArray(value)) {
-                filters.value[key] = value.filter((v) => !_.isNil(v));
-                return;
-            }
-
-            if (!_.isNil(value)) {
-                filters.value[key] = value;
-            }
-        });
+        filters.value = getFiltersFromQuery(route.query, filterConfig);
 
         page.value = Number(route.query.page) || 1;
-        pageSize.value = Number(route.query.pageSize) || 25;
+        pageSize.value = Number(route.query.size) || 25;
 
         const sortQueriesPresent = route.query.sortBy && route.query.sortOrder;
 
@@ -43,22 +34,16 @@ export function useTableQuery<T extends Record<string, any>>() {
     };
 
     const saveToQuery = async () => {
-        const query: Record<string, string | string[]> = {
-            page: String(page.value),
-            pageSize: String(pageSize.value),
-        };
+        const params = prepareTableParams(
+            page.value,
+            pageSize.value,
+            filters.value,
+            filterConfig,
+            sorter.value?.columnKey as keyof T | undefined,
+            sorter.value?.order as "ascend" | "descend" | undefined,
+        );
 
-        _.entries(filters.value).forEach(([key, value]) => {
-            if (_.isEmpty(value)) return;
-            query[key] = _.isArray(value) ? value.map(String) : String(value);
-        });
-
-        if (sorter.value?.columnKey && sorter.value.order) {
-            query.sortBy = String(sorter.value.columnKey);
-            query.sortOrder = sorter.value.order;
-        }
-
-        await router.replace({ query });
+        await router.replace({ query: Object.fromEntries(params.entries()) });
     };
 
     loadFromQuery();

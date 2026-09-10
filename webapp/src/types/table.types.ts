@@ -1,6 +1,8 @@
 import type { DataTableColumns, DataTableSortState } from "naive-ui";
 
-export type FilterType = "freetext" | "options";
+export type RangeValue = [number | undefined, number | undefined];
+
+export type FilterType = "freetext" | "options" | "datetime" | "range";
 
 export type FilterOption = {
     label: string;
@@ -10,16 +12,28 @@ export type FilterOption = {
 export type FilterFieldConfig =
     | {
           type: "freetext";
+          label?: string;
           allowedCharacters?: string;
       }
     | {
           type: "options";
+          label?: string;
           options: FilterOption[];
+      }
+    | {
+          type: "datetime";
+          label?: string;
+      }
+    | {
+          type: "range";
+          label?: string;
+          min?: number;
+          max?: number;
       };
 
 export type FilterConfig<T> = Partial<Record<keyof T, FilterFieldConfig>>;
 
-export type Filters<T> = Partial<Record<keyof T, string | string[]>>;
+export type Filters<T> = Partial<Record<keyof T, string | string[] | RangeValue>>;
 
 export interface DataPaginated<T> {
     items: T[];

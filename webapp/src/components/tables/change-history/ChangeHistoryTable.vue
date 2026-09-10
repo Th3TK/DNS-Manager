@@ -8,7 +8,7 @@ import type { ChangeHistoryEntry, User } from "../../../types/api.types";
 import type { TableExpose } from "../../../types/table.types.ts";
 import RemoteDataTable from "../../data-table/RemoteDataTable.vue";
 import { columns } from "./columns.ts";
-import { getFilters } from "./filters.ts";
+import { getFilters } from "./filterConfig.ts";
 
 const { data: users } = useFetch<User[]>("/users");
 

@@ -6,7 +6,7 @@ import { getColumns } from "./columns.ts";
 import { getUsers } from "../../../services/api.ts";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
 import type { TableExpose } from "../../../types/table.types.ts";
-import { filters } from "./filters.ts";
+import { filters } from "./filterConfig.ts";
 import UserControls from "../../controls/UserControls.vue";
 
 const table = useTemplateRef<TableExpose<User>>("table");

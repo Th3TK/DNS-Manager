@@ -4,12 +4,13 @@ import { h } from "vue";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
 import TextField from "../../data-table/fields/TextField.vue";
 import _ from "lodash";
+import { naturalCompare } from "../../../utils/sorters.ts";
 
 export const columns: DataTableColumns<NameSearchDNSRecord> = [
     {
         title: "Name",
         key: "name",
-        sorter: "default",
+        sorter: (a, b) => naturalCompare(a.name ?? "", b.name ?? ""),
         render: (row: NameSearchDNSRecord) =>
             h(TextField, {
                 value: row.name,
@@ -45,7 +46,7 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
     {
         title: "Content",
         key: "content",
-        sorter: "default",
+        sorter: (a, b) => naturalCompare([a.content].flat().join(","), [b.content].flat().join(",")),
         render: (row: NameSearchDNSRecord) =>
             h(TextField, {
                 value: _.isArray(row.content) ? row.content.join("\n") : row.content,
@@ -57,7 +58,7 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
     {
         title: "Zone",
         key: "zone_name",
-        sorter: "default",
+        sorter: (a, b) => naturalCompare(a.zone_name, b.zone_name),
         render: (row: NameSearchDNSRecord) =>
             h(TextField, {
                 value: row.zone_name,

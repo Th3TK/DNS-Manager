@@ -1,24 +1,17 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { NText, type DataTableColumns, type DataTableRowKey } from "naive-ui";
 import { computed, ref, shallowRef, useTemplateRef, watch } from "vue";
-import {
-    type BaseDataTableExpose,
-    type DataPaginated,
-    type FilterConfig,
-    type Filters,
-    type TableExpose,
-    type TableRow,
-} from "../../types/table.types.ts";
+import { type BaseDataTableExpose, type DataPaginated, type FilterConfig, type Filters } from "../../types/table.types.ts";
 import { useErrorHandler } from "../../composables/useErrorHandler.ts";
 import { isAxiosError } from "axios";
 import BaseDataTable from "./BaseDataTable.vue";
-import _ from "lodash";
 
 const props = defineProps<{
     getData: (
         page: number,
         pageSize: number,
         filters: Filters<T>,
+        filterConfig: FilterConfig<T>,
         sortBy: keyof T | null,
         sortOrder: "ascend" | "descend" | null,
     ) => Promise<DataPaginated<T>>;
@@ -47,6 +40,7 @@ const loadData = async () => {
             table.value.page,
             table.value.pageSize,
             table.value.filters,
+            props.filterConfig,
             (table.value.sorter?.columnKey as keyof T | undefined) ?? null,
             table.value.sorter?.order || null,
         );

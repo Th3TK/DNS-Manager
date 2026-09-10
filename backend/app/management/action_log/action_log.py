@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from itertools import zip_longest
 from typing import Any
 from uuid import UUID
@@ -14,7 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_log_entries_query(
-    db: Session, action: ChangeAction | None = None, actor: str | None = None, affected_object_name: str | None = None
+    action: ChangeAction | None = None,
+    actor: str | None = None,
+    affected_object_name: str | None = None,
+    affected_object_type: str | None = None,
+    action_timestamp_min: int | None = None,
+    action_timestamp_max: int | None = None,
 ) -> Select:
     query = select(ActionLogInDB).order_by(ActionLogInDB.action_timestamp.desc())
 
@@ -27,6 +33,15 @@ def get_log_entries_query(
     if affected_object_name is not None:
         pattern = affected_object_name.replace("*", "%")
         query = query.where(ActionLogInDB.affected_object_name.like(pattern))
+
+    if affected_object_type is not None:
+        query = query.where(ActionLogInDB.affected_object_type == affected_object_type)
+
+    if action_timestamp_min is not None:
+        query = query.where(ActionLogInDB.action_timestamp > datetime.fromtimestamp(action_timestamp_min / 1000, tz=timezone.utc))
+
+    if action_timestamp_max is not None:
+        query = query.where(ActionLogInDB.action_timestamp < datetime.fromtimestamp(action_timestamp_max / 1000, tz=timezone.utc))
 
     return query
 

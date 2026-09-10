@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NFlex, NText, type DataTableRowKey } from "naive-ui";
+import { type DataTableRowKey } from "naive-ui";
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import ClientDataTable from "../../data-table/ClientDataTable.vue";
@@ -7,8 +7,8 @@ import useFetch from "../../../composables/useFetch.ts";
 import { getAllRecords, getRecords } from "../../../services/api.ts";
 import type { DNSRecord, DNSRecordExtended, User } from "../../../types/api.types";
 import type { TableExpose } from "../../../types/table.types.ts";
-import { getFilters } from "./filters.ts";
-import { getColumns, getColumnsForAllRecordsTable } from "./columns.ts";
+import { getFilters } from "./filterConfig.ts";
+import { getColumns } from "./columns.ts";
 import RecordControls from "../../controls/RecordControls.vue";
 import { useRecordsStatusStore } from "../../../stores/useRecordsStatusStore.ts";
 import _ from "lodash";
@@ -33,7 +33,7 @@ const data = ref<DNSRecordExtended[]>([]);
 const loading = ref(false);
 const selectedKeys = ref<DataTableRowKey[]>([]);
 
-const columns = computed(() => (props.global ? getColumnsForAllRecordsTable() : getColumns(refresh)));
+const columns = computed(() => getColumns(props.global, refresh));
 const filterConfig = computed(() => getFilters(users.value ?? []));
 
 const refresh = () => table.value?.refresh();

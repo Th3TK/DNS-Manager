@@ -3,7 +3,7 @@ import { NText, type DataTableColumns, type DataTableRowKey } from "naive-ui";
 import { computed, onMounted, ref, useTemplateRef } from "vue";
 import type { TableExpose, BaseDataTableExpose, FilterConfig, TableRow } from "../../types/table.types.ts";
 import { useErrorHandler } from "../../composables/useErrorHandler.ts";
-import { filterFunctions } from "./filters/filters.ts";
+import { filterFunctions } from "../../utils/filters.ts";
 import BaseDataTable from "./BaseDataTable.vue";
 import _ from "lodash";
 import { isAxiosError } from "axios";
