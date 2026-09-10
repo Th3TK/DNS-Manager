@@ -12,6 +12,18 @@ services:
             - "${API_PORT}:8000"
         networks:
             - dnsnet
+frontend:
+    container_name: dns-manager-frontend
+    build:
+        context: ./webapp
+        dockerfile: ./docker/Dockerfile
+    environment:
+        - VITE_HTTPS_ENABLED=${HTTPS_ENABLED}
+        - VITE_API_PORT=${API_PORT}
+    ports:
+        - "${FRONTEND_PORT}:3000"
+    networks:
+        - dnsnet
 networks:
     dnsnet:
         external: true

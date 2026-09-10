@@ -107,6 +107,11 @@ export const routes = [
             adminRequired: true,
         },
     },
+    {
+        path: "/:pathMatch(.*)*",
+        redirect: "/",
+        meta: {},
+    },
 ];
 
 const authentication = useAuthenticationStore(pinia);
@@ -114,7 +119,7 @@ const authentication = useAuthenticationStore(pinia);
 const router = createRouter({ history: createWebHistory(), routes });
 
 router.beforeEach(async (to, from) => {
-    if (to.meta.public) return;
+    if (to.meta?.public) return;
 
     await authentication.refresh();
 
@@ -125,7 +130,7 @@ router.beforeEach(async (to, from) => {
     if (to.name === "Login") return { name: "Dashboard" };
 
     // forbid not authorized users to view admin only routes
-    if (to.meta.adminRequired && !authentication.user.is_admin) return { name: "Dashboard" };
+    if (to.meta?.adminRequired && !authentication.user.is_admin) return { name: "Dashboard" };
 });
 
 export default router;

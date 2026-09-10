@@ -78,7 +78,7 @@ docker compose up -d --build
 
 ### 4. Connect to the app
 
-DNS Manager runs at [0.0.0.0:3000](http://0.0.0.0:3000) (available at http://127.0.0.1:3000).
+DNS Manager web application runs by default at [0.0.0.0:3000](http://0.0.0.0:3000) (available at http://127.0.0.1:3000).
 
 ## Production - Watcher build
 
