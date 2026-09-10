@@ -160,7 +160,7 @@ onMounted(() => usernameInput.value?.focus());
                     size="small"
                 >
                     <NFormItem
-                        label="Name"
+                        label="Username"
                         path="username"
                         class="item"
                         content-class="item-content"

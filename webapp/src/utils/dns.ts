@@ -98,7 +98,7 @@ export const isValidDnsName = (value: string) => {
     return normalized.length <= 255;
 };
 
-export const isValidIpv4Address = (value: string): boolean => ipaddr.IPv4.isValid(value);
+export const isValidIpv4Address = (value: string): boolean => ipaddr.IPv4.isValidFourPartDecimal(value);
 
 export const isValidIpv6Address = (value: string): boolean => ipaddr.IPv6.isValid(value);
 

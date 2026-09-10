@@ -66,7 +66,7 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
 
             if exc.response.status_code == 401:
                 raise DNSProviderException(
-                    "Authentication with the PowerDNS REST API failed.Verify that POWERDNS_API_KEY contains a valid API key."
+                    "Authentication with the PowerDNS REST API failed. Verify that POWERDNS_API_KEY contains a valid API key."
                 )
 
             try:

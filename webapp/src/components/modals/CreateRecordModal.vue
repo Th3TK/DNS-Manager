@@ -67,6 +67,7 @@ const rules: FormRules = {
             trigger: ["blur", "input"],
         },
         {
+            required: true,
             validator: (_rule, value: string) => {
                 switch (form.type) {
                     case "CNAME":
@@ -87,7 +88,7 @@ const rules: FormRules = {
 
                 return true;
             },
-            trigger: "blur",
+            trigger: ["blur"],
         },
     ],
 };

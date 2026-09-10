@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { NButton, NCard, NCheckbox, NFlex, NForm, NFormItem, NIcon, NInput, NModal, NSelect, type FormInst } from "naive-ui";
 import type { ModifyUserForm, User } from "../../types/api.types";
-import { onMounted, reactive, ref, useTemplateRef, watch } from "vue";
+import { computed, onMounted, reactive, ref, useTemplateRef, watch } from "vue";
 import { AxiosError, HttpStatusCode, isAxiosError } from "axios";
 import { modifyUser } from "../../services/api";
 import { useErrorHandler } from "../../composables/useErrorHandler";
@@ -57,6 +57,8 @@ const onSubmit = async () => {
         handleError(error as AxiosError);
     }
 };
+
+const modifyingOneself = computed(() => props.user.username === authentication.user?.username);
 
 watch([show, () => props.user], () => {
     form.full_name = props.user.full_name;
@@ -124,8 +126,8 @@ onMounted(() => fullNameInput.value?.focus());
                         label="Role"
                         class="item"
                         path="is_admin"
-                        :feedback="!form.is_admin ? 'You will no longer be able to manage user accounts.' : undefined"
-                        :validation-status="!form.is_admin ? 'warning' : undefined"
+                        :feedback="modifyingOneself && !form.is_admin ? 'You will no longer be able to manage user accounts.' : undefined"
+                        :validation-status="modifyingOneself && !form.is_admin ? 'warning' : undefined"
                     >
                         <NSelect
                             :options="[
@@ -140,8 +142,8 @@ onMounted(() => fullNameInput.value?.focus());
                         :show-label="false"
                         class="item"
                         path="disabled"
-                        :feedback="form.disabled ? 'Disabling this account will log you out immediately.' : undefined"
-                        :validation-status="form.disabled ? 'warning' : undefined"
+                        :feedback="modifyingOneself && form.disabled ? 'Disabling this account will log you out immediately.' : undefined"
+                        :validation-status="modifyingOneself && form.disabled ? 'warning' : undefined"
                     >
                         <NCheckbox
                             v-model:checked="form.disabled"
