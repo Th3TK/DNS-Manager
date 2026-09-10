@@ -66,7 +66,11 @@ const zone = computed(() => (_.isArray(zones.value) ? null : zones.value));
         >
             <NText>
                 Selected zones ({{ zonesList.length }}) will be deleted along with
-                <NText type="error"> all of their records ({{ _.sum(zonesList.map((z) => z.record_count)) }}). </NText>
+                <NText type="error">
+                    all of their records ({{
+                        zonesList.find((z) => z.record_count === null) ? "Unknown" : _.sum(zonesList.map((z) => z.record_count))
+                    }}).
+                </NText>
             </NText>
             <NText>
                 The zones and their internal records will be moved to trash, while

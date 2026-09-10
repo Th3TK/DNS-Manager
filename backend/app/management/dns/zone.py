@@ -48,8 +48,8 @@ def get_zone(db: Session, zone_name: str) -> DNSZone:
     return DNSZone(**properties.model_dump(), **metadata.model_dump())
 
 
-def get_zones(db: Session) -> list[DNSZone]:
-    properties = provider.get_zones()
+def get_zones(db: Session, skip_record_count: bool = False) -> list[DNSZone]:
+    properties = provider.get_zones(skip_record_count)
 
     zone_names = {zone.name for zone in properties}
 

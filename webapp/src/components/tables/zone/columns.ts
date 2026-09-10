@@ -48,7 +48,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
         sorter: (a, b) => compareNumbers(a.record_count ?? 0, b.record_count ?? 0),
         render: (row: DNSZone) =>
             h(TextField, {
-                value: String(row.record_count),
+                value: row.record_count === null ? "-" : String(row.record_count),
             }),
     },
     {

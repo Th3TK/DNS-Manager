@@ -9,7 +9,7 @@ import APP_CONFIG from "../config/app.config";
 
 const BASE_REQUEST_CONFIG = {
     transitional: { clarifyTimeoutError: true },
-    timeout: 10000,
+    timeout: 20000,
     timeoutErrorMessage: "No response from the API service.",
     withCredentials: true,
 };
@@ -19,12 +19,13 @@ export const sendRequest = async <T = any>(
     path: string,
     config: AxiosRequestConfig = {},
     refreshTokensOnUnauthorized: boolean = true,
+    abortSignal?: AbortSignal,
 ): Promise<T> => {
     const fullPath = combinePaths(APP_CONFIG.API_URL_HTTP, path);
 
     const getFullConfig = () => _.merge(config, BASE_REQUEST_CONFIG);
 
-    const sendAxiosRequest = async () => await axios.request<T>({ ...getFullConfig(), method: method, url: fullPath });
+    const sendAxiosRequest = async () => await axios.request<T>({ ...getFullConfig(), method: method, url: fullPath, signal: abortSignal });
 
     try {
         const response = await sendAxiosRequest();

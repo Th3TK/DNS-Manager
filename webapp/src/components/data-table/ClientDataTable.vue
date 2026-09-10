@@ -42,7 +42,6 @@ const loadData = async () => {
 const filteredData = computed(() =>
     data.value.filter((item) =>
         _.entries(table.value!?.filters).every(([key, filterValue]) =>
-            // @ts-expect-error
             filterFunctions[props.filterConfig[key]!.type](item[key], filterValue)
         ),
     ) as TableRow<T>[],

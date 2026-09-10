@@ -60,6 +60,7 @@ export const useErrorHandler = () => {
     };
 
     const handleError = (error: AxiosError, title?: string, message?: string) => {
+        if (error.code === "ERR_CANCELED") return;
         if (error.response?.status === HttpStatusCode.Unauthorized) {
             return handleUnauthorized();
         }

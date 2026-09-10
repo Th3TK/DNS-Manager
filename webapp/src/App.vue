@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { darkTheme, lightTheme, NConfigProvider, NNotificationProvider } from "naive-ui";
 import { useAuthenticationStore } from "./stores/useAuthenticationStore";
 import { useRecordsStatusStore } from "./stores/useRecordsStatusStore";
@@ -24,6 +24,16 @@ onMounted(() => {
     authentication.refresh();
     recordsStatus.connect();
 });
+
+watch(
+    () => recordsStatus.connected,
+    () => {
+        if (!recordsStatus.connected && authentication.user) {
+            authentication.refresh();
+            recordsStatus.connect();
+        }
+    },
+);
 </script>
 
 <template>

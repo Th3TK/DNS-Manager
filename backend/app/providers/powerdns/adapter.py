@@ -1,6 +1,5 @@
 import logging
 import re
-from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
 import requests
@@ -86,7 +85,7 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
     def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
         return DNSZoneProperties(
             name=zone.name,
-            record_count=sum(len(rrset.records) for rrset in zone.rrsets or []),
+            record_count=sum(len(rrset.records) for rrset in zone.rrsets) if zone.rrsets is not None else None,
         )
 
     def _get_records_properties_from_powerdns_zone(
@@ -166,16 +165,32 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         response = self._send_request("GET", "zones?dnssec=false")
         powerdns_zones = [PowerDNSZone.model_validate(zone) for zone in response.json()]
 
+        zones_by_name = {
+            powerdns_zone.name: self._get_zone_properties_from_powerdns_zone(powerdns_zone) for powerdns_zone in powerdns_zones
+        }
+
         if skip_record_count:
-            return [self._get_zone_properties_from_powerdns_zone(powerdns_zone) for powerdns_zone in powerdns_zones]
+            return list(zones_by_name.values())
 
-        names = [powerdns_zone.name for powerdns_zone in powerdns_zones]
+        # counting records
 
-        # count records
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            zones = executor.map(self.get_zone, names)
+        # names = [powerdns_zone.name for powerdns_zone in powerdns_zones]
 
-        return [zone for zone in zones if zone is not None]
+        # # count records
+        # with ThreadPoolExecutor(max_workers=10) as executor:
+        #     zones = executor.map(self.get_zone, names)
+
+        # using query is much faster than sending seperate requests for each zone
+        all_records = self.query_records("*")
+
+        if all_records is not None:
+            for record in all_records:
+                zone = zones_by_name[record.zone_name]
+
+                if zone is not None:
+                    zone.record_count = (zone.record_count or 0) + 1
+
+        return list(zones_by_name.values())
 
     def get_zone(
         self,

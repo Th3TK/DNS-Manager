@@ -85,7 +85,8 @@ export const changeUserPassword = (username: string, form: ChangePasswordForm) =
 /* DNS ZONES                                                                 */
 /* ------------------------------------------------------------------------- */
 
-export const getZones = () => sendRequest<DNSZone[]>("GET", "/zones");
+export const getZones = (skipRecordCount: boolean = false, abortSignal: AbortSignal) =>
+    sendRequest<DNSZone[]>("GET", `/zones?skip_record_count=${skipRecordCount}`, undefined, undefined, abortSignal);
 
 export const getZone = (zoneName: string) => sendRequest<DNSZone>("GET", `/zones/${zoneName}`);
 

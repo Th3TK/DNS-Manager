@@ -33,8 +33,9 @@ router = APIRouter(
 def __get_all_zones__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
+    skip_record_count: bool = False,
 ) -> list[DNSZone]:
-    return get_zones(db)
+    return get_zones(db, skip_record_count)
 
 
 @router.get("/zones/{zone_name}", response_model=DNSZone)
