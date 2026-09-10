@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.utils.env import get_env, get_env_boolean, get_env_int, get_env_literal
+from app.utils.env import get_env, get_env_int, get_env_literal
 
 
 @dataclass(frozen=True)
@@ -19,8 +19,8 @@ class EnvConfig:
     AUTHENTICATION_SECRET_KEY: str = get_env("AUTHENTICATION_SECRET_KEY")
     CHECK_INTERVAL_SECONDS: int = get_env_int("CHECK_INTERVAL_SECONDS", 300)
     MANAGED_ZONE: str = get_env("MANAGED_ZONE", "", True)
+    HTTPS_ENABLED: bool = get_env_literal("HTTPS_ENABLED", {"TRUE", "FALSE"}, "FALSE") == "FALSE"
     # debug/advanced
-    HTTPS_ENABLED: bool = get_env_boolean("HTTPS_ENABLED", True)
     LOG_LEVEL: str = get_env_literal("LOG_LEVEL", {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}, "INFO")
     AUTHENTICATION_ALGORITHM: str = get_env("AUTHENTICATION_ALGORITHM", "HS256")
     ACCESS_TOKEN_LIFETIME_SECONDS: int = get_env_int("ACCESS_TOKEN_LIFETIME_SECONDS", 3600)

@@ -1,19 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
-import LoginView from "./views/LoginView.vue";
-import DashboardView from "./views/DashboardView.vue";
-import TrashView from "./views/TrashView.vue";
-import ZoneListView from "./views/ZoneListView.vue";
-import ZoneDetailView from "./views/ZoneDetailView.vue";
-import ChangeHistoryView from "./views/ChangeHistoryView.vue";
-import UserManagementView from "./views/UserManagementView.vue";
-import { getAuthenticatedUser } from "./services/api.ts";
+import LoginView from "../views/LoginView.vue";
+import DashboardView from "../views/DashboardView.vue";
+import TrashView from "../views/TrashView.vue";
+import ZoneListView from "../views/ZoneListView.vue";
+import ZoneDetailView from "../views/ZoneDetailView.vue";
+import ChangeHistoryView from "../views/ChangeHistoryView.vue";
+import UserManagementView from "../views/UserManagementView.vue";
 import { LayoutBoard, World, History, Trash, Users, ListDetails } from "@vicons/tabler";
-import ChangeHistoryEntryView from "./views/ChangeHistoryEntryView.vue";
-import TrashEntryView from "./views/TrashEntryView.vue";
-import RecordDetailView from "./views/RecordDetailView.vue";
-import { useAuthenticationStore } from "./stores/useAuthenticationStore.ts";
-import { pinia } from "./pinia.ts";
-import RecordListView from "./views/RecordListView.vue";
+import ChangeHistoryEntryView from "../views/ChangeHistoryEntryView.vue";
+import TrashEntryView from "../views/TrashEntryView.vue";
+import RecordDetailView from "../views/RecordDetailView.vue";
+import { useAuthenticationStore } from "../stores/useAuthenticationStore.ts";
+import { pinia } from "./pinia.config.ts";
+import RecordListView from "../views/RecordListView.vue";
 
 export const routes = [
     {

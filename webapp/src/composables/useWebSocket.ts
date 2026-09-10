@@ -3,8 +3,7 @@ import { logout, refreshTokens } from "../services/api";
 import { combinePaths } from "../utils/url";
 import { useRouter } from "vue-router";
 import { useAuthenticationStore } from "../stores/useAuthenticationStore";
-
-const API_URL = `ws://${window.location.hostname}:9000/api`;
+import APP_CONFIG from "../config/app.config";
 
 export function useWebSocket<T>(path: string) {
     const authentication = useAuthenticationStore();
@@ -24,7 +23,7 @@ export function useWebSocket<T>(path: string) {
     function connect(refreshTokensOnDisconnect: boolean = true) {
         if (connected.value) return;
 
-        socket.value = new WebSocket(combinePaths(API_URL, path));
+        socket.value = new WebSocket(combinePaths(APP_CONFIG.API_URL_WEBSOCKET, path));
 
         socket.value.onopen = () => {
             connected.value = true;

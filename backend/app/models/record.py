@@ -156,7 +156,6 @@ type ReachabilityStatus = Literal["REACHABLE", "UNREACHABLE", "NOT_CHECKED"]
 class RecordStatus(BaseModel):
     resolution: ResolutionStatus
     reachability: ReachabilityStatus | None
-    timestamp: datetime.datetime
 
 
 type RecordStatuses = dict[str, dict[str, dict[str, RecordStatus | None]]]

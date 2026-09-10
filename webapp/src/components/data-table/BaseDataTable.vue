@@ -209,6 +209,7 @@ defineExpose({
 
 .data-table {
     flex: 1;
+    min-height: 300px;
 }
 
 .controls {

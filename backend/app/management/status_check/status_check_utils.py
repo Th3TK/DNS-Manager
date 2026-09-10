@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from datetime import datetime
 
 import dns.asyncresolver
 import dns.exception
@@ -21,18 +20,15 @@ reachability_semaphore = asyncio.Semaphore(REACHABILITY_CONCURRENCY)
 logger = logging.getLogger(__name__)
 
 
-async def check_record_resolution(
+async def resolve_record_type(
     resolver: dns.asyncresolver.Resolver,
-    hostname: str,
+    target: str,
     record_type: str,
-    expected_content: str | list[str],
-) -> ResolutionStatus:
-    """ """
-
+) -> list[str]:
     async with resolution_semaphore:
         try:
             answer = await resolver.resolve(
-                hostname,
+                target,
                 record_type,
                 lifetime=CHECKS_TIMEOUT_SECONDS,
             )
@@ -42,14 +38,28 @@ async def check_record_resolution(
             dns.resolver.NoNameservers,
             dns.exception.Timeout,
         ):
-            return "NO_RESOLUTION"
+            return []
 
-    actual_values = {str(record).rstrip(".") for record in answer}
+    return [str(record) for record in answer]
+
+
+async def check_record_resolution(
+    resolver: dns.asyncresolver.Resolver,
+    hostname: str,
+    record_type: str,
+    expected_content: str | list[str],
+) -> ResolutionStatus:
+    values = await resolve_record_type(resolver, hostname, record_type)
+
+    actual_values = {value.rstrip(".") for value in values}
 
     if isinstance(expected_content, str):
         expected_values = {expected_content.rstrip(".")}
     else:
         expected_values = {content.rstrip(".") for content in expected_content}
+
+    if not actual_values:
+        return "NO_RESOLUTION"
 
     if expected_values == actual_values:
         return "OK"
@@ -57,50 +67,18 @@ async def check_record_resolution(
     return "MISMATCH"
 
 
-async def get_record_resolution_with_timestamp(
+async def resolve_cname_targets(
     resolver: dns.asyncresolver.Resolver,
-    hostname: str,
-    record_type: str,
-    expected_content: str | list[str],
-) -> tuple[ResolutionStatus, datetime]:
-    return (await check_record_resolution(resolver, hostname, record_type, expected_content), datetime.now())
-
-
-async def resolve_cname_targets(resolver: dns.asyncresolver.Resolver, target: str | list[str]) -> list[str]:
-    targets = [target] if isinstance(target, str) else target
-
-    async def resolve_target(target: str) -> list[str]:
-        async def resolve_type(record_type: str) -> list[str]:
-            async with resolution_semaphore:
-                try:
-                    answer = await resolver.resolve(
-                        target,
-                        record_type,
-                        lifetime=CHECKS_TIMEOUT_SECONDS,
-                    )
-                except (
-                    dns.resolver.NXDOMAIN,
-                    dns.resolver.NoAnswer,
-                    dns.resolver.NoNameservers,
-                    dns.exception.Timeout,
-                ):
-                    return []
-
-            return [str(record) for record in answer]
-
-        results = await asyncio.gather(
-            resolve_type("A"),
-            resolve_type("AAAA"),
-        )
-
-        return [address for result in results for address in result]
-
-    results = await asyncio.gather(*(resolve_target(target) for target in targets))
+    targets: list[str],
+) -> list[str]:
+    results = await asyncio.gather(
+        *(resolve_record_type(resolver, target, record_type) for target in targets for record_type in ("A", "AAAA"))
+    )
 
     return [address for result in results for address in result]
 
 
-async def ping_batch(batch: list[str]) -> dict[str, tuple[bool, datetime]]:
+async def ping_batch(batch: list[str]) -> dict[str, bool]:
 
     async with reachability_semaphore:
         try:
@@ -108,12 +86,12 @@ async def ping_batch(batch: list[str]) -> dict[str, tuple[bool, datetime]]:
         except Exception:
             raise
 
-    results = {address: (host.is_alive, datetime.now()) for address, host in zip(batch, hosts)}
+    results = {address: host.is_alive for address, host in zip(batch, hosts)}
 
     return results
 
 
-async def check_reachability(addresses: list[str]) -> dict[str, tuple[bool, datetime]]:
+async def check_reachability(addresses: list[str]) -> dict[str, bool]:
     if not addresses:
         return {}
 
@@ -128,4 +106,4 @@ async def check_reachability(addresses: list[str]) -> dict[str, tuple[bool, date
 
     results = await asyncio.gather(*(ping_batch(batch) for batch in batches))
 
-    return {address: (is_alive, timestamp) for result in results for address, (is_alive, timestamp) in result.items()}
+    return {address: is_alive for result in results for address, is_alive in result.items()}

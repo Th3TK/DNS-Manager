@@ -20,7 +20,7 @@ defineOptions({
 const props = defineProps<{
     zones: DNSZone | DNSZone[];
     type: "dropdown" | "current" | "table";
-    onDeleteError?: (error: AxiosError) => void;
+    onDeleteError?: (error?: AxiosError) => void;
     onDeleteSuccess?: () => void;
     onCreateSuccess?: (zone: DNSZone) => void;
 }>();
@@ -54,6 +54,7 @@ const zone = computed(() => (_.isArray(zones.value) ? null : zones.value));
     />
 
     <ConfirmationModal
+        v-if="!_.isEmpty(zones)"
         type="error"
         v-model:show="deleteModalOpened"
         @submit="() => onDelete(zonesList)"

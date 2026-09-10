@@ -19,7 +19,7 @@ const props = defineProps<
       }
     | {
           zoneName: string;
-          global: boolean;
+          global: false;
       }
 >();
 

@@ -9,6 +9,7 @@ import { naturalCompare, compareNumbers } from "../../../utils/sorters.ts";
 export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
         type: "selection",
+        options: ["all", "none"],
     },
     {
         title: "Name",
@@ -49,7 +50,6 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
             h(TextField, {
                 value: String(row.record_count),
             }),
-        width: 180,
     },
     {
         title: "",

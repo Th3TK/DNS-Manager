@@ -1,14 +1,17 @@
 import { HttpStatusCode, type AxiosError } from "axios";
 import type { User } from "../types/api.types";
 import { useErrorHandler } from "./useErrorHandler";
-import { ref, type Ref } from "vue";
+import { ref } from "vue";
 import { deleteUser, logout } from "../services/api";
 import { useRouter } from "vue-router";
 import { useAuthenticationStore } from "../stores/useAuthenticationStore";
+import _ from "lodash";
+import useBulkDelete from "./useBulkDelete.ts";
 
-export const useUserActions = (onDeleteSuccess?: () => void, onDeleteError?: (error: AxiosError) => void) => {
+export const useUserActions = (onDeleteSuccess?: () => void, onDeleteError?: (error?: AxiosError) => void) => {
     const authentication = useAuthenticationStore();
     const { handleError } = useErrorHandler();
+    const { onBulkDelete } = useBulkDelete();
     const router = useRouter();
 
     const changePasswordModalOpened = ref(false);
@@ -16,20 +19,32 @@ export const useUserActions = (onDeleteSuccess?: () => void, onDeleteError?: (er
     const createModalOpened = ref(false);
     const editModalOpened = ref(false);
 
-    const onDelete = (users: User | User[]) => {
-        Promise.all([users].flat().map((u) => deleteUser(u.username)))
-            .then(onDeleteSuccess)
+    const onDelete = async (users: User | User[]) => {
+        const isArray = _.isArray(users);
+
+        if (isArray && users.length > 1) {
+            const { failed } = await onBulkDelete<User>(users, (user: User) => deleteUser(user.username), "user", "username");
+
+            if (!_.isEmpty(failed)) {
+                return onDeleteError?.();
+            }
+
+            return onDeleteSuccess?.();
+        }
+
+        const user = isArray ? users[0] : users;
+
+        deleteUser(user.username)
+            .then(() => {
+                onDeleteSuccess?.();
+            })
             .catch((error: AxiosError) => {
-                // skip default error handling for 401 and 409
                 if (![HttpStatusCode.NotFound, HttpStatusCode.Conflict].includes(error.response?.status as HttpStatusCode)) {
                     handleError(error);
                 }
-
-                // erorr handling for 409
                 if (error.response?.status === HttpStatusCode.Conflict) {
                     handleError(error, "Action Not Allowed");
                 }
-
                 onDeleteError?.(error);
             });
     };

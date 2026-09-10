@@ -9,6 +9,7 @@ import UserControls from "../../controls/UserControls.vue";
 export const getColumns = (refresh: () => void): DataTableColumns<User> => [
     {
         type: "selection",
+        options: ["all", "none"],
     },
     {
         title: "Username",

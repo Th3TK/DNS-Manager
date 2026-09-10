@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { NButton, NCard, NFlex, NIcon, NText, type DropdownOption } from "naive-ui";
-import { computed, h } from "vue";
-import { routes } from "../../router";
+import { NButton, NCard, NFlex, NIcon, NText } from "naive-ui";
+import { computed } from "vue";
+import { routes } from "../../config/router.config.ts";
 import { useRouter } from "vue-router";
-import { ChevronRight, User as IconUser, Key, Logout, UserCircle } from "@vicons/tabler";
 import { useAuthenticationStore } from "../../stores/useAuthenticationStore";
 import UserControls from "../controls/UserControls.vue";
 

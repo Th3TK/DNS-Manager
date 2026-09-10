@@ -9,7 +9,7 @@ services:
         env_file:
             - .env
         ports:
-            - "9000:8000"
+            - "${API_PORT}:8000"
         networks:
             - dnsnet
 networks:

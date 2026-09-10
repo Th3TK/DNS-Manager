@@ -39,7 +39,7 @@ watch(error, () => {
 </script>
 
 <template>
-    <MainLayout :class="{ hidden: detailsHidden }">
+    <MainLayout :class="{ hidden: detailsHidden, detailsCard: true }">
         <NFlex
             vertical
             size="large"
@@ -130,8 +130,13 @@ watch(error, () => {
 .description {
     margin-bottom: var(--spacing-lg);
 }
+:deep(.detailsCard) {
+    flex: 0 0 auto !important ;
+}
+
 .tableCard {
-    flex: 3;
+    flex: 1 1 0;
+    min-height: 300px;
 }
 .expandButton {
     margin-left: auto;

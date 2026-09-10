@@ -52,7 +52,6 @@ const props = defineProps<
     width: fit-content;
 }
 .comment {
-    text-wrap: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
 }

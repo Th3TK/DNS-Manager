@@ -12,7 +12,7 @@ services:
         env_file:
             - .env
         ports:
-            - "9000:8000"
+            - "${API_PORT}:8000"
         networks:
             - dnsnet
     frontend:
@@ -23,8 +23,11 @@ services:
         volumes:
             - ./webapp:/webapp
             - /webapp/node_modules
+        environment:
+            - VITE_HTTPS_ENABLED=${HTTPS_ENABLED}
+            - VITE_API_PORT=${API_PORT}
         ports:
-            - "3000:5173"
+            - "${FRONTEND_PORT}:5173"
         networks:
             - dnsnet
 networks:

@@ -2,8 +2,11 @@
 import { NBadge, NDescriptions, NDescriptionsItem, NFlex, NPopover, NText, NTime, useThemeVars } from "naive-ui";
 import type { APIRecordStatus, DisplayedRecordStatus } from "../../../types/api.types";
 import _ from "lodash";
+import { useRecordsStatusStore } from "../../../stores/useRecordsStatusStore";
 
 const theme = useThemeVars();
+
+const recordsStatus = useRecordsStatusStore();
 
 const props = defineProps<{
     displayed_status: DisplayedRecordStatus;
@@ -69,6 +72,10 @@ const colors = {
                 strong
             >
                 {{ api_status.reachability }}
+            </NText>
+            <NText strong>Last checked:</NText>
+            <NText depth="3">
+                {{ recordsStatus.data?.timestamp.toLocaleString() }}
             </NText>
         </div>
     </NPopover>

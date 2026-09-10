@@ -1,12 +1,12 @@
 import { createApp } from "vue";
-import router from "./router.ts";
+import { pinia } from "./config/pinia.config.ts";
+import router from "./config/router.config.ts";
 import App from "./App.vue";
 
 import "./styles/main.css";
 
 import "vfonts/Lato.css";
 import "vfonts/FiraCode.css";
-import { pinia } from "./pinia.ts";
 
 const app = createApp(App);
 

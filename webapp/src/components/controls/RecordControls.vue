@@ -21,7 +21,7 @@ const props = defineProps<{
     zoneName: string;
     records: DNSRecord | DNSRecord[];
     type: "dropdown" | "current" | "table";
-    onDeleteError?: (error: AxiosError) => void;
+    onDeleteError?: (error?: AxiosError) => void;
     onDeleteSuccess?: () => void;
     onCreateSuccess?: (record: DNSRecord) => void;
     onEditSuccess?: (record: DNSRecord) => void;

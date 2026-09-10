@@ -22,7 +22,7 @@ defineOptions({
 const props = defineProps<{
     users: User | User[];
     type: "dropdown" | "current" | "table";
-    onDeleteError?: (error: AxiosError) => void;
+    onDeleteError?: (error?: AxiosError) => void;
     onDeleteSuccess?: () => void;
     onCreateSuccess?: (record: User) => void;
     onEditSuccess?: (record: User) => void;

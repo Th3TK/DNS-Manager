@@ -20,7 +20,7 @@ const props = defineProps<{
     type: "dropdown" | "current" | "table";
     onRestoreError?: (error: AxiosError) => void;
     onRestoreSuccess?: () => void;
-    onDeleteError?: (error: AxiosError) => void;
+    onDeleteError?: (error?: AxiosError) => void;
     onDeleteSuccess?: () => void;
 }>();
 

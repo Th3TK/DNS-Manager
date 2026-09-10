@@ -110,7 +110,7 @@ watch(loading, () => {
                                     :type="loading ? 'warning' : dependency.error ? 'error' : 'success'"
                                     strong
                                 >
-                                    {{ loading ? "Loading" : dependency.error ? "Error" : "OK" }}
+                                    {{ dependency.error ? "Error" : "OK" }}
                                 </NText>
                             </NFlex>
                         </div>

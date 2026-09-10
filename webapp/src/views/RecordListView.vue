@@ -5,6 +5,9 @@ import MainLayout from "../layouts/MainLayout.vue";
 
 <template>
     <MainLayout fill-height>
-        <RecordsTable global />
+        <RecordsTable
+            global
+            zoneName=""
+        />
     </MainLayout>
 </template>

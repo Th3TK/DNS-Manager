@@ -12,7 +12,7 @@ from app.database.connection import session_factory
 from app.management.dns.record import get_all_records
 from app.management.status_check.status_check_utils import (
     check_reachability,
-    get_record_resolution_with_timestamp,
+    check_record_resolution,
     resolve_cname_targets,
 )
 from app.management.status_check.websocket_manager import status_check_websocket_manager
@@ -32,6 +32,10 @@ class AutomaticRecordStatusCheck:
         self._task: Task[None] | None = None
 
     def _create_resolver(self) -> dns.asyncresolver.Resolver:
+        """
+        Resolves resolver IP from the ENV variables if hostname was provided.
+        """
+
         value = ENV_CONFIG.DNS_RESOLVER
 
         try:
@@ -98,6 +102,10 @@ class AutomaticRecordStatusCheck:
         return self._data
 
     async def _run(self) -> None:
+        """
+        Status check loop
+        """
+
         while True:
             try:
                 logger.debug("Running automatic record status check.")
@@ -129,7 +137,6 @@ class AutomaticRecordStatusCheck:
             await asyncio.sleep(ENV_CONFIG.CHECK_INTERVAL_SECONDS)
 
     async def _check_records(self) -> RecordStatuses:
-
         with session_factory() as db:
             all_records = get_all_records(db)
 
@@ -145,7 +152,7 @@ class AutomaticRecordStatusCheck:
         # Resolve DNS for records.
         resolutions = await asyncio.gather(
             *(
-                get_record_resolution_with_timestamp(
+                check_record_resolution(
                     resolver=self._resolver,
                     hostname=record.name,
                     record_type=record.type,
@@ -157,7 +164,7 @@ class AutomaticRecordStatusCheck:
 
         records_with_resolution: list[DNSRecord] = []
 
-        for record, (resolution, timestamp) in zip(records_to_check, resolutions):
+        for record, resolution in zip(records_to_check, resolutions):
             reachability = None
 
             if resolution == "OK":
@@ -167,7 +174,7 @@ class AutomaticRecordStatusCheck:
                     reachability = "NOT_CHECKED"
 
             check_data[record.zone_name][record.name][record.type] = RecordStatus(
-                resolution=resolution, reachability=reachability, timestamp=timestamp
+                resolution=resolution, reachability=reachability
             )
 
         # Prepare all addresses that need to be pinged.
@@ -181,7 +188,8 @@ class AutomaticRecordStatusCheck:
                 case "A" | "AAAA":
                     addresses = [record.content] if isinstance(record.content, str) else record.content
                 case "CNAME":
-                    addresses = await resolve_cname_targets(resolver=self._resolver, target=record.content)
+                    targets = [record.content] if isinstance(record.content, str) else record.content
+                    addresses = await resolve_cname_targets(resolver=self._resolver, targets=targets)
 
             if addresses is not None:
                 record_addresses[id(record)] = addresses
@@ -193,17 +201,13 @@ class AutomaticRecordStatusCheck:
 
         # Apply results to records.
         for record in records_with_resolution:
-            r_addresses = record_addresses[id(record)]
-            last_address = r_addresses[-1]
-
-            reachable = any(address_reachability[address][0] for address in r_addresses)
+            reachable = any(address_reachability[address] for address in record_addresses[id(record)])
 
             record_status = check_data[record.zone_name][record.name][record.type]
 
             assert record_status is not None
 
             record_status.reachability = "REACHABLE" if reachable else "UNREACHABLE"
-            record_status.timestamp = address_reachability[last_address][1]
 
         return check_data
 

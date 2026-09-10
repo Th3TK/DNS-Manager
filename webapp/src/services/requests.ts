@@ -3,10 +3,9 @@ import type { RequestMethod } from "../types/api.types";
 import axios, { HttpStatusCode, isAxiosError } from "axios";
 import _ from "lodash";
 import { combinePaths } from "../utils/url";
+import APP_CONFIG from "../config/app.config";
 
 // const sendFetch = async () : Promise<AxiosResponse> => await axios({})
-
-const API_URL = `http://${window.location.hostname}:9000/api`;
 
 const BASE_REQUEST_CONFIG = {
     transitional: { clarifyTimeoutError: true },
@@ -21,7 +20,7 @@ export const sendRequest = async <T = any>(
     config: AxiosRequestConfig = {},
     refreshTokensOnUnauthorized: boolean = true,
 ): Promise<T> => {
-    const fullPath = combinePaths(API_URL, path);
+    const fullPath = combinePaths(APP_CONFIG.API_URL_HTTP, path);
 
     const getFullConfig = () => _.merge(config, BASE_REQUEST_CONFIG);
 
@@ -38,7 +37,7 @@ export const sendRequest = async <T = any>(
 
         if (error.response?.status === HttpStatusCode.Unauthorized && refreshTokensOnUnauthorized) {
             try {
-                await axios.post(combinePaths(API_URL, "/auth/refresh"), undefined, BASE_REQUEST_CONFIG);
+                await axios.post(combinePaths(APP_CONFIG.API_URL_HTTP, "/auth/refresh"), undefined, BASE_REQUEST_CONFIG);
             } catch (refreshError) {
                 if (isAxiosError(refreshError)) throw refreshError;
 

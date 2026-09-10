@@ -25,9 +25,12 @@ import NavBar from "../components/navigation/NavBar.vue";
         >
             <NavBar />
         </NLayoutSider>
-        <NLayoutContent content-class="content">
+        <NLayoutContent
+            content-class="content"
+            :native-scrollbar="false"
+            :scrollbar-props="{ xScrollable: true }"
+        >
             <AutoBreadcrumbs />
-
             <NCard
                 class="content-card"
                 content-class="content-card-content"
@@ -48,27 +51,32 @@ import NavBar from "../components/navigation/NavBar.vue";
 <style scoped>
 .layout {
     height: 100vh;
+    width: 100vw;
 }
 
-.content,
 :deep(.content) {
     flex: 1;
-    min-height: 0;
+    height: 100%;
 
     box-sizing: border-box;
-    display: flex !important;
+    display: flex;
     flex-direction: column;
     padding: var(--spacing-md);
     gap: var(--spacing-md);
+    overflow-x: auto !important;
+}
+
+:deep(.content) > * {
+    min-width: 800px;
 }
 
 :deep(.content-card) {
-    min-height: 0;
     flex: 1;
 }
 
 :deep(.content-card-content) {
     flex: 1;
+
     min-height: 0;
     box-sizing: border-box;
     display: flex !important;

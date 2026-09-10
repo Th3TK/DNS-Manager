@@ -32,7 +32,6 @@ export type ReachabilityStatus = "REACHABLE" | "UNREACHABLE" | "NOT_CHECKED";
 export interface APIRecordStatus {
     resolution: ResolutionStatus;
     reachability: ReachabilityStatus;
-    timestamp: string;
 }
 
 export type APIRecordStatuses = Record<string, Record<string, Record<string, APIRecordStatus | null>>>;

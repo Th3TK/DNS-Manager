@@ -26,6 +26,7 @@ export const getColumns = (global: boolean, refresh: () => void): DataTableColum
             : ({
                   type: "selection",
                   multiple: true,
+                  options: ["all", "none"],
               } as DataTableColumn<DNSRecordExtended>),
         {
             title: "Name",
@@ -116,19 +117,7 @@ export const getColumns = (global: boolean, refresh: () => void): DataTableColum
                     displayed_status: row.displayed_status,
                     api_status: row.api_status,
                 }),
-            width: 220,
-        },
-        {
-            title: "Last status check",
-            key: "status_timestamp",
-            sorter: (a, b) => compareDates(a.status_timestamp, b.status_timestamp),
-            render: (row: DNSRecordExtended) =>
-                row.status_timestamp
-                    ? h(DateField, {
-                          value: row.status_timestamp,
-                      })
-                    : "-",
-            width: 180,
+            width: 150,
         },
 
         !global
