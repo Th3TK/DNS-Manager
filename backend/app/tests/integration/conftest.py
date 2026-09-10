@@ -20,3 +20,15 @@ def test_zone(provider: DNSProvider):
         yield zone_name
     finally:
         provider.delete_zone(zone_name)
+
+
+@pytest.fixture
+def another_test_zone(provider: DNSProvider):
+    zone_name = f"{uuid4().hex}.test.dev."
+
+    provider.create_zone(zone_name)
+
+    try:
+        yield zone_name
+    finally:
+        provider.delete_zone(zone_name)

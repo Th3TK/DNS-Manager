@@ -87,7 +87,7 @@ class DNSProvider(Protocol):
         """
         Modifies an existing record's content and time-to-live.
         Name and type must be replaced with the newly provided values.
-        It is guaranteed that the record exists.
+        It is guaranteed that the record exists and that (new_name, new_type) is unique.
         Returns the modified record properties.
         """
         ...

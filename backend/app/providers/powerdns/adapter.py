@@ -241,7 +241,12 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         return self._get_records_properties_from_powerdns_zone(zone, name)
 
     def get_records(self, zone_name: str) -> list[DNSRecordProperties] | None:
-        response = self._send_request("GET", f"zones/{zone_name}?rrsets=true")
+        try:
+            response = self._send_request("GET", f"zones/{zone_name}?rrsets=true")
+        except HTTPException as exc:
+            if exc.status_code == status.HTTP_404_NOT_FOUND:
+                return None
+            raise exc
         zone = PowerDNSZone.model_validate(response.json())
 
         return self._get_records_properties_from_powerdns_zone(zone)

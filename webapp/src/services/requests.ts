@@ -9,7 +9,7 @@ import APP_CONFIG from "../config/app.config";
 
 const BASE_REQUEST_CONFIG = {
     transitional: { clarifyTimeoutError: true },
-    timeout: 20000,
+    timeout: 60_000,
     timeoutErrorMessage: "No response from the API service.",
     withCredentials: true,
 };
