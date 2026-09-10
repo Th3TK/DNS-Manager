@@ -49,7 +49,6 @@ const expandRecords = (records: DNSRecord[]) =>
             ...record,
             api_status: status,
             displayed_status: recordStatus.generateDisplayStatus(status),
-            status_timestamp: status?.timestamp ? new Date(status?.timestamp) : undefined,
         } as DNSRecordExtended;
     });
 

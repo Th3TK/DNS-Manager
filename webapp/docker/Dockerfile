@@ -6,7 +6,7 @@ WORKDIR /webapp
 COPY package*.json ./
 
 RUN npm install
-RUN npm ci -g serve
+RUN npm i -g serve
 
 COPY . .
 

@@ -24,8 +24,8 @@ const navigateToTable = () => {
     router.push({ name: "Trash" });
 };
 
-const handleControlsError = (error: AxiosError) => {
-    if (error.response?.status === HttpStatusCode.NotFound) navigateToTable();
+const handleControlsError = (error?: AxiosError) => {
+    if (error?.response?.status === HttpStatusCode.NotFound) navigateToTable();
 };
 </script>
 

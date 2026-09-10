@@ -110,7 +110,9 @@ export const routes = [
     {
         path: "/:pathMatch(.*)*",
         redirect: "/",
-        meta: {},
+        meta: {
+            hide: true,
+        },
     },
 ];
 

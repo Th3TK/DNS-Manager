@@ -11,7 +11,7 @@ const router = useRouter();
 
 const filteredRoutes = computed(() => routes.filter((e) => !e.meta?.hide && (!e.meta.adminRequired || authentication.isAdmin)));
 
-const isRouteActive = (routeName: string) => router.currentRoute.value.name === routeName;
+const isRouteActive = (routeName: string | undefined) => router.currentRoute.value.name === routeName;
 </script>
 
 <template>
