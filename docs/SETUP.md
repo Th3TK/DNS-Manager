@@ -24,14 +24,7 @@ This section covers building and initializing the **DNS Manager main instance** 
 
 The application depends on an external PostgreSQL database and running DNS provider. The default configuration in `docker-compose.yml` also requires an external network `dnsnet`, to which the database and DNS provider containers are connected.
 
-If your Docker network has a different name, or your services are running on a separate server, modify `docker-compose.yml` accordingly:
-
-```yml
-networks:
-    dnsnet:
-        external: true
-        name: name-of-your-network
-```
+If your Docker network has a different name, or your services are running on a separate server, modify `docker-compose.yml` accordingly.
 
 All deployed DNS Manager containers will connect to this network. This network can therefore be used to reference the external services in your environment variables.
 

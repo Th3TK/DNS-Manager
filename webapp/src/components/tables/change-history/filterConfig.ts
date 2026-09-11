@@ -7,10 +7,10 @@ export const getFilters = (users: User[]): FilterConfig<ChangeHistoryEntry> => (
         type: "options",
         options: [
             { label: "Created", value: "created" },
-            { label: "Changed", value: "Changed" },
-            { label: "Deleted", value: "Deleted" },
-            { label: "Restored", value: "Restored" },
-            { label: "Permanently Deleted", value: "Permanently Deleted" },
+            { label: "Changed", value: "changed" },
+            { label: "Deleted", value: "deleted" },
+            { label: "Restored", value: "restored" },
+            { label: "Permanently Deleted", value: "permanently_deleted" },
         ],
     },
 

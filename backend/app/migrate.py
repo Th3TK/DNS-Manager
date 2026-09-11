@@ -11,8 +11,6 @@ def run_migrations():
 
     try:
         command.upgrade(Config("alembic.ini"), "head")
-    except Exception as exc:
-        logging.exception("Database migrations failed.", exc)
-        raise
-
-    logger.info("Database migrations completed.")
+        logger.info("Database migrations completed.")
+    except Exception:
+        logging.error("Database migrations FAILED.")

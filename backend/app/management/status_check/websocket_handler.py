@@ -23,7 +23,7 @@ class StatusCheckWebSocketHandler(WebSocketHandler):
             while self.is_connected():
                 await self.websocket.receive()
                 # keep open connection while ignoring any incoming messages
-        except WebSocketDisconnect:
+        except WebSocketDisconnect, RuntimeError:
             await status_check_websocket_manager.unregister(self)
             pass
         except Exception:

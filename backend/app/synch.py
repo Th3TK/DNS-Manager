@@ -19,19 +19,22 @@ def create_first_account():
     """
 
     with session_factory() as db:
-        logging.info("Checking for existing accounts.")
+        try:
+            logging.info("Checking for existing accounts.")
 
-        active_administrators_count = get_active_admin_count(db)
+            active_administrators_count = get_active_admin_count(db)
 
-        if active_administrators_count:
+            if active_administrators_count:
+                logging.info(
+                    "Found %d active administrative accounts. Skipping initial account creation.", active_administrators_count
+                )
+                return
+
             logging.info(
-                "Found %d active administrative accounts. Skipping initial account creation.", active_administrators_count
+                "Found no active administrative accounts. Creating an initial administrator account from the ENV configuration."
             )
-            return
-
-        logging.info(
-            "Found no active administrative accounts. Creating an initial administrator account from the ENV configuration."
-        )
+        except Exception:
+            logging.error("Error occured during retrieving application accounts.")
 
         username = get_env("ADMIN_USERNAME")
         password = get_env("ADMIN_PASSWORD")

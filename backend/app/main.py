@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
-from sqlalchemy.exc import OperationalError
+from psycopg.errors import UndefinedColumn, UndefinedTable
+from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 
 from app.config import ENV_CONFIG
 from app.endpoints.action_log import router as action_log_router
@@ -86,6 +87,42 @@ async def sqlalchemy_connection_error_handler(request: Request, exc: Operational
             "code": DependencyExceptionCodes.DATABASE,
         },
     )
+
+
+@app.exception_handler(IntegrityError)
+async def handle_integrity_error(
+    request: Request,
+    exc: IntegrityError,
+):
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": "The database rejected this operation due to an integrity constraint.",
+            "code": DependencyExceptionCodes.DATABASE,
+        },
+    )
+
+
+@app.exception_handler(ProgrammingError)
+async def handle_programming_error(
+    request: Request,
+    exc: ProgrammingError,
+):
+    if isinstance(exc.orig, UndefinedTable) or isinstance(exc.orig, UndefinedColumn):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "Database migrations have not been applied. "
+                    "Ensure database connectivity and restart the backend container "
+                    "in order to migrate."
+                ),
+                "code": DependencyExceptionCodes.DATABASE,
+            },
+        )
+
+    # Don't hide unrelated programming errors
+    raise exc
 
 
 @app.exception_handler(DNSProviderException)

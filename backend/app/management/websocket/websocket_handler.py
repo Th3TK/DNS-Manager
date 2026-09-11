@@ -6,7 +6,7 @@ from app.management.users.authentication import get_authenticated_user_from_toke
 from app.management.users.tokens import decode_token
 from app.management.websocket.websocket_manager import global_websocket_manager
 from app.models.user import User
-from fastapi import HTTPException, status
+from fastapi import HTTPException, WebSocketDisconnect, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 from starlette.websockets import WebSocket, WebSocketState
@@ -58,7 +58,7 @@ class WebSocketHandler(BaseModel):
                 await asyncio.sleep(expiration_delay)
 
             await self.close(status.WS_1008_POLICY_VIOLATION, "Access token expired.")
-        except asyncio.CancelledError:
+        except asyncio.CancelledError, WebSocketDisconnect:
             pass
         except Exception:
             logger.exception("Exception occured in the WebsocketHandler's __close_at_token_expiration__ method")

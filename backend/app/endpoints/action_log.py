@@ -7,15 +7,14 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models.enums import ChangeAction
 from app.management.action_log.action_log import get_all_actors, get_log_entries_query, get_log_entry
 from app.management.users.authentication import get_authenticated_user
 from app.models.action_log import ActionLogEntry
 from app.models.user import User
 
 router = APIRouter(
-    prefix="/log",
-    tags=["Action log"],
+    prefix="/change-history",
+    tags=["Change history"],
 )
 
 
@@ -23,7 +22,7 @@ router = APIRouter(
 def __get_list_of_action_log_entries__(
     user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
-    action: ChangeAction | None = Query(None),
+    action: Literal["created", "changed", "deleted", "restored", "permanently_deleted"] | None = Query(None),
     actor: str | None = Query(None),
     affected_object_type: Literal["record", "zone"] | None = Query(None),
     affected_object_name: str | None = Query(None),

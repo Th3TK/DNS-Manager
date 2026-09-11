@@ -8,11 +8,12 @@ type NaiveTableColumn<T> = DataTableColumn<T> & { key: keyof T; title: string };
 export const filterFunctions: Record<FilterType, (value: any, ...args: any) => boolean> = {
     freetext: (value: string, pattern: string) => {
         const regexPattern = pattern
+            .toLowerCase()
             .split("*")
             .map((part) => _.escapeRegExp(part))
             .join(".*");
 
-        return new RegExp(`^${regexPattern}$`).test(value);
+        return new RegExp(`^${regexPattern}$`).test(value.toLowerCase());
     },
     options: (value: string | number | boolean, selected: string[]) => {
         return _.includes(selected, String(value));

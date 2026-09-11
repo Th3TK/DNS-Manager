@@ -45,7 +45,7 @@ class EnvConfig:
     ...
 ```
 
-Ensure they all have a set default value and accept empty values. Otherwise they will be required by the application even when `DNS_PROVIDER` is set to another provider. You may also use `get_env_int` for integer variables or `get_env_literal` for a variable that accepts strings from a list of options.
+Ensure they all have a set default value and accept empty values. Otherwise they will be required by the application even when `DNS_PROVIDER` is set to another provider. You may also use `get_env_int` for integer variables or `get_env_literal` for a variable that accepts strings from a set of options.
 
 ### 2. Create the adapter
 
@@ -62,16 +62,17 @@ The following checks are performed before any request reaches the adapter:
 - Duplicate and existing-resource checks are performed beforehand.
 - Field types and length limits are validated beforehand.
 - General DNS rules are validated beforehand.
-- DNS syntax is validated beforehand. The API allows alphanumeric characters, hyphens and underscores in the DNS names. If the provider has sticter requirements, further validation should be handled by the adapter.
+- DNS syntax is validated beforehand. The API allows alphanumeric characters, hyphens and underscores in the DNS names. If the provider has stricter requirements, further validation should be handled by the adapter.
+- A, AAAA, CNAME, MX, SRV records' content field is validated beforehand.
 
 #### 2.2 Requirements
 
 - All methods must return the types specified by the DNSProvider protocol.
-- Raised exceptions must be of type `HTTPException` imported from `fastapi`.
-- Provider unreachable should raise `HTTP 503` with an appropriate detail.
-- Provider internal errors should raise `HTTP 502` with an appropriate detail.
-- Provider authentication errors should raise `HTTP 503` with an appropriate detail.
-- Client errors should raise appropriate `HTTP 4XX` status.
+- Provider reachability and authentication errors should raise `DNSProviderException` (imported from `app.models.exceptions`) with an appropriate detail.
+- Other raised exceptions must be of type `HTTPException` imported from `fastapi`.
+- Provider internal errors should raise `HTTPException 502` with an appropriate detail.
+- Client errors should raise appropriate `HTTPException 4XX` status.
+- CNAME exclusivity constraint violation should raise `HTTPException 409` status.
 
 #### 2.3 Return models
 

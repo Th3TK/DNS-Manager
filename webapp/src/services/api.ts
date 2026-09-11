@@ -127,7 +127,7 @@ export const getChangeHistory = async (
     filterConfig: FilterConfig<ChangeHistoryEntry>,
 ): Promise<DataPaginated<ChangeHistoryEntry>> => {
     const params = prepareTableParams(page, pageSize, filters, filterConfig);
-    return await sendRequest<DataPaginated<ChangeHistoryEntry>>("GET", `/log?${params.toString()}`);
+    return await sendRequest<DataPaginated<ChangeHistoryEntry>>("GET", `/change-history?${params.toString()}`);
 };
 
 /* ------------------------------------------------------------------------- */

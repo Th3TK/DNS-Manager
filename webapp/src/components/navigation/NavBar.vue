@@ -2,7 +2,7 @@
 import { NButton, NCard, NFlex, NIcon, NText } from "naive-ui";
 import { computed } from "vue";
 import { routes } from "../../config/router.config.ts";
-import { useRouter } from "vue-router";
+import { useRouter, type RouteRecordNameGeneric } from "vue-router";
 import { useAuthenticationStore } from "../../stores/useAuthenticationStore";
 import UserControls from "../controls/UserControls.vue";
 
@@ -11,7 +11,7 @@ const router = useRouter();
 
 const filteredRoutes = computed(() => routes.filter((e) => !e.meta?.hide && (!e.meta.adminRequired || authentication.isAdmin)));
 
-const isRouteActive = (routeName: string | undefined) => router.currentRoute.value.name === routeName;
+const isRouteActive = (routeName: RouteRecordNameGeneric | undefined) => router.currentRoute.value.name === routeName;
 </script>
 
 <template>

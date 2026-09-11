@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 from itertools import zip_longest
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from app.database.models.action_log import ActionLogInDB
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_log_entries_query(
-    action: ChangeAction | None = None,
+    action: Literal["created", "changed", "deleted", "restored", "permanently_deleted"] | None = None,
     actor: str | None = None,
     affected_object_name: str | None = None,
     affected_object_type: str | None = None,
@@ -32,7 +32,7 @@ def get_log_entries_query(
 
     if affected_object_name is not None:
         pattern = affected_object_name.replace("*", "%")
-        query = query.where(ActionLogInDB.affected_object_name.like(pattern))
+        query = query.where(ActionLogInDB.affected_object_name.ilike(pattern))
 
     if affected_object_type is not None:
         query = query.where(ActionLogInDB.affected_object_type == affected_object_type)
