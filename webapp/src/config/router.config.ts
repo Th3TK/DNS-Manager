@@ -13,8 +13,9 @@ import RecordDetailView from "../views/RecordDetailView.vue";
 import { useAuthenticationStore } from "../stores/useAuthenticationStore.ts";
 import { pinia } from "./pinia.config.ts";
 import RecordListView from "../views/RecordListView.vue";
+import type { Route } from "../types/app.types.ts";
 
-export const routes = [
+export const routes: Route[] = [
     {
         name: "Login",
         path: "/login",
@@ -38,6 +39,16 @@ export const routes = [
         component: ZoneListView,
         meta: {
             icon: World,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Zones",
+                    to: "/zones",
+                },
+            ],
         },
     },
     {
@@ -46,6 +57,20 @@ export const routes = [
         component: ZoneDetailView,
         meta: {
             hide: true,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Zones",
+                    to: "/zones",
+                },
+                {
+                    title: ":name",
+                    to: "/zones/:name",
+                },
+            ],
         },
     },
     {
@@ -54,6 +79,16 @@ export const routes = [
         component: RecordListView,
         meta: {
             icon: ListDetails,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Records",
+                    to: "/records",
+                },
+            ],
         },
     },
     {
@@ -62,6 +97,24 @@ export const routes = [
         component: RecordDetailView,
         meta: {
             hide: true,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Zones",
+                    to: "/zones",
+                },
+                {
+                    title: ":name",
+                    to: "/zones/:name",
+                },
+                {
+                    title: "Record",
+                    to: "/zones/:name/record/:record_name/:record_type",
+                },
+            ],
         },
     },
     {
@@ -70,6 +123,16 @@ export const routes = [
         component: TrashView,
         meta: {
             icon: Trash,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Trash",
+                    to: "/trash",
+                },
+            ],
         },
     },
     {
@@ -79,6 +142,20 @@ export const routes = [
         meta: {
             icon: Trash,
             hide: true,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Trash",
+                    to: "/trash",
+                },
+                {
+                    title: "Trashed item",
+                    to: "/trash/:uuid",
+                },
+            ],
         },
     },
     {
@@ -87,6 +164,16 @@ export const routes = [
         component: ChangeHistoryView,
         meta: {
             icon: History,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Change History",
+                    to: "/history",
+                },
+            ],
         },
     },
     {
@@ -96,6 +183,20 @@ export const routes = [
         meta: {
             icon: History,
             hide: true,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Change History",
+                    to: "/history",
+                },
+                {
+                    title: "History Entry",
+                    to: "/history/:uuid",
+                },
+            ],
         },
     },
     {
@@ -105,6 +206,16 @@ export const routes = [
         meta: {
             icon: Users,
             adminRequired: true,
+            breadcrumbs: [
+                {
+                    title: "Dashboard",
+                    to: "/",
+                },
+                {
+                    title: "Users",
+                    to: "/users",
+                },
+            ],
         },
     },
     {
