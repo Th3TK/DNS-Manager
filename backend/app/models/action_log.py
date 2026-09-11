@@ -2,8 +2,9 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from app.database.models.action_log import ActionLogInDB
 from pydantic import BaseModel, ConfigDict
+
+from app.database.models.action_log import ActionLogInDB
 
 
 class ActionLogEntry(BaseModel):

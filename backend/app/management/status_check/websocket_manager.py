@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 class StatusCheckWebSocketManager:
+    """
+    Manages all status check websockets and handles the status check update broadcast.
+    """
+
     def __init__(self):
         self._connections: set["StatusCheckWebSocketHandler"] = set()
         self._lock = asyncio.Lock()

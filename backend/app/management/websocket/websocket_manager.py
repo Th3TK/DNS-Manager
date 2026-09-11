@@ -8,7 +8,12 @@ if TYPE_CHECKING:
 
 
 class _WebSocketManager:
+    """
+    Manages all WebSocket instances in the application.
+    """
+
     def __init__(self):
+        # dictionary keeping track of websockets per user
         self._connections: dict[str, set["WebSocketHandler"]] = dict()
         self._lock = asyncio.Lock()
 
@@ -24,6 +29,10 @@ class _WebSocketManager:
                     del self._connections[username]
 
     async def disconnect_user(self, username: str, code: int = status.WS_1008_POLICY_VIOLATION, reason: str = "Account deleted"):
+        """
+        Close all WebSockets assigned to a user. Used when user is disabled / deleted.
+        """
+
         handlers = list(self._connections.get(username, []))
 
         for handler in handlers:

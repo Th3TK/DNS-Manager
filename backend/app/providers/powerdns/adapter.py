@@ -28,6 +28,10 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         self.api_url = join_url(ENV_CONFIG.POWERDNS_API_URL, "servers", ENV_CONFIG.POWERDNS_SERVER_ID)
 
     def _send_request(self, method: Literal["GET", "DELETE", "POST", "PUT", "PATCH"], path: str, **kwargs) -> requests.Response:
+        """
+        Utility method for sending HTTP requests and handling basic errors.
+        """
+
         try:
             response = self.session.request(
                 method=method,
@@ -83,6 +87,10 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
             raise DNSProviderException("Failed to communicate with the PowerDNS REST API.")
 
     def _get_zone_properties_from_powerdns_zone(self, zone: PowerDNSZone) -> DNSZoneProperties:
+        """
+        Converts the PowerDNSZone response to a API model.
+        """
+
         return DNSZoneProperties(
             name=zone.name,
             record_count=sum(len(rrset.records) for rrset in zone.rrsets) if zone.rrsets is not None else None,
@@ -94,6 +102,12 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         name: str | None = None,
         type_: str | None = None,
     ) -> list[DNSRecordProperties]:
+        """
+        Converts the records from a PowerDNSZone response to a list of API record models.
+
+        - If `name` is provided, only records with this name will be present in the return value.
+        - If `type_` is provided, only records with this type will be present in the return value.
+        """
 
         if zone.rrsets is None:
             return []
@@ -252,8 +266,8 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         return self._get_records_properties_from_powerdns_zone(zone)
 
     def query_records(self, name_query: str) -> list[DNSRecordProperties] | None:
-        # search-data matches both record names and content
-        # we'll have to filter out content matches but it's still faster than fetching all records
+        # PowerDNS' search-data matches both record names and content
+        # we'll have to filter out content matches but it's still faster than fetching all records by quering each zone seperately
         response = self._send_request("GET", f"search-data?q={name_query.rstrip('.')}&object_type=record&max=100000")
 
         pattern = re.escape(name_query.rstrip("."))

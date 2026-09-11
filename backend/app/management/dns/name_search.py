@@ -17,7 +17,11 @@ def wildcards_to_sql_like(pattern: str) -> str:
     return pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_").replace("*", "%").replace("?", "_")
 
 
-def prepare_trash_entry_search_results(trash_entries: Sequence[DNSTrashInDB]):
+def prepare_trash_entry_search_results(trash_entries: Sequence[DNSTrashInDB]) -> list[DNSRecordSearchResult]:
+    """
+    Converts sequence of database trash entries into a list of DNSRecordSearchResult.
+    """
+
     results = []
 
     for entry in trash_entries:
@@ -34,7 +38,11 @@ def prepare_trash_entry_search_results(trash_entries: Sequence[DNSTrashInDB]):
     return results
 
 
-def prepare_search_results(active_records: list[DNSRecord], trash_entries: Sequence[DNSTrashInDB]):
+def prepare_search_results(active_records: list[DNSRecord], trash_entries: Sequence[DNSTrashInDB]) -> list[DNSRecordSearchResult]:
+    """
+    Converts active and trash entries into a list of results.
+    """
+
     return [
         *[DNSRecordSearchResult(**record.model_dump(), location="active") for record in active_records],
         *prepare_trash_entry_search_results(trash_entries),
@@ -110,6 +118,14 @@ def hostname_search(db: Session, hostname: str, zones: list[DNSZoneProperties]) 
 
 
 def record_name_search(db: Session, query: str) -> list[DNSRecordSearchResult]:
+    """
+    Searches DNS records by name using `query`
+
+    - If `query` includes wildcards (`*` or `?`), returns pattern matches over full record name.
+    - If `query` ends with an existing zone name, returns exact name matches only.
+    - Else, `query` is handled as a hostname. All hostname matches from every zone are returned.
+    """
+
     validate_search_query(query)
 
     query = f"{query.rstrip('.')}."

@@ -1,8 +1,9 @@
 from typing import Annotated, Literal
 
+from pydantic import BaseModel, Field, field_validator
+
 from app.database.models.dns_zone_metadata import DNSZoneMetadataInDB
 from app.database.models.enums import ChangeAction
-from pydantic import BaseModel, Field, field_validator
 
 
 class DNSZoneProperties(BaseModel):

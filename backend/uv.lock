@@ -404,7 +404,6 @@ dependencies = [
     { name = "httpx" },
     { name = "icmplib" },
     { name = "passlib" },
-    { name = "ping3" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pyjwt" },
     { name = "requests" },
@@ -427,7 +426,6 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "icmplib", specifier = ">=3.0.4" },
     { name = "passlib", specifier = ">=1.7.4" },
-    { name = "ping3", specifier = ">=5.1.5" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "requests", specifier = ">=2.34.2" },
@@ -606,15 +604,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b6/06/9da9ee59a67fae7761aab3ccc84fa4f3f33f125b370f1ccdb915bf967c11/passlib-1.7.4.tar.gz", hash = "sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04", size = 689844, upload-time = "2020-10-08T19:00:52.121Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl", hash = "sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1", size = 525554, upload-time = "2020-10-08T19:00:49.856Z" },
-]
-
-[[package]]
-name = "ping3"
-version = "5.1.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0d/e5/702dfb79e74990585d502734065f8a1610d18473bbd4bd18e4058abe9dbc/ping3-5.1.5.tar.gz", hash = "sha256:6c99bc844e0b7dbc5c9765e8b530140daf1ccd2112c99db01ab79831bd8081cd", size = 19995, upload-time = "2025-08-10T16:07:30.582Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/03/2580e349f6cab60865456db4b8984a50c91c98e88fc5055a3cd7c30485a5/ping3-5.1.5-py3-none-any.whl", hash = "sha256:9503164d054b87b01a6bd0df83a49c29e7c8427eb06940f874ebd4ed2d8ba8f6", size = 15945, upload-time = "2025-08-10T16:07:28.777Z" },
 ]
 
 [[package]]

@@ -11,7 +11,6 @@ dependencies = [
     "httpx>=0.28.1",
     "icmplib>=3.0.4",
     "passlib>=1.7.4",
-    "ping3>=5.1.5",
     "psycopg[binary]>=3.3.4",
     "pyjwt>=2.13.0",
     "requests>=2.34.2",

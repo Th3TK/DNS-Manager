@@ -28,6 +28,10 @@ def get_trash_entries_query(
     sort_by: Literal["deletion_timestamp", "actor", "object_type"],
     sort_order: Literal["ascend", "descend"],
 ) -> Select:
+    """
+    Prepares a query for paginated, filtered and sorted retrieval of trash entries from the database.
+    """
+
     query = select(DNSTrashInDB)
 
     if deletion_timestamp_min is not None:
@@ -54,6 +58,10 @@ def get_trash_entries_query(
 
 
 def get_trash_entry(db: Session, entry_uuid: UUID) -> TrashEntry:
+    """
+    Retrieves a single trash entry from the database.
+    """
+
     trash_entry_in_db = db.scalar(select(DNSTrashInDB).where(DNSTrashInDB.entry_uuid == entry_uuid))
 
     if trash_entry_in_db is None:
@@ -92,6 +100,7 @@ def create_trash_entry(db: Session, actor: str, object_type: DNSObjectType, obje
         )
         return False
 
+    # IMPORTANT - ensure that the trash removal loop is running
     automatic_trash_removal.start()
     return True
 
@@ -130,11 +139,16 @@ def create_trash_entries(
         )
         return False
 
+    # IMPORTANT - ensure that the trash removal loop is running
     automatic_trash_removal.start()
     return True
 
 
 def delete_trash_entry(db: Session, entry_uuid: UUID, logged_in_user: User) -> None:
+    """
+    Permanently removes a trash entry from the database.
+    """
+
     trash_entry_in_db = db.get(DNSTrashInDB, entry_uuid)
 
     if trash_entry_in_db is None:

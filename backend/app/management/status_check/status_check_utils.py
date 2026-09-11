@@ -25,6 +25,10 @@ async def resolve_record_type(
     target: str,
     record_type: str,
 ) -> list[str]:
+    """
+    Resolves a target query and returns a string list of answers.
+    """
+
     async with resolution_semaphore:
         try:
             answer = await resolver.resolve(
@@ -49,6 +53,12 @@ async def check_record_resolution(
     record_type: str,
     expected_content: str | list[str],
 ) -> ResolutionStatus:
+    """
+    Resolves a hostname and validates the returned content.
+
+    Returns "NO_RESOLUTION" on timeout, "MISMATCH" if the content doesn't match, and "OK" on success.
+    """
+
     values = await resolve_record_type(resolver, hostname, record_type)
 
     actual_values = {value.rstrip(".") for value in values}
@@ -71,6 +81,10 @@ async def resolve_cname_targets(
     resolver: dns.asyncresolver.Resolver,
     targets: list[str],
 ) -> list[str]:
+    """
+    Resolves each CNAME target and returns all resolved IPv4 and IPv6 addresses.
+    """
+
     results = await asyncio.gather(
         *(resolve_record_type(resolver, target, record_type) for target in targets for record_type in ("A", "AAAA"))
     )
@@ -79,6 +93,9 @@ async def resolve_cname_targets(
 
 
 async def ping_batch(batch: list[str]) -> dict[str, bool]:
+    """
+    Pings a batch of IP addresses. Tries each IP once for a set timeout.
+    """
 
     async with reachability_semaphore:
         try:
@@ -92,6 +109,10 @@ async def ping_batch(batch: list[str]) -> dict[str, bool]:
 
 
 async def check_reachability(addresses: list[str]) -> dict[str, bool]:
+    """
+    Checks reachability of IP addresses, returns a dictionary with a boolean indicating whether the address responded to ICMP.
+    """
+
     if not addresses:
         return {}
 

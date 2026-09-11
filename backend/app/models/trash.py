@@ -1,11 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict
+
 from app.database.models.dns_trash import DNSTrashInDB
 from app.database.models.enums import DNSObjectType
 from app.models.record import DNSRecord
 from app.models.zone import DNSZone
-from pydantic import BaseModel, ConfigDict
 
 
 class TrashEntry(BaseModel):

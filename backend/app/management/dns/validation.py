@@ -24,11 +24,7 @@ def is_valid_ipv6(value: str) -> bool:
 
 def validate_dns_name(name: str):
     """
-    Validates the DNS name's octet-length constraints only.
-    It does not perform character validation.
-
-    Character validation should be handled by the DNS provider adapters
-    to comply with the format requirements of the respective provider.
+    Checks if name passed the characters validation and meets the octet-length constraints.
     """
 
     if not name:
@@ -57,8 +53,7 @@ def validate_dns_name(name: str):
 
 def validate_dns_record_name(name: str, zone_name: str):
     """
-    Validates that the DNS record name satisfies DNS octet-length limits
-    and belongs to the specified zone.
+    Validates DNS name characters and length and ensures it belongs to the specified zone.
     """
 
     validate_dns_name(name)

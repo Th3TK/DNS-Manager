@@ -22,6 +22,10 @@ def get_log_entries_query(
     action_timestamp_min: int | None = None,
     action_timestamp_max: int | None = None,
 ) -> Select:
+    """
+    Prepares a query for paginated, filtered and sorted retrieval of change history entries from the database.
+    """
+
     query = select(ActionLogInDB).order_by(ActionLogInDB.action_timestamp.desc())
 
     if action is not None:
@@ -47,6 +51,10 @@ def get_log_entries_query(
 
 
 def get_log_entry(db: Session, entry_uuid: UUID) -> ActionLogEntry:
+    """
+    Retrieves a change history log entry.
+    """
+
     action_log_in_db = db.scalar(select(ActionLogInDB).where(ActionLogInDB.entry_uuid == entry_uuid))
 
     if action_log_in_db is None:
@@ -68,6 +76,10 @@ def create_log_entry(
     object_before: dict[str, Any] | None,
     object_after: dict[str, Any] | None,
 ) -> None:
+    """
+    Creates a change history log entry.
+    """
+
     log = ActionLogInDB(
         actor_type=actor_type,
         actor=actor,
@@ -104,6 +116,9 @@ def create_log_entries(
     objects_before: list[dict[str, Any]] | None,
     objects_after: list[dict[str, Any]] | None,
 ) -> None:
+    """
+    Creates multiple log entries of the same (type, actor, action, affected_object_type) in one database request.
+    """
 
     logs = [
         ActionLogInDB(

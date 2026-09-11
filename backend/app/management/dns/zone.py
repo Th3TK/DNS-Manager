@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 def cleanup_zone_metadata(db: Session):
     """
-    # Remove metadata for zones that no longer exist in the provider
-    # (i.e. they were deleted outside of the application).
+    Removes metadata for zones that no longer exist in the provider
+    (i.e. they were deleted outside of the application).
     """
 
     zones = provider.get_zones(skip_record_count=True)
@@ -36,6 +36,10 @@ def cleanup_zone_metadata(db: Session):
 
 
 def get_zone(db: Session, zone_name: str) -> DNSZone:
+    """
+    Retrieves a single zone.
+    """
+
     properties = provider.get_zone(zone_name)
 
     if properties is None:
@@ -49,6 +53,10 @@ def get_zone(db: Session, zone_name: str) -> DNSZone:
 
 
 def get_zones(db: Session, skip_record_count: bool = False) -> list[DNSZone]:
+    """
+    Retrieves a list of all zones present in the DNS.
+    """
+
     properties = provider.get_zones(skip_record_count)
 
     zone_names = {zone.name for zone in properties}
@@ -76,8 +84,14 @@ def get_zones(db: Session, skip_record_count: bool = False) -> list[DNSZone]:
 
 
 def create_zone(db: Session, creation_args: CreateDNSZoneArgs, is_restoration: bool = False) -> DNSZone:
+    """
+    Creates a zone in the provider and saves its metadata to the database.
+
+    Raises DNSValidationError if zone name is invalid.
+    """
 
     # remove metadata for zones that were deleted outside of the application
+    # to ensure there won't be fake duplicates
     cleanup_zone_metadata(db)
 
     validate_dns_name(creation_args.name)
@@ -123,8 +137,8 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
     """
     Deletes a DNS zone and all of its records.
 
-    Internal zones are soft-deleted and stored in the trash. Records belonging to internal
-    zones are also stored in the trash. External zones are permanently deleted.
+    Zones are soft-deleted and stored in the trash. Records belonging to internal
+    zones are also stored in the trash.
 
     Returns a DNSZoneRemovalResult indicating whether the zone and its internal records
     were soft-deleted or permanently deleted.
@@ -148,6 +162,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         internal_records_status=ChangeAction.PERMANENTLY_DELETED,
     )
 
+    # try to create ZONE trash entry
     if create_trash_entry(
         db=db,
         actor=logged_in_user.username,
@@ -156,6 +171,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
     ):
         result.zone_status = ChangeAction.DELETED
 
+    # try to create trash entries for internal records
     if create_trash_entries(
         db=db,
         actor=logged_in_user.username,
@@ -175,6 +191,8 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
         logger.exception("Failed to delete stale metadata for the deleted DNS zone %s.", zone_name)
 
     logger.info("%s %s DNS zone %s", logged_in_user.username, result.zone_status.replace("_", " "), zone.name)
+
+    # push deletion logs:
 
     create_log_entry(
         db=db,

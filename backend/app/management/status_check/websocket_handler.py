@@ -10,6 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class StatusCheckWebSocketHandler(WebSocketHandler):
+    """
+    Extends WebSocketHandler
+
+    Handles status check websockets.
+    On connect retrieves the cached status data and sends it instantly to the client.
+    """
+
     async def listen(self):
 
         await status_check_websocket_manager.register(self)

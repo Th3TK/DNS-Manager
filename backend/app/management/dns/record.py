@@ -193,7 +193,16 @@ def validate_no_duplicate(zone_name: str, name: str, type_: str):
 
 
 def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoration: bool = False) -> DNSRecord:
+    """
+    Creates a record in a zone.
+
+    Raises HTTP 404 if zone doesn't exist in the provider.
+    Raises HTTP 409 if another record with the same (name, type) already exists.
+    Raises DNSValidationError if args are invalid.
+    """
+
     # remove metadata for records within the zone that were deleted outside of the application
+    # to ensure there won't be fake duplicates
     cleanup_record_metadata(db, creation_args.zone_name)
 
     validate_dns_record_name(creation_args.name, creation_args.zone_name)
@@ -207,6 +216,7 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
             detail=f"DNS zone with name='{creation_args.zone_name}' could not be found.",
         )
 
+    # ensure there are no duplicate (name, type) records, even across zones
     validate_no_duplicate(creation_args.zone_name, creation_args.name, creation_args.type)
 
     properties = provider.create_record(
@@ -258,7 +268,17 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
 def modify_record(
     db: Session, zone_name: str, name: str, type_: SupportedDNSRecordTypes, modification_args: ModifyDNSRecordArgs
 ) -> DNSRecord:
+    """
+    Modifies record properties.
+
+    Raises HTTP 400 if record is external (no database metadata found).
+    Raises HTTP 404 if zone doesn't exist in the provider.
+    Raises HTTP 409 when modifying record's name and/or type, and if another record with the same key already exists.
+    Raises DNSValidationError if args are invalid.
+    """
+
     # remove metadata for records within the zone that were deleted outside of the application
+    # to ensure there won't be fake duplicates
     cleanup_record_metadata(db, zone_name)
 
     # validate query
@@ -359,9 +379,7 @@ def modify_record(
 
 def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_user: User) -> DNSRecordRemovalResult:
     """
-    Deletes a DNS zone and all of its records.
-
-    Internal records are soft-deleted and stored in the trash. External records are permanently deleted.
+    Deletes a record. Internal records are soft-deleted and stored in the trash. External records are permanently deleted.
     """
 
     record = get_record(db, zone_name, name, type_)
@@ -374,6 +392,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
     result = DNSRecordRemovalResult(record_status=ChangeAction.PERMANENTLY_DELETED)
 
     if not is_record_external:
+        # try creating a trash entry
         if create_trash_entry(db=db, actor=logged_in_user.username, object_type=DNSObjectType.RECORD, object_data=record):
             result.record_status = ChangeAction.DELETED
 
