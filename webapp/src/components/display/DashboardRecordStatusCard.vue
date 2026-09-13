@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { NBadge, NButton, NCard, NFlex, NText, NTime, useThemeVars } from "naive-ui";
+import { NBadge, NButton, NCard, NEmpty, NFlex, NIcon, NText, NTime, useThemeVars } from "naive-ui";
 import DatetimeCountdown from "./DatetimeCountdown.vue";
 import { useRouter } from "vue-router";
 import { useRecordsStatusStore } from "../../stores/useRecordsStatusStore.ts";
 import _ from "lodash";
+import { X as XIcon } from "@vicons/tabler";
 
 const router = useRouter();
 const theme = useThemeVars();
@@ -50,6 +51,7 @@ const colors = {
         </template>
         <NFlex vertical>
             <NButton
+                v-if="recordsStatus.data?.statuses"
                 v-for="status in ['OK', 'WARNING', 'ERROR', 'DISABLED']"
                 :key="status"
                 quaternary
@@ -90,6 +92,11 @@ const colors = {
                     </NText>
                 </div>
             </NButton>
+            <NEmpty
+                v-else
+                description="No data"
+                class="empty"
+            />
         </NFlex>
         <template #footer>
             <NFlex justify="space-between">
@@ -138,5 +145,9 @@ const colors = {
 .data-list-button :deep(.n-button__content) {
     width: 100%;
     justify-content: flex-start;
+}
+.empty {
+    height: 160px;
+    justify-content: center;
 }
 </style>

@@ -92,7 +92,7 @@ class WebSocketHandler(BaseModel):
         try:
             if self.is_connected():
                 await self.websocket.close(code, reason)
-        except RuntimeError:
+        except (RuntimeError, WebSocketDisconnect):
             # WebSocket already closed
             pass
 

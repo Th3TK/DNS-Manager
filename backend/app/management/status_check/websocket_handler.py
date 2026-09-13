@@ -31,7 +31,9 @@ class StatusCheckWebSocketHandler(WebSocketHandler):
                 await self.websocket.receive()
                 # keep open connection while ignoring any incoming messages
         except WebSocketDisconnect, RuntimeError:
-            await status_check_websocket_manager.unregister(self)
             pass
         except Exception:
             logging.exception(f"Unhandled expection within websocket {self.websocket}.")
+        finally:
+            await status_check_websocket_manager.unregister(self)
+            await self.close()

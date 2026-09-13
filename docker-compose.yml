@@ -9,7 +9,7 @@ services:
         env_file:
             - .env
         ports:
-            - "${API_PORT}:8000"
+            - "${API_PORT-9000}:8000"
         networks:
             - dnsnet
     frontend:
@@ -18,10 +18,10 @@ services:
             context: ./webapp
             dockerfile: ./docker/Dockerfile
         environment:
-            - VITE_HTTPS_ENABLED=${HTTPS_ENABLED}
-            - VITE_API_PORT=${API_PORT}
+            - VITE_HTTPS_ENABLED=${HTTPS_ENABLED:-FALSE}
+            - VITE_API_PORT=${API_PORT:-9000}
         ports:
-            - "${FRONTEND_PORT}:3000"
+            - "${FRONTEND_PORT-3000}:3000"
         networks:
             - dnsnet
 networks:

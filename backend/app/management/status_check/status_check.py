@@ -6,7 +6,6 @@ from asyncio import Task
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlsplit
 
-import dns.asyncresolver
 from app.config import ENV_CONFIG
 from app.database.connection import session_factory
 from app.management.dns.record import get_all_records
@@ -18,8 +17,9 @@ from app.management.status_check.status_check_utils import (
 from app.management.status_check.websocket_manager import status_check_websocket_manager
 from app.models.exceptions import DNSProviderException
 from app.models.record import DNSRecord, RecordStatus, RecordStatusCheckData, RecordStatuses
+from dns.asyncresolver import Resolver
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,44 @@ class AutomaticRecordStatusCheck:
     def __init__(self):
         self._data: RecordStatusCheckData | None = None  # Cached data
         self._task: Task[None] | None = None
+        self._resolver: Resolver | None = None
 
-    def _create_resolver(self) -> dns.asyncresolver.Resolver:
+    async def start(self) -> None:
+        """
+        Starts the status check task loop.
+        """
+
+        if self._task is not None and not self._task.done():
+            logger.debug("Automatic record status check is already running.")
+            return
+
+        logger.debug("Starting automatic record status check.")
+        self._task = asyncio.create_task(self._run())
+
+    async def stop(self) -> None:
+        """
+        Stops the status check task loop.
+        """
+
+        if self._task is None:
+            return
+
+        logger.debug("Stopping automatic record status check.")
+
+        task = self._task
+        self._task = None
+
+        task.cancel()
+
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    def get_data(self) -> RecordStatusCheckData | None:
+        return self._data
+
+    def _create_resolver(self) -> Resolver:
         """
         Creates and configures a DNS resolver using the DNS_RESOLVER configuration.
         Resolves the nameserver hostname to an IPv4 address when necessary.
@@ -66,50 +102,13 @@ class AutomaticRecordStatusCheck:
             except socket.gaierror as exc:
                 raise ValueError(f"Could not resolve DNS_RESOLVER hostname: {hostname!r}") from exc
 
-        resolver = dns.asyncresolver.Resolver(configure=False)
+        resolver = Resolver(configure=False)
         resolver.nameservers = [nameserver_ip]
         resolver.port = port
 
         logger.info(f"Configured DNS resolver: {nameserver_ip}:{port}")
 
         return resolver
-
-    async def start(self) -> None:
-        """
-        Starts the status check task loop.
-        """
-
-        if self._task is not None and not self._task.done():
-            logger.debug("Automatic record status check is already running.")
-            return
-
-        self._resolver = self._create_resolver()
-
-        logger.debug("Starting automatic record status check.")
-        self._task = asyncio.create_task(self._run())
-
-    async def stop(self) -> None:
-        """
-        Stops the status check task loop.
-        """
-
-        if self._task is None:
-            return
-
-        logger.debug("Stopping automatic record status check.")
-
-        task = self._task
-        self._task = None
-
-        task.cancel()
-
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
-
-    def get_data(self) -> RecordStatusCheckData | None:
-        return self._data
 
     async def _run(self) -> None:
         """
@@ -118,22 +117,33 @@ class AutomaticRecordStatusCheck:
 
         while True:
             try:
+                if self._resolver is None:
+                    # try creating the resolver, raises errors on fail
+                    self._resolver = self._create_resolver()
+
                 logger.debug("Running automatic record status check.")
 
                 statuses = await self._check_records()
 
                 logger.debug("Successfully retrieved record statuses.")
+
             except asyncio.CancelledError:
                 raise
-            except DNSProviderException:
+            except Exception as exc:
                 statuses = None
-                logger.error("Automatic record status check failed - could not reach the DNS provider.")
-            except OperationalError:
-                statuses = None
-                logger.error("Automatic record status check failed - could not reach the database.")
-            except Exception:
-                statuses = None
-                logger.exception("Automatic record status check failed.")
+
+                if isinstance(exc, ValueError):
+                    logger.error("Automatic record status check failed - %s", str(exc))
+                elif isinstance(exc, socket.gaierror):
+                    logger.error("Automatic record status check failed - could not reach the DNS resolver.")
+                elif isinstance(exc, DNSProviderException):
+                    logger.error("Automatic record status check failed - could not reach the DNS provider.")
+                elif isinstance(exc, OperationalError):
+                    logger.error("Automatic record status check failed - could not reach the database.")
+                elif isinstance(exc, ProgrammingError):
+                    logger.error("Automatic record status check failed - database migrations have not been applied.")
+                else:
+                    logger.exception("Automatic record status check failed.")
 
             # Update cached data
             self._data = RecordStatusCheckData(
@@ -149,12 +159,15 @@ class AutomaticRecordStatusCheck:
 
             await asyncio.sleep(ENV_CONFIG.CHECK_INTERVAL_SECONDS)
 
-    async def _check_records(self) -> RecordStatuses:
+    async def _check_records(self) -> RecordStatuses | None:
         """
         Checks all records on their resolution and reachability and returns a dictionary:
 
         `dict[ZONE_NAME, dict[RECORD_NAME, dict[RECORD_TYPE, RecordStatus | None]]]`
         """
+
+        if self._resolver is None:
+            return None
 
         with session_factory() as db:
             all_records = get_all_records(db)

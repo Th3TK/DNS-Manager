@@ -32,18 +32,17 @@ class StatusCheckWebSocketManager:
         async with self._lock:
             handlers = list(self._connections)
 
-            results = await asyncio.gather(
-                *(handler.websocket.send_json(data) for handler in handlers),
-                return_exceptions=True,
-            )
+        results = await asyncio.gather(
+            *(handler.websocket.send_json(data) for handler in handlers),
+            return_exceptions=True,
+        )
 
+        async with self._lock:
             for handler, result in zip(handlers, results):
-                if (
-                    isinstance(result, WebSocketDisconnect)
-                    or isinstance(result, ClientDisconnected)
-                    or isinstance(result, RuntimeError)
-                ):
+                if isinstance(result, (WebSocketDisconnect, ClientDisconnected, RuntimeError)):
                     self._connections.discard(handler)
+                    continue
+
                 if isinstance(result, Exception):
                     logger.exception(
                         "Failed to send WebSocket data to %s",
