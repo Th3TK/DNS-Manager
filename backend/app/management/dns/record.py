@@ -2,7 +2,7 @@ import logging
 from typing import Any, cast
 
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
-from app.database.models.enums import ActorType, ChangeAction, DNSObjectType, InternalRecordOrigin
+from app.database.models.enums import ActorType, ChangeAction, DNSObjectType
 from app.management.action_log.action_log import create_log_entry
 from app.management.dns.validation import validate_dns_record_name, validate_record_content
 from app.management.trash.trash import create_trash_entry
@@ -15,7 +15,6 @@ from app.models.record import (
     ModifyDNSRecordArgs,
     SupportedDNSRecordTypes,
 )
-from app.models.user import User
 from app.providers.factory import provider
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -236,7 +235,7 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
         comment=creation_args.comment,
         checks_enabled=creation_args.checks_enabled,
         author=creation_args.author,
-        origin="manual",
+        origin=creation_args.origin,
     )
 
     record = DNSRecord(**properties.model_dump(), **DNSRecordMetadata.from_db(metadata).model_dump())
@@ -326,7 +325,7 @@ def modify_record(
             **record_old.model_dump(),
             **updates,
             "author": modification_args.author,
-            "origin": "manual",
+            "origin": modification_args.origin,
         }
     )
 
@@ -355,7 +354,7 @@ def modify_record(
     record_metadata_in_db.comment = record_new.comment
     record_metadata_in_db.checks_enabled = record_new.checks_enabled
     record_metadata_in_db.author = record_new.author
-    record_metadata_in_db.origin = InternalRecordOrigin.MANUAL
+    record_metadata_in_db.origin = modification_args.origin  # type: ignore
 
     try:
         db.commit()
@@ -377,7 +376,7 @@ def modify_record(
     return record_new
 
 
-def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_user: User) -> DNSRecordRemovalResult:
+def delete_record(db: Session, zone_name: str, name: str, type_: str, actor: str) -> DNSRecordRemovalResult:
     """
     Deletes a record. Internal records are soft-deleted and stored in the trash. External records are permanently deleted.
     """
@@ -393,7 +392,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
 
     if not is_record_external:
         # try creating a trash entry
-        if create_trash_entry(db=db, actor=logged_in_user.username, object_type=DNSObjectType.RECORD, object_data=record):
+        if create_trash_entry(db=db, actor=actor, object_type=DNSObjectType.RECORD, object_data=record):
             result.record_status = ChangeAction.DELETED
 
         try:
@@ -416,7 +415,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
 
     logger.info(
         "%s %s DNS record %s %s %s",
-        logged_in_user.username,
+        actor,
         result.record_status.replace("_", " "),
         zone_name,
         name,
@@ -426,7 +425,7 @@ def delete_record(db: Session, zone_name: str, name: str, type_: str, logged_in_
     create_log_entry(
         db=db,
         actor_type=ActorType.USER,
-        actor=logged_in_user.username,
+        actor=actor,
         action=result.record_status,
         affected_object_type=DNSObjectType.RECORD,
         affected_object_name=record.name,

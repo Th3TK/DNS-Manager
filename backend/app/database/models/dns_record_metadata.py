@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import Boolean, Enum, ForeignKey, ForeignKeyConstraint, Index, String
+from sqlalchemy import Boolean, Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.database import Base
@@ -10,15 +10,7 @@ from app.database.models.enums import InternalRecordOrigin
 class DNSRecordMetadataInDB(Base):
     __tablename__ = "dns_records_metadata"
 
-    __table_args__ = (
-        Index("ix_dns_records_metadata_zone_name", "zone_name"),
-        ForeignKeyConstraint(
-            ["zone_name"],
-            ["dns_zones_metadata.name"],
-            name="fk_dns_records_metadata_zone_name",
-            ondelete="CASCADE",
-        ),
-    )
+    __table_args__ = (Index("ix_dns_records_metadata_zone_name", "zone_name"),)
 
     # identified by the zone name along with the record type, name and content.
     zone_name: Mapped[str] = mapped_column(String(255), primary_key=True)
@@ -32,7 +24,7 @@ class DNSRecordMetadataInDB(Base):
 
     checks_enabled: Mapped[bool] = mapped_column(Boolean, server_default="true", nullable=False)
 
-    author: Mapped[str | None] = mapped_column(String(64), ForeignKey("users.username", ondelete="SET NULL"), nullable=True)
+    author: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     origin: Mapped[InternalRecordOrigin] = mapped_column(
         Enum(InternalRecordOrigin, name="internal_record_origin", native_enum=True),

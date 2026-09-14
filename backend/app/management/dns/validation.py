@@ -51,6 +51,13 @@ def validate_dns_name(name: str):
         raise DNSValidationError("DNS name cannot exceed 255 octets.")
 
 
+def is_record_name_in_zone(record_name: str, zone_name: str):
+    normalized_name = f"{record_name.rstrip('.').lower()}."
+    normalized_zone = f"{zone_name.rstrip('.').lower()}."
+
+    return normalized_name == normalized_zone or normalized_name.endswith(f".{normalized_zone}")
+
+
 def validate_dns_record_name(name: str, zone_name: str):
     """
     Validates DNS name characters and length and ensures it belongs to the specified zone.
@@ -58,10 +65,7 @@ def validate_dns_record_name(name: str, zone_name: str):
 
     validate_dns_name(name)
 
-    normalized_name = f"{name.rstrip('.').lower()}."
-    normalized_zone = f"{zone_name.rstrip('.').lower()}."
-
-    if normalized_name != normalized_zone and not normalized_name.endswith(f".{normalized_zone}"):
+    if not is_record_name_in_zone(name, zone_name):
         raise DNSValidationError("DNS record name is out of zone.")
 
 

@@ -1,0 +1,38 @@
+import logging
+import threading
+
+from src.config import ENV_CONFIG
+from src.managers.messenger import APIMessenger
+from src.managers.watcher import DockerWatcher
+
+logger = logging.getLogger(__name__)
+
+
+def main():
+    logging.basicConfig(
+        level=getattr(logging, ENV_CONFIG.LOG_LEVEL),
+        format="%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    try:
+        logger.info("Initializing Docker events watcher.")
+
+        api_messenger = APIMessenger()
+        docker_watcher = DockerWatcher(messenger=api_messenger)
+
+        docker_watcher.start()
+
+        logger.info("Successfully initialized Docker events watcher.")
+
+    except Exception:
+        logger.exception("Error occurred during watcher initialization.")
+
+    try:
+        threading.Event().wait()
+    except KeyboardInterrupt:
+        logger.info("Stopping Docker events watcher.")
+
+
+if __name__ == "__main__":
+    main()

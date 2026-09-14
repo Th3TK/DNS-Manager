@@ -24,6 +24,24 @@ services:
             - "${FRONTEND_PORT-3000}:3000"
         networks:
             - dnsnet
+    watcher:
+        container_name: dns-manager-docker-watcher
+        build:
+            context: ./watcher
+            dockerfile: ./docker/Dockerfile
+        restart: unless-stopped
+        environment:
+            - API_PORT=8000
+            - API_HOST=dns-manager-backend
+            - HTTPS_ENABLED=${HTTPS_ENABLED:-FALSE}
+            - WATCHER_NAME=${WATCHER_NAME}
+            - TRAEFIK_HOST_IP=${TRAEFIK_HOST_IP}
+            - WATCHER_AUTHENTICATION_SECRET_KEY=${WATCHER_AUTHENTICATION_SECRET_KEY}
+            - LOG_LEVEL=${LOG_LEVEL:-INFO}
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        networks:
+            - dnsnet
 networks:
     dnsnet:
         external: true

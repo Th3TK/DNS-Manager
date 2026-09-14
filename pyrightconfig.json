@@ -3,6 +3,7 @@
     "reportIncompatibleMethodOverride": "none",
     "reportIncompatibleVariableOverride": "none",
     "extraPaths": [
-        "./backend"
+        "./backend",
+        "./watcher"
     ]
 }

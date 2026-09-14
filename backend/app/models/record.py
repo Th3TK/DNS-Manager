@@ -132,6 +132,7 @@ class ModifyDNSRecordArgs(ModifyDNSRecordForm):
     """
 
     author: str
+    origin: DNSRecordOriginInternal
 
 
 class DNSRecordRemovalResult(BaseModel):
@@ -166,3 +167,16 @@ class RecordStatusCheckData(BaseModel):
     statuses: RecordStatuses | None
     timestamp: datetime.datetime
     next_check: datetime.datetime
+
+
+class WatcherRecordForm(BaseModel):
+    record_name: str
+    content: str
+    watcher_name: str
+
+    @field_validator("record_name", mode="after")
+    @classmethod
+    def normalize_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return f"{value.rstrip('.').lower()}."

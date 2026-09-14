@@ -19,6 +19,7 @@ from app.endpoints.name_search import router as name_search_router
 from app.endpoints.status_check import router as status_check_router
 from app.endpoints.trash import router as trash_router
 from app.endpoints.user import router as users_router
+from app.endpoints.watcher import router as watcher_router
 from app.management.status_check.status_check import automatic_status_check
 from app.management.trash.cleanup import automatic_trash_removal
 from app.migrate import run_migrations
@@ -158,6 +159,7 @@ app.include_router(trash_router)
 app.include_router(action_log_router)
 app.include_router(users_router)
 app.include_router(status_check_router)
+app.include_router(watcher_router)
 
 
 # Add an OAuth2 security scheme to the OpenAPI schema so Swagger UI

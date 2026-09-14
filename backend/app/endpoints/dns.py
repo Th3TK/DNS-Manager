@@ -123,7 +123,7 @@ def __modify_record__(
         zone_name=zone_name,
         name=record_name,
         type_=record_type,
-        modification_args=ModifyDNSRecordArgs(**form.model_dump(), author=user.username),
+        modification_args=ModifyDNSRecordArgs(**form.model_dump(), author=user.username, origin="manual"),
     )
 
 
@@ -140,5 +140,5 @@ def __delete_record__(
         zone_name=zone_name,
         name=record_name,
         type_=record_type,
-        logged_in_user=user,
+        actor=user.username,
     )

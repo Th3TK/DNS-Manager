@@ -100,7 +100,7 @@ export const getColumns = (global: boolean, refresh: () => void): DataTableColum
                     },
                 }),
 
-            width: 150,
+            width: 175,
         },
         {
             title: "TTL",

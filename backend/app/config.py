@@ -18,7 +18,7 @@ class EnvConfig:
     # app options
     AUTHENTICATION_SECRET_KEY: str = get_env("AUTHENTICATION_SECRET_KEY")
     CHECK_INTERVAL_SECONDS: int = get_env_int("CHECK_INTERVAL_SECONDS", 300)
-    MANAGED_ZONE: str = get_env("MANAGED_ZONE", "", True)
+    MANAGED_ZONE: str = f"{get_env('MANAGED_ZONE', '', True).rstrip('.')}."
     HTTPS_ENABLED: bool = get_env_literal("HTTPS_ENABLED", {"TRUE", "FALSE"}, "FALSE") == "TRUE"
     # debug/advanced
     LOG_LEVEL: str = get_env_literal("LOG_LEVEL", {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}, "INFO")

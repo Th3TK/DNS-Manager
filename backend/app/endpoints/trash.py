@@ -86,7 +86,7 @@ def __restore_dns_object_from_trash__(
                 is_restoration=True,
             )
 
-    delete_trash_entry(db, entry_uuid, user)
+    delete_trash_entry(db, entry_uuid, user.username)
     return response
 
 
@@ -94,4 +94,4 @@ def __restore_dns_object_from_trash__(
 def __permanently_delete_object_from_trash__(
     user: Annotated[User, Depends(get_authenticated_administrator)], db: Annotated[Session, Depends(get_db)], entry_uuid: UUID
 ) -> None:
-    delete_trash_entry(db, entry_uuid, user)
+    delete_trash_entry(db, entry_uuid, user.username)
