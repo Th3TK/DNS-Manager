@@ -9,7 +9,6 @@ from app.management.action_log.action_log import create_log_entry
 from app.management.trash.cleanup import automatic_trash_removal
 from app.models.record import DNSRecord
 from app.models.trash import TrashEntry
-from app.models.user import User
 from app.models.zone import DNSZone
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -144,7 +143,7 @@ def create_trash_entries(
     return True
 
 
-def delete_trash_entry(db: Session, entry_uuid: UUID, logged_in_user: User) -> None:
+def delete_trash_entry(db: Session, entry_uuid: UUID, actor: str) -> None:
     """
     Permanently removes a trash entry from the database.
     """
@@ -162,7 +161,7 @@ def delete_trash_entry(db: Session, entry_uuid: UUID, logged_in_user: User) -> N
     create_log_entry(
         db,
         actor_type=ActorType.USER,
-        actor=logged_in_user.username,
+        actor=actor,
         action=ChangeAction.PERMANENTLY_DELETED,
         affected_object_type=trash_entry.object_type,
         affected_object_name=trash_entry.object_data.name,
