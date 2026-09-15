@@ -1,14 +1,10 @@
-import asyncio
 import logging
 from typing import Literal
 
 import requests
 
-from src.config import ENV_CONFIG
-from src.utils.env import get_env
+from src.config import API_URL, ENV_CONFIG
 from src.utils.paths import join_url
-
-type Action = Literal["UPDATE", "DELETE"]
 
 RETRY_INTERVAL_SECONDS = 60
 
@@ -18,121 +14,105 @@ logger = logging.getLogger(__name__)
 class APIMessenger:
     """
     Sends requests to the API and handles the responses.
-
-    Backlogs requests that failed due to timeout.
     """
 
-    traefik_host_ip: str
-    watcher_name: str
-    backlog: list[tuple[Action, str]]
-    retry_loop_active: bool
+    is_synchronized: bool
     _session: requests.Session
-    _api_url: str
 
     def __init__(self):
-        self._api_url = f"{'https' if ENV_CONFIG.HTTPS_ENABLED else 'http'}://{ENV_CONFIG.API_HOST}:{ENV_CONFIG.API_PORT}/api"
         self._session = requests.Session()
-        self.traefik_host_ip = get_env("TRAEFIK_HOST_IP")
-        self.watcher_name = get_env("WATCHER_NAME")
-        self.backlog = []
-        self.retry_loop_active = False
+        self.is_synchronized = False
 
     def sync(self, hostnames: list[str]):
         """
         Replaces all current records created by this watcher with a list of new ones.
         """
+        if self._send("SYNC", hostnames):
+            self.is_synchronized = True
 
     def update(self, hostname: str):
         """
         Creates a new record or modifies an existing one.
         """
-        logger.info("Sending update")
-        try:
-            response = self._send_request(
-                "POST",
-                "/watcher/update",
-                json={
-                    "record_name": hostname,
-                    "content": ENV_CONFIG.TRAEFIK_HOST_IP,
-                    "watcher_name": ENV_CONFIG.WATCHER_NAME,
-                },
-            )
-            logger.info(response)
-            response.raise_for_status()
-
-        except (
-            requests.exceptions.Timeout,
-            requests.exceptions.ConnectionError,
-        ):
-            logger.error("API request timed out")
-            self.backlog.append(("UPDATE", hostname))
-        except requests.exceptions.HTTPError as exc:
-            if exc.response is None:
-                return logger.error("API returned an invalid HTTP response", exc)
-
-            try:
-                body = exc.response.json()
-            except requests.exceptions.JSONDecodeError:
-                body = None
-
-            logger.warning("UPDATE operation rejected, API returned %s %s", exc.response.status_code, body)
+        self._send("UPDATE", hostname)
 
     def delete(self, hostname: str):
         """
         Moves a record to trash.
         """
+        self._send("DELETE", hostname)
+
+    def _send(self, action: Literal["UPDATE", "DELETE", "SYNC"], data: str | list[str]) -> bool:
+        """
+        Sends the API request. Returns boolean indicating whether the operation succeded.
+        """
+
+        match action:
+            case "UPDATE":
+                method = "POST"
+                path = "/watcher/update"
+                data_field_name = "record_name"
+
+            case "DELETE":
+                method = "DELETE"
+                path = "/watcher/delete"
+                data_field_name = "record_name"
+
+            case "SYNC":
+                method = "POST"
+                path = "/watcher/sync"
+                data_field_name = "record_names"
+
+        json = {"content": ENV_CONFIG.TRAEFIK_HOST_IP, data_field_name: data}
+
         try:
-            response = self._send_request(
-                "DELETE",
-                "/watcher/delete",
-                json={
-                    "record_name": hostname,
-                    "content": ENV_CONFIG.TRAEFIK_HOST_IP,
-                    "watcher_name": ENV_CONFIG.WATCHER_NAME,
+            response = self._session.request(
+                method=method,
+                url=join_url(API_URL, path),
+                timeout=5,
+                json=json,
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Watcher-Secret": ENV_CONFIG.WATCHER_AUTH_SECRET_KEY,
+                    "X-Watcher-Name": ENV_CONFIG.WATCHER_NAME,
                 },
             )
             response.raise_for_status()
 
-        except requests.exceptions.Timeout, requests.exceptions.ConnectionError:
-            self.backlog.append(("DELETE", hostname))
+            logger.info("%s %s operation succeded", action, str(data))
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ConnectTimeout,
+        ):
+            self.is_synchronized = False
+            logging.error("%s %s operation failed, API timed out", action, str(data))
+            return False
+
         except requests.exceptions.HTTPError as exc:
             if exc.response is None:
-                return logger.error("API returned an invalid HTTP response", exc)
+                logger.error("API returned an invalid HTTP response", exc)
+                return False
+
             try:
                 body = exc.response.json()
+
+                if not isinstance(body, dict):
+                    detail = None
+
+                detail = body.get("detail")
             except requests.exceptions.JSONDecodeError:
-                body = None
+                detail = None
 
-            logger.warning("DELETE operation rejected, API returned %s %s", exc.response.status_code, body)
+            logger.error("%s %s operation rejected, API returned %s - %s", action, str(data), exc.response.status_code, detail)
 
-    async def start_loop(self):
-        if self.retry_loop_active:
-            logger.debug("APIMessenger loop is already running - skipping start.")
-            return
+            if exc.response.status_code >= 500:
+                self.is_synchronized = False
 
-        self.retry_loop_active = True
+            return False
+        except Exception:
+            logger.exception("Unhandled request exception occured")
+            return False
 
-        asyncio.create_task(self._retry())
-
-    async def _retry(self):
-        """
-        Retries failed requests.
-        """
-        while True:
-            if self.backlog:
-                ...
-
-            await asyncio.sleep(RETRY_INTERVAL_SECONDS)
-
-    def _send_request(self, method: Literal["POST", "DELETE"], path: str, **kwargs) -> requests.Response:
-        logger.info(join_url(self._api_url, path))
-        return self._session.request(
-            method=method,
-            url=join_url(self._api_url, path),
-            timeout=5,
-            **kwargs,
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
-        )
+        return True

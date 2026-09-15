@@ -16,13 +16,14 @@ class EnvConfig:
     # database options
     DATABASE_URL: str = get_env("DATABASE_URL")
     # app options
-    AUTHENTICATION_SECRET_KEY: str = get_env("AUTHENTICATION_SECRET_KEY")
+    AUTH_SECRET_KEY: str = get_env("AUTH_SECRET_KEY")
+    WATCHER_AUTH_SECRET_KEY: str = get_env("WATCHER_AUTH_SECRET_KEY")
     CHECK_INTERVAL_SECONDS: int = get_env_int("CHECK_INTERVAL_SECONDS", 300)
     MANAGED_ZONE: str = f"{get_env('MANAGED_ZONE', '', True).rstrip('.')}."
     HTTPS_ENABLED: bool = get_env_literal("HTTPS_ENABLED", {"TRUE", "FALSE"}, "FALSE") == "TRUE"
     # debug/advanced
     LOG_LEVEL: str = get_env_literal("LOG_LEVEL", {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}, "INFO")
-    AUTHENTICATION_ALGORITHM: str = get_env("AUTHENTICATION_ALGORITHM", "HS256")
+    AUTHENTICATION_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_LIFETIME_SECONDS: int = get_env_int("ACCESS_TOKEN_LIFETIME_SECONDS", 3600)
     REFRESH_TOKEN_LIFETIME_SECONDS: int = get_env_int("REFRESH_TOKEN_LIFETIME_SECONDS", 259200)
 

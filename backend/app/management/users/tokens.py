@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 def create_token(token_type: TokenTypes, user: User, expires_delta: timedelta) -> str:
     to_encode = {"token_type": token_type, "sub": str(user.username), "exp": datetime.now(timezone.utc) + expires_delta}
-    return encode(to_encode, ENV_CONFIG.AUTHENTICATION_SECRET_KEY, algorithm="HS256")
+    return encode(to_encode, ENV_CONFIG.AUTH_SECRET_KEY, algorithm="HS256")
 
 
 def create_access_token(user: User) -> str:
@@ -42,7 +42,7 @@ def is_refresh_token(payload: DecodedTokenPayload):
 
 
 def decode_token(token: str) -> DecodedTokenPayload:
-    payload = decode(token, ENV_CONFIG.AUTHENTICATION_SECRET_KEY, algorithms=["HS256"])
+    payload = decode(token, ENV_CONFIG.AUTH_SECRET_KEY, algorithms=["HS256"])
 
     subject = payload.get("sub")
     expiration_date = payload.get("exp")

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 ROUTER_RULE_PATTERN = re.compile(r"^traefik\.http\.routers\.[^.]+\.rule$")
 HOST_PATTERN = re.compile(r"Host\((.*?)\)")
+RETRY_SYNC_INTERVAL_SECONDS = 15
 
 
 class DockerWatcher:
@@ -21,16 +22,20 @@ class DockerWatcher:
 
     messanger: APIMessenger
     is_running: bool
+    _sync_active: bool
     _docker_client: docker.DockerClient
     _thread: threading.Thread | None
+    _sync_thread: threading.Thread | None
     _events: CancellableStream[dict[str, Any]] | None
     _labels_cache: dict[str, list[str]]
 
     def __init__(self, messenger: APIMessenger):
         self.messenger = messenger
         self.is_running = False
+        self._sync_active = False
         self._docker_client = docker.from_env()
         self._thread = None
+        self._sync_thread = None
         self._events = None
         self._labels_cache = {}
 
@@ -45,45 +50,52 @@ class DockerWatcher:
 
         self.is_running = True
 
-        self._thread = threading.Thread(target=self._listen, daemon=True)
+        self._thread = threading.Thread(target=self.__listen, daemon=True)
         self._thread.start()
 
-    def stop(self):
-        """
-        Stop listening for Docker events.
-        """
-
-        if not self.is_running:
-            logger.debug("DockerWatcher is not running - skipping stop.")
+    def start_sync(self):
+        if self._sync_active:
+            logger.debug("Docker synchronization is already running - skipping.")
             return
 
-        self.is_running = False
+        self._sync_thread = threading.Thread(target=self.__sync, daemon=True)
+        self._sync_thread.start()
 
-        if self._events is not None:
-            self._events.close()
+    def __sync(self):
+        """Retrieve current Docker containers state and synchronize the DNS."""
 
-        if self._thread is not None:
-            self._thread.join()
+        if self._sync_active:
+            return
 
-        self._thread = None
+        self._sync_active = True
 
-    def sync(self):
-        """
-        Retrieve current Docker containers state and run updates to synchronize the DNS.
-        """
-        containers = self._docker_client.containers.list()
+        # Retry synchronizing every RETRY_SYNC_INTERVAL_SECONDS
+        while self.is_running and not self.messenger.is_synchronized:
+            # retrieve all current containers
+            containers = self._docker_client.containers.list()
 
-        for container in containers:
-            container_id = container.id
+            # update cache
+            self._labels_cache = {}
 
-            if container_id is None:
-                return
+            for container in containers:
+                if container.id is not None:
+                    self._labels_cache[container.id] = self._get_container_host_values(container)
 
-            self._labels_cache[container_id] = self._get_container_hosts(container)
+            # get hostnames from updated cache
+            hostnames = [hostname for hosts in self._labels_cache.values() for hostname in hosts]
 
-        self.messenger.sync([host for hosts in self._labels_cache.values() for host in hosts])
+            # send SYNC to the API
+            self.messenger.sync(hostnames)
 
-    def _listen(self):
+            if self.messenger.is_synchronized:
+                break
+
+            # wait for next retry
+            threading.Event().wait(RETRY_SYNC_INTERVAL_SECONDS)
+
+        self._sync_active = False
+
+    def __listen(self):
         """
         Main loop listening for Docker events.
         """
@@ -105,6 +117,9 @@ class DockerWatcher:
                 elif action == "die":
                     self._on_container_die(event)
 
+                if not self.messenger.is_synchronized:
+                    self.start_sync()
+
         except Exception:
             logger.exception("Docker event listener failed.")
 
@@ -117,12 +132,23 @@ class DockerWatcher:
 
         container = self._docker_client.containers.get(container_id)
 
-        self._labels_cache[container_id] = self._get_container_hosts(container)
+        self._labels_cache[container_id] = self._get_container_host_values(container)
 
         for hostname in self._labels_cache[container_id]:
             self.messenger.update(hostname)
 
-    def _get_container_hosts(self, container):
+    def _on_container_die(self, event):
+        container_id = event["Actor"]["ID"]
+
+        hostnames = self._labels_cache.pop(container_id, None)
+
+        if not hostnames:
+            return
+
+        for hostname in hostnames:
+            self.messenger.delete(hostname)
+
+    def _get_container_host_values(self, container):
         labels: dict[str, str] = container.labels
 
         all_hosts = []
@@ -136,15 +162,3 @@ class DockerWatcher:
             all_hosts.extend(hosts)
 
         return all_hosts
-
-    def _on_container_die(self, event):
-        container_id = event["Actor"]["ID"]
-
-        hostnames = self._labels_cache.get(container_id)
-
-        if not hostnames:
-            return
-
-        for hostname in hostnames:
-            logger.info(hostname)
-            self.messenger.delete(hostname)

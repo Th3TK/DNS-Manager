@@ -22,6 +22,7 @@ def main():
         docker_watcher = DockerWatcher(messenger=api_messenger)
 
         docker_watcher.start()
+        docker_watcher.start_sync()
 
         logger.info("Successfully initialized Docker events watcher.")
 

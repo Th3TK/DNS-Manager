@@ -4,7 +4,7 @@ from app.database.models.dns_trash import DNSTrashInDB
 from app.database.models.enums import DNSObjectType
 from app.management.dns.record import create_record
 from app.management.dns.zone import create_zone
-from app.models.record import CreateDNSRecordArgs, DNSRecord
+from app.models.record import CreateDNSRecordArgs, DNSRecord, DNSRecordOriginInternal
 from app.models.trash import TrashEntry
 from app.models.zone import CreateDNSZoneArgs, DNSZone
 from fastapi import HTTPException, status
@@ -12,7 +12,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 
-def restore_trash_entry(db: Session, entry_uuid: UUID, actor: str) -> DNSZone | DNSRecord:
+def restore_trash_entry(
+    db: Session, entry_uuid: UUID, actor: str, origin: DNSRecordOriginInternal = "manual"
+) -> DNSZone | DNSRecord:
 
     trash_entry_in_db = db.scalar(select(DNSTrashInDB).where(DNSTrashInDB.entry_uuid == entry_uuid))
 
@@ -40,7 +42,7 @@ def restore_trash_entry(db: Session, entry_uuid: UUID, actor: str) -> DNSZone | 
                 creation_args=CreateDNSRecordArgs(
                     **trash_entry.object_data.model_dump(exclude={"author", "origin"}),
                     author=actor,
-                    origin="manual",
+                    origin=origin,
                 ),
                 is_restoration=True,
             )

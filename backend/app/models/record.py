@@ -172,11 +172,18 @@ class RecordStatusCheckData(BaseModel):
 class WatcherRecordForm(BaseModel):
     record_name: str
     content: str
-    watcher_name: str
 
     @field_validator("record_name", mode="after")
     @classmethod
-    def normalize_name(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
+    def normalize_name(cls, value: str) -> str:
         return f"{value.rstrip('.').lower()}."
+
+
+class WatcherRecordsForm(BaseModel):
+    record_names: list[str]
+    content: str
+
+    @field_validator("record_names", mode="after")
+    @classmethod
+    def normalize_names(cls, values: list[str]) -> list[str]:
+        return [f"{value.rstrip('.').lower()}." for value in values]

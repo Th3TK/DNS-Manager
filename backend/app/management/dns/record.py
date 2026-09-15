@@ -57,7 +57,23 @@ def cleanup_record_metadata(db: Session, *zone_names: str):
     logger.info("Removed %d stale records from the database.", removed)
 
 
+def has_matching_content(record: DNSRecord | DNSRecordProperties, content: str) -> bool:
+    """
+    Checks whether the provided content matches the record content.
+    For list content, the provided content must be present in the list.
+    """
+    if isinstance(record.content, str):
+        return record.content == content
+
+    return content in record.content
+
+
 def get_record(db: Session, zone_name: str, name: str, type_: str) -> DNSRecord:
+    """
+    Retrieves a record with matching (`zone_name`, `name` and `type`).
+    If there are multiple, the return object's `content` property will be of type `list[str]`.
+    """
+
     properties = provider.get_record(zone_name, name, type_)
 
     if properties is None:
@@ -80,6 +96,10 @@ def get_record(db: Session, zone_name: str, name: str, type_: str) -> DNSRecord:
 
 
 def expand_records_properties_with_metadata(db: Session, properties: list[DNSRecordProperties]) -> list[DNSRecord]:
+    """
+    Concatenate database-stored record metadata to matching record properties from the provider.
+    """
+
     record_keys = {(record.zone_name, record.name, record.type) for record in properties}
 
     if not record_keys:
@@ -89,6 +109,7 @@ def expand_records_properties_with_metadata(db: Session, properties: list[DNSRec
 
     record_keys = list(record_keys)
 
+    # query the database only max 1000 records at a time
     for i in range(0, len(record_keys), 1000):
         batch = record_keys[i : i + 1000]
 
@@ -124,6 +145,10 @@ def expand_records_properties_with_metadata(db: Session, properties: list[DNSRec
 
 
 def get_records(db: Session, zone_name: str) -> list[DNSRecord]:
+    """
+    Retrieves all records from provided zone.
+    """
+
     properties = provider.get_records(zone_name)
 
     if properties is None:
