@@ -15,7 +15,7 @@ const router = useRouter();
 const themeVars = useThemeVars();
 const { handleError } = useErrorHandler();
 
-const { data: entry, error, loading } = useFetch<ChangeHistoryEntry>(`/log/${route.params.uuid}`);
+const { data: entry, error, loading } = useFetch<ChangeHistoryEntry>(`/change-history/${route.params.uuid}`);
 
 if (error.value) {
     handleError(error.value);
