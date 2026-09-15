@@ -3,7 +3,6 @@ from typing import cast
 
 from app.config import ENV_CONFIG
 from app.management.dns.record import (
-    cleanup_record_metadata,
     create_record,
     delete_record,
     get_record,
@@ -36,13 +35,10 @@ def watcher_update(db: Session, record_name: str, content: str, watcher_name: st
 
     zone_name = ENV_CONFIG.MANAGED_ZONE
 
-    # remove metadata for records within the zone that were deleted outside of the application
-    # to ensure there won't be fake duplicates
-    cleanup_record_metadata(db, zone_name)
-
     if not is_record_name_in_zone(record_name, zone_name):
         logger.warning(
             "Watcher %s tried to create a record %s outside of the managed zone %s",
+            watcher_name,
             record_name,
             zone_name,
         )
@@ -51,7 +47,7 @@ def watcher_update(db: Session, record_name: str, content: str, watcher_name: st
             detail="DNS record name is out of the managed zone.",
         )
 
-    # get all records of the same name regardless of zone
+    # find existing record
     duplicate = provider.get_record(zone_name, record_name, "A")
 
     # exists

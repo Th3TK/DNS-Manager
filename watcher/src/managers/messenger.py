@@ -6,8 +6,6 @@ import requests
 from src.config import API_URL, ENV_CONFIG
 from src.utils.paths import join_url
 
-RETRY_INTERVAL_SECONDS = 60
-
 logger = logging.getLogger(__name__)
 
 

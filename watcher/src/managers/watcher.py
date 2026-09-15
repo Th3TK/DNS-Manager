@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 ROUTER_RULE_PATTERN = re.compile(r"^traefik\.http\.routers\.[^.]+\.rule$")
 HOST_PATTERN = re.compile(r"Host\((.*?)\)")
-RETRY_SYNC_INTERVAL_SECONDS = 15
+RETRY_SYNC_INTERVAL_SECONDS = 60
 
 
 class DockerWatcher:
