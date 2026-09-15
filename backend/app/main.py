@@ -148,7 +148,10 @@ async def internal_request_json_parsing_error(request: Request, exc: requests.ex
 
 @app.exception_handler(DNSValidationError)
 async def dns_validation_error(request: Request, exc: DNSValidationError):
-    return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
 
 
 app.include_router(base_router)

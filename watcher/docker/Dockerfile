@@ -10,4 +10,4 @@ RUN uv sync --locked --no-dev
 
 COPY src ./src
 
-CMD ["uv", "run", "--no-dev", "python", "src/main.py"]
+CMD ["uv", "run", "--no-dev", "python", "-m", "src.main"]

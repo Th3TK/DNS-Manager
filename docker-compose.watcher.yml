@@ -16,5 +16,3 @@ services:
             - LOG_LEVEL=${LOG_LEVEL:-INFO}
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock:ro
-        networks:
-            - dnsnet

@@ -78,7 +78,7 @@ class APIMessenger:
             )
             response.raise_for_status()
 
-            logger.info("%s %s operation succeded", action, str(data))
+            logger.info("%s %s operation succeeded", action, str(data))
         except (
             requests.exceptions.Timeout,
             requests.exceptions.ConnectionError,
@@ -96,14 +96,21 @@ class APIMessenger:
             try:
                 body = exc.response.json()
 
-                if not isinstance(body, dict):
+                if isinstance(body, dict):
+                    detail = body.get("detail")
+                else:
                     detail = None
-
-                detail = body.get("detail")
             except requests.exceptions.JSONDecodeError:
+                body = None
                 detail = None
 
-            logger.error("%s %s operation rejected, API returned %s - %s", action, str(data), exc.response.status_code, detail)
+            logger.error(
+                "%s %s operation rejected, API returned %s - %s",
+                action,
+                str(data),
+                exc.response.status_code,
+                detail or body,
+            )
 
             if exc.response.status_code >= 500:
                 self.is_synchronized = False
