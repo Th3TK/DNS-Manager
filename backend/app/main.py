@@ -22,9 +22,9 @@ from app.endpoints.user import router as users_router
 from app.endpoints.watcher import router as watcher_router
 from app.management.status_check.status_check import automatic_status_check
 from app.management.trash.cleanup import automatic_trash_removal
-from app.migrate import run_migrations
+from app.migrate import create_first_account, run_migrations
 from app.models.exceptions import DependencyExceptionCodes, DNSProviderException, DNSValidationError
-from app.synch import create_first_account, synchronize_database
+from app.synch import synchronize_database
 
 logging.basicConfig(
     level=getattr(logging, ENV_CONFIG.LOG_LEVEL),
@@ -42,11 +42,13 @@ logging.getLogger("passlib").disabled = True
 logger = logging.getLogger(__name__)
 
 
+run_migrations()
+create_first_account()
+synchronize_database()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    run_migrations()
-    create_first_account()
-    synchronize_database()
 
     await automatic_trash_removal.initialize()
     logging.info("Initialized trash removal event loop.")

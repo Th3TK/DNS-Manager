@@ -4,7 +4,7 @@ from typing import Literal
 import requests
 
 from src.config import API_URL, ENV_CONFIG
-from src.utils.paths import join_url
+from src.utils.url import join_url
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class APIMessenger:
                 path = "/watcher/sync"
                 data_field_name = "record_names"
 
-        json = {"content": ENV_CONFIG.TRAEFIK_HOST_IP, data_field_name: data}
+        json = {"content": str(ENV_CONFIG.TRAEFIK_HOST_IP), data_field_name: data}
 
         try:
             response = self._session.request(

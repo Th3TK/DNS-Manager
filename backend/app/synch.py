@@ -8,51 +8,8 @@ from app.database.connection import session_factory
 from app.database.models.dns_record_metadata import DNSRecordMetadataInDB
 from app.management.dns.record import cleanup_record_metadata
 from app.management.dns.zone import cleanup_zone_metadata
-from app.management.users.users import create_user, get_active_admin_count
-from app.models.user import CreateUserForm
-from app.utils.env import get_env
 
-
-def create_first_account():
-    """
-    Creates initial user if there are no active administrators in the users table is empty.
-    """
-
-    with session_factory() as db:
-        try:
-            logging.info("Checking for existing accounts.")
-
-            active_administrators_count = get_active_admin_count(db)
-
-            if active_administrators_count:
-                logging.info(
-                    "Found %d active administrative accounts. Skipping initial account creation.", active_administrators_count
-                )
-                return
-
-            logging.info(
-                "Found no active administrative accounts. Creating an initial administrator account from the ENV configuration."
-            )
-        except Exception:
-            logging.error("Error occured during retrieving application accounts.")
-
-        username = get_env("ADMIN_USERNAME")
-        password = get_env("ADMIN_PASSWORD")
-
-        try:
-            create_user(
-                db,
-                CreateUserForm(
-                    username=username,
-                    password=password,
-                    full_name="",
-                    is_admin=True,
-                    disabled=False,
-                ),
-            )
-            logging.info("Admin account '%s' created successfully.", username)
-        except Exception:
-            logging.error("Error occurred while creating the admin account. %s")
+logger = logging.getLogger(__name__)
 
 
 def synchronize_database():
@@ -61,7 +18,7 @@ def synchronize_database():
     """
 
     with session_factory() as db:
-        logging.info("Synchronizing database metadata with DNS provider.")
+        logger.info("Synchronizing database metadata with DNS provider.")
 
         try:
             cleanup_zone_metadata(db)
@@ -70,20 +27,25 @@ def synchronize_database():
 
             cleanup_record_metadata(db, *zone_names)
 
-            logging.info("Database synchronization with the DNS provider completed.")
+            logger.info("Database synchronization with the DNS provider completed.")
+
+            raise Exception
 
         except Exception as exc:
-            logging.error("Database synchronization with the DNS provider FAILED.")
+            logging.error(
+                "Database synchronization with the DNS provider FAILED. "
+                "DNS object metadata tables may include objects that no longer exist."
+            )
 
             if ENV_CONFIG.DNS_PROVIDER == "powerdns" and isinstance(exc, HTTPException):
                 match exc.status_code:
                     case status.HTTP_401_UNAUTHORIZED:
-                        logging.error(
+                        logger.error(
                             "Database synchronization failed because PowerDNS rejected the request as unauthorized. "
                             "Ensure the POWERDNS_API_KEY environment variable is set correctly."
                         )
                     case status.HTTP_404_NOT_FOUND:
-                        logging.error(
+                        logger.error(
                             "Database synchronization failed because the PowerDNS API resource path was invalid. "
                             "Ensure the POWERDNS_API_URL and POWERDNS_SERVER_ID environment variables are set correctly."
                         )

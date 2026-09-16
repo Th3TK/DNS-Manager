@@ -1,3 +1,4 @@
+import ipaddress
 import os
 
 
@@ -19,6 +20,15 @@ def get_env_int(name: str, default: int | None = None) -> int:
         return int(value)
     except ValueError:
         raise ValueError(f"Environment variable {name} must have an integer value.")
+
+
+def get_env_ipv4(name: str, default: str | None = None) -> ipaddress.IPv4Address:
+    value = get_env(name, str(default))
+
+    try:
+        return ipaddress.IPv4Address(value)
+    except (ipaddress.AddressValueError, ValueError):
+        raise ValueError(f"Environment variable {name} must be a valid IPv4 address.")
 
 
 def get_env_literal(name: str, options: set[str], default: str | None = None) -> str:

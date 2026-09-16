@@ -52,6 +52,10 @@ def validate_dns_name(name: str):
 
 
 def is_record_name_in_zone(record_name: str, zone_name: str):
+    """
+    Determines whether the record belongs to a zone.
+    """
+
     normalized_name = f"{record_name.rstrip('.').lower()}."
     normalized_zone = f"{zone_name.rstrip('.').lower()}."
 

@@ -13,9 +13,10 @@ def get_dns_provider() -> DNSProvider:
             return PowerDNSAdapter_4_9_17()
         case _:
             logger.critical(
-                "Invalid DNS provider configured: %r. The application cannot start and will now shut down.",
+                "Invalid DNS provider configured: %r.",
                 ENV_CONFIG.DNS_PROVIDER,
             )
+            logger.critical("Critical error occured during startup - EXITING")
             raise SystemExit(1)
 
 

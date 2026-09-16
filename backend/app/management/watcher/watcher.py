@@ -35,6 +35,12 @@ def watcher_update(db: Session, record_name: str, content: str, watcher_name: st
 
     zone_name = ENV_CONFIG.MANAGED_ZONE
 
+    if zone_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="DNS record name is out of the managed zone.",
+        )
+
     if not is_record_name_in_zone(record_name, zone_name):
         logger.warning(
             "Watcher %s tried to create a record %s outside of the managed zone %s",
@@ -109,6 +115,12 @@ def watcher_delete(db: Session, record_name: str, content: str, watcher_name: st
 
     zone_name = ENV_CONFIG.MANAGED_ZONE
 
+    if zone_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="DNS record name is out of the managed zone.",
+        )
+
     if not is_record_name_in_zone(record_name, zone_name):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -138,6 +150,12 @@ def watcher_sync(db: Session, record_names: list[str], content: str, watcher_nam
     """
 
     zone_name = ENV_CONFIG.MANAGED_ZONE
+
+    if zone_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="DNS record name is out of the managed zone.",
+        )
 
     record_names_set = set(record_names)
     author = f"watcher:{watcher_name}"

@@ -37,3 +37,12 @@ def get_env_boolean(name: str, default: bool | None = None) -> bool:
         raise ValueError(f"Environment variable {name} must have a boolean value.")
 
     return value.lower() == "true"
+
+
+def get_watcher_managed_zone_env(name: str) -> str | None:
+    value = get_env(name, None, True)
+
+    if not value or not value.rstrip("."):
+        return None
+
+    return f"{value.rstrip('.')}."
