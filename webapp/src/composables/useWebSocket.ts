@@ -1,4 +1,4 @@
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { logout, refreshTokens } from "../services/api";
 import { combinePaths } from "../utils/url";
 import { useRouter } from "vue-router";
@@ -20,7 +20,7 @@ export function useWebSocket<T>(path: string) {
         logout();
     };
 
-    function connect(refreshTokensOnDisconnect: boolean = true) {
+    const connect = () => {
         if (connected.value) return;
 
         socket.value = new WebSocket(combinePaths(APP_CONFIG.API_URL_WEBSOCKET, path));
@@ -38,21 +38,19 @@ export function useWebSocket<T>(path: string) {
 
             if (event.code !== 1008) return;
 
-            if (!refreshTokensOnDisconnect) return onUnauthorized();
-
             refreshTokens()
-                .then(() => connect(false))
-                .catch(onUnauthorized);
+                .then(connect)
+                .catch(() => onUnauthorized);
         };
-    }
+    };
 
-    function send(data: unknown) {
+    const send = (data: unknown) => {
         socket.value?.send(JSON.stringify(data));
-    }
+    };
 
-    function disconnect() {
+    const disconnect = () => {
         socket.value?.close();
-    }
+    };
 
     return {
         socket,

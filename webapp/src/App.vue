@@ -24,16 +24,6 @@ onMounted(() => {
     authentication.refresh();
     recordsStatus.connect();
 });
-
-watch(
-    () => recordsStatus.connected,
-    () => {
-        if (!recordsStatus.connected && authentication.user) {
-            authentication.refresh();
-            recordsStatus.connect();
-        }
-    },
-);
 </script>
 
 <template>
