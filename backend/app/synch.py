@@ -29,8 +29,6 @@ def synchronize_database():
 
             logger.info("Database synchronization with the DNS provider completed.")
 
-            raise Exception
-
         except Exception as exc:
             logging.error(
                 "Database synchronization with the DNS provider FAILED. "
