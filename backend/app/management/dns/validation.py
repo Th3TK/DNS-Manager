@@ -146,12 +146,62 @@ def validate_srv_record_content(content: str):
     validate_dns_name(target)
 
 
+def validate_txt_record_content(content: str):
+    """
+    Validates the TXT record content.
+    """
+
+    if not content:
+        return DNSValidationError("TXT record cannot be empty")
+    i = 0
+
+    while i < len(content):
+        if content[i] != '"':
+            return DNSValidationError(f'Expected " at position {i + 1}. Each TXT string must be enclosed in double quotes.')
+
+        i += 1
+        closed = False
+
+        while i < len(content):
+            char = content[i]
+
+            if char == '"':
+                i += 1
+                closed = True
+                break
+
+            if char == "\\":
+                if i + 1 >= len(content):
+                    return DNSValidationError(f"Invalid escape at position {i + 1}. A backslash must be followed by a character.")
+
+                i += 2
+                continue
+
+            i += 1
+
+        if not closed:
+            return DNSValidationError('Missing closing " for TXT string.')
+
+        if i == len(content):
+            return True
+
+        if content[i] != " ":
+            return DNSValidationError(f"TXT strings must be separated by exactly one space at position {i + 1}.")
+
+        i += 1
+
+        if i >= len(content):
+            return DNSValidationError("Expected another TXT string after the separator.")
+
+        if content[i] != '"':
+            return DNSValidationError(f'Expected " after the separator at position {i + 1}.')
+
+    return True
+
+
 def validate_record_content(content: str, type_: SupportedDNSRecordTypes):
     """
     Raises an error if the provided content value is not valid.
-
-    Content of `TXT` records is not validated. `TXT` content validation should be handled by the DNS provider adapters
-    to comply with the format requirements of the respective provider.
     """
 
     match type_:
@@ -166,7 +216,7 @@ def validate_record_content(content: str, type_: SupportedDNSRecordTypes):
         case "SRV":
             validate_srv_record_content(content)
         case "TXT":
-            pass
+            validate_txt_record_content(content)
 
 
 def validate_search_query(query: str):
