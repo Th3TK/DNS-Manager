@@ -19,7 +19,6 @@ export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
         render: (row: DNSZone) =>
             h(TextField, {
                 value: row.name,
-                copyOption: true,
                 monospace: true,
             }),
     },

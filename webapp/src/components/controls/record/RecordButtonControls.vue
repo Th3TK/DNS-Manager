@@ -20,6 +20,7 @@ const props = defineProps<{
             strong
             @click="emit('edit')"
             :disabled="!authentication.isAdmin"
+            :focusable="false"
         >
             <template #icon>
                 <NIcon
@@ -34,6 +35,7 @@ const props = defineProps<{
             strong
             @click="emit('delete')"
             :disabled="!authentication.isAdmin"
+            :focusable="false"
         >
             <template #icon>
                 <NIcon

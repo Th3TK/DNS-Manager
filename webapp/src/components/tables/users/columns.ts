@@ -18,7 +18,7 @@ export const getColumns = (refresh: () => void): DataTableColumns<User> => [
         render: (row: User) =>
             h(TextField, {
                 value: row.username,
-                copyOption: true,
+
                 monospace: true,
             }),
     },

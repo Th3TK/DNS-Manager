@@ -15,7 +15,6 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
             h(TextField, {
                 value: row.name,
                 monospace: true,
-                copyOption: true,
             }),
     },
 
@@ -51,7 +50,6 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
             h(TextField, {
                 value: _.isArray(row.content) ? row.content.join("\n") : row.content,
                 monospace: true,
-                copyOption: true,
             }),
     },
 
@@ -63,7 +61,6 @@ export const columns: DataTableColumns<NameSearchDNSRecord> = [
             h(TextField, {
                 value: row.zone_name,
                 monospace: true,
-                copyOption: true,
             }),
     },
     {

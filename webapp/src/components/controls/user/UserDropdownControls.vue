@@ -51,6 +51,7 @@ const onSelect = (key: string) => {
         trigger="click"
         show-arrow
         @select="onSelect"
+        :focusable="false"
     >
         <NButton
             quaternary

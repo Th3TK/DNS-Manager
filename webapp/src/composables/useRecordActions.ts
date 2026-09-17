@@ -12,10 +12,6 @@ export const useRecordActions = (onDeleteSuccess?: () => void, onDeleteError?: (
     const { onBulkDelete } = useBulkDelete();
     const router = useRouter();
 
-    const deleteModalOpened = ref(false);
-    const createModalOpened = ref(false);
-    const editModalOpened = ref(false);
-
     const onNavigate = (record: DNSRecord) => {
         router.push({
             name: "RecordDetails",
@@ -55,9 +51,6 @@ export const useRecordActions = (onDeleteSuccess?: () => void, onDeleteError?: (
     };
 
     return {
-        deleteModalOpened,
-        createModalOpened,
-        editModalOpened,
         onDelete,
         onNavigate,
     };

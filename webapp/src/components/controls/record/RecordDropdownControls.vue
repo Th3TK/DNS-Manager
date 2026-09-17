@@ -63,6 +63,7 @@ const onSelect = (key: string) => {
             square
             class="icon-button"
             @click.stop
+            :focusable="false"
         >
             <NIcon
                 :component="DotsVertical"

@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import { Copy as IconCopy } from "@vicons/tabler";
-import { NButton, NIcon, NText } from "naive-ui";
+import { NText } from "naive-ui";
 
 const props = defineProps<{
     value: string;
     monospace?: boolean;
-    copyOption?: boolean;
 }>();
-
-const copy = () => {
-    navigator.clipboard.writeText(props.value);
-};
 </script>
 
 <template>
@@ -22,21 +16,6 @@ const copy = () => {
         @click.stop
     >
         {{ value }}
-        <NButton
-            v-if="copyOption && value"
-            quaternary
-            circle
-            size="tiny"
-            class="copy-button"
-            @click="copy"
-        >
-            <template #icon>
-                <NIcon
-                    :component="IconCopy"
-                    size="16"
-                />
-            </template>
-        </NButton>
     </NText>
 </template>
 

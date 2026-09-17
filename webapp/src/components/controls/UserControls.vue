@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 
 import type { User } from "../../types/api.types.ts";
 
-import { computed, toRef } from "vue";
+import { computed, ref, toRef } from "vue";
 import _ from "lodash";
 import ConfirmationModal from "../modals/ConfirmationModal.vue";
 import { NText } from "naive-ui";
@@ -29,10 +29,13 @@ const props = defineProps<{
 }>();
 
 const users = toRef(props, "users");
-const { createModalOpened, deleteModalOpened, editModalOpened, changePasswordModalOpened, onDelete, onLogout } = useUserActions(
-    props.onDeleteSuccess,
-    props.onDeleteError,
-);
+
+const changePasswordModalOpened = ref(false);
+const deleteModalOpened = ref(false);
+const createModalOpened = ref(false);
+const editModalOpened = ref(false);
+
+const { onDelete, onLogout } = useUserActions(props.onDeleteSuccess, props.onDeleteError);
 
 const usersList = computed(() => [users.value].flat());
 const user = computed(() => (_.isArray(users.value) ? null : users.value));

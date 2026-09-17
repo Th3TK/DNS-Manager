@@ -1,13 +1,17 @@
 import type { DataTableColumn, DataTableColumns } from "naive-ui";
-import type { APIRecordStatus, DisplayedRecordStatus, DNSRecordExtended } from "../../../types/api.types";
+import type { DNSRecordExtended } from "../../../types/api.types";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
 import _ from "lodash";
 import { h } from "vue";
 import RecordControls from "../../controls/RecordControls.vue";
 import StatusField from "../../data-table/fields/StatusField.vue";
 import TextField from "../../data-table/fields/TextField.vue";
-import DateField from "../../data-table/fields/DateField.vue";
-import { naturalCompare, compareNumbers, compareDates, compareStatus } from "../../../utils/sorters.ts";
+import { naturalCompare, compareNumbers, compareStatus } from "../../../utils/sorters.ts";
+
+// TODO
+// FIX:
+// "controls" column rendering multiple modals per row (in RecordControls).
+// Should use centralized modals instead.
 
 export const getColumns = (global: boolean, refresh: () => void): DataTableColumns<DNSRecordExtended> => {
     const columns: (DataTableColumn<DNSRecordExtended> | undefined)[] = [
@@ -20,7 +24,6 @@ export const getColumns = (global: boolean, refresh: () => void): DataTableColum
                       h(TextField, {
                           value: row.zone_name,
                           monospace: true,
-                          copyOption: true,
                       }),
               } as DataTableColumn<DNSRecordExtended>)
             : ({
@@ -36,7 +39,6 @@ export const getColumns = (global: boolean, refresh: () => void): DataTableColum
                 h(TextField, {
                     value: row.name,
                     monospace: true,
-                    copyOption: true,
                 }),
         },
 
@@ -72,7 +74,6 @@ export const getColumns = (global: boolean, refresh: () => void): DataTableColum
                 h(TextField, {
                     value: _.isArray(row.content) ? row.content.join("\n") : row.content,
                     monospace: true,
-                    copyOption: true,
                 }),
         },
 

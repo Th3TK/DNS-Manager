@@ -11,7 +11,7 @@ import _ from "lodash";
 import CreateZoneModal from "../modals/CreateZoneModal.vue";
 import ZoneTableControls from "./zone/ZoneTableControls.vue";
 import { NText } from "naive-ui";
-import { computed, toRef } from "vue";
+import { computed, ref, toRef } from "vue";
 
 defineOptions({
     inheritAttrs: false,
@@ -27,7 +27,10 @@ const props = defineProps<{
 
 const zones = toRef(props, "zones");
 
-const { deleteModalOpened, createModalOpened, onDelete, onNavigate } = useZoneActions(props.onDeleteSuccess, props.onDeleteError);
+const deleteModalOpened = ref(false);
+const createModalOpened = ref(false);
+
+const { onDelete, onNavigate } = useZoneActions(props.onDeleteSuccess, props.onDeleteError);
 
 const zonesList = computed(() => [zones.value].flat());
 const zone = computed(() => (_.isArray(zones.value) ? null : zones.value));

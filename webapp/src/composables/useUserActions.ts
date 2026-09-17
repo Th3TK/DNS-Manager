@@ -14,11 +14,6 @@ export const useUserActions = (onDeleteSuccess?: () => void, onDeleteError?: (er
     const { onBulkDelete } = useBulkDelete();
     const router = useRouter();
 
-    const changePasswordModalOpened = ref(false);
-    const deleteModalOpened = ref(false);
-    const createModalOpened = ref(false);
-    const editModalOpened = ref(false);
-
     const onDelete = async (users: User | User[]) => {
         const isArray = _.isArray(users);
 
@@ -56,10 +51,6 @@ export const useUserActions = (onDeleteSuccess?: () => void, onDeleteError?: (er
     };
 
     return {
-        changePasswordModalOpened,
-        deleteModalOpened,
-        createModalOpened,
-        editModalOpened,
         onDelete,
         onLogout,
     };

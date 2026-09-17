@@ -87,7 +87,7 @@ const pagination = computed(
             pageSize: pageSize.value,
             itemCount: total.value,
             showSizePicker: true,
-            pageSizes: [10, 25, 50, 100],
+            pageSizes: [10, 25, 50],
             onUpdatePage: handlePageChange,
             onUpdatePageSize: handlePageSizeChange,
             prefix: props.paginationPrefix ?? defaultPaginationPrefix.value,
@@ -232,5 +232,15 @@ defineExpose({
 :deep(.n-pagination-prefix) {
     flex: 1 !important;
     font-size: 16px;
+}
+:deep(.n-data-table-th--sortable:hover) {
+    background: transparent !important;
+}
+
+:deep(.n-data-table .n-data-table-th.n-data-table-th--sorting) {
+    background-color: transparent;
+}
+:deep(.n-data-table .n-data-table-td.n-data-table-td--sorting) {
+    background-color: transparent;
 }
 </style>

@@ -12,9 +12,6 @@ export const useZoneActions = (onDeleteSuccess?: () => void, onDeleteError?: (er
     const { onBulkDelete } = useBulkDelete();
     const router = useRouter();
 
-    const deleteModalOpened = ref(false);
-    const createModalOpened = ref(false);
-
     const onNavigate = (zone: DNSZone) => {
         router.push({ name: "ZoneDetails", params: { name: zone.name } });
     };
@@ -46,8 +43,6 @@ export const useZoneActions = (onDeleteSuccess?: () => void, onDeleteError?: (er
     };
 
     return {
-        deleteModalOpened,
-        createModalOpened,
         onDelete,
         onNavigate,
     };

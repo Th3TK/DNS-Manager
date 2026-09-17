@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 
 import type { DNSRecord } from "../../types/api.types.ts";
 
-import { computed, toRef, watch } from "vue";
+import { computed, ref, toRef, watch } from "vue";
 import { useRecordActions } from "../../composables/useRecordActions.ts";
 import RecordDropdownControls from "./record/RecordDropdownControls.vue";
 import _ from "lodash";
@@ -30,10 +30,11 @@ const props = defineProps<{
 const records = toRef(props, "records");
 const singularRecord = computed(() => [props.records].flat()?.[0] as DNSRecord | undefined);
 
-const { deleteModalOpened, createModalOpened, editModalOpened, onDelete, onNavigate } = useRecordActions(
-    props.onDeleteSuccess,
-    props.onDeleteError,
-);
+const deleteModalOpened = ref(false);
+const createModalOpened = ref(false);
+const editModalOpened = ref(false);
+
+const { onDelete, onNavigate } = useRecordActions(props.onDeleteSuccess, props.onDeleteError);
 
 const numberOfInternalRecords = computed(() => [records.value].flat().filter((r) => r.origin !== "external").length);
 const numberOfExternalRecords = computed(() => [records.value].flat().filter((r) => r.origin === "external").length);
