@@ -45,30 +45,29 @@ class APIMessenger:
         Sends the API request. Returns boolean indicating whether the operation succeded.
         """
 
+        content = str(ENV_CONFIG.TRAEFIK_HOST_IP)
+        body = None
+
         match action:
             case "UPDATE":
                 method = "POST"
-                path = "/watcher/update"
-                data_field_name = "record_name"
+                path = f"/watcher/update?record_name={data}&content={content}"
 
             case "DELETE":
                 method = "DELETE"
-                path = "/watcher/delete"
-                data_field_name = "record_name"
+                path = f"/watcher/delete?record_name={data}&content={content}"
 
             case "SYNC":
                 method = "POST"
                 path = "/watcher/sync"
-                data_field_name = "record_names"
-
-        json = {"content": str(ENV_CONFIG.TRAEFIK_HOST_IP), data_field_name: data}
+                body = {"record_names": data, "content": content}
 
         try:
             response = self._session.request(
                 method=method,
                 url=join_url(API_URL, path),
                 timeout=5,
-                json=json,
+                json=body,
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json",

@@ -30,25 +30,13 @@ class AutomaticTrashRemoval:
 
     def __init__(self):
         self._task: Task[None] | None = None
-        self._loop: asyncio.AbstractEventLoop | None = None
-
-    async def initialize(self) -> None:
-        self._loop = asyncio.get_running_loop()
 
     def start(self) -> None:
-        """
-        Starts the automatic trash removal loop.
-        """
-
         if self._task is not None and not self._task.done():
-            logger.debug("Automatic trash removal already running.")
             return
 
-        if self._loop is None:
-            raise RuntimeError("AutomaticTrashRemoval has not been initialized.")
-
-        logger.debug("Starting automatic trash removal.")
-        self._loop.call_soon_threadsafe(self._schedule)
+        logging.debug("Starting automatic trash removal.")
+        self._task = asyncio.create_task(self._run())
 
     def stop(self) -> None:
         """

@@ -73,7 +73,10 @@ def watcher_update(db: Session, record_name: str, content: str, watcher_name: st
                 ttl=60,
                 author=f"watcher:{watcher_name}",
                 origin="automatic => traefik",
+                comment="",
+                checks_enabled=True,
             ),
+            is_watcher_modification=True,
         )
         return None
 

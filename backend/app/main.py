@@ -50,9 +50,6 @@ synchronize_database()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    await automatic_trash_removal.initialize()
-    logging.info("Initialized trash removal event loop.")
-
     automatic_trash_removal.start()
     logging.info("Scheduled automatic trash removal.")
 

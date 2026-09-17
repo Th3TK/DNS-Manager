@@ -169,16 +169,6 @@ class RecordStatusCheckData(BaseModel):
     next_check: datetime.datetime
 
 
-class WatcherRecordForm(BaseModel):
-    record_name: str
-    content: str
-
-    @field_validator("record_name", mode="after")
-    @classmethod
-    def normalize_name(cls, value: str) -> str:
-        return f"{value.rstrip('.').lower()}."
-
-
 class WatcherRecordsForm(BaseModel):
     record_names: list[str]
     content: str

@@ -290,7 +290,12 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
 
 
 def modify_record(
-    db: Session, zone_name: str, name: str, type_: SupportedDNSRecordTypes, modification_args: ModifyDNSRecordArgs
+    db: Session,
+    zone_name: str,
+    name: str,
+    type_: SupportedDNSRecordTypes,
+    modification_args: ModifyDNSRecordArgs,
+    is_watcher_modification: bool = False,
 ) -> DNSRecord:
     """
     Modifies record properties.
@@ -336,25 +341,31 @@ def modify_record(
 
     # validate origin
     if not record_metadata_in_db:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The API does not support modifying DNS records created outside the application.",
+        if not is_watcher_modification:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The API does not support modifying DNS records created outside the application.",
+            )
+
+        # if modification is performed by the watcher and the origin is external
+        # create the metadata object instead of raising the exception
+        record_metadata_in_db = DNSRecordMetadataInDB(
+            zone_name=zone_name,
+            name=name,
+            type=type_,
+            origin=modification_args.origin,
+            comment=modification_args.comment,
+            author=modification_args.author,
+            checks_enabled=modification_args.checks_enabled,
         )
+        db.add(record_metadata_in_db)
 
     updates = modification_args.model_dump(exclude_unset=True)
 
     record_old = DNSRecord(**properties_old.model_dump(), **DNSRecordMetadata.from_db(record_metadata_in_db).model_dump())
 
-    record_new = DNSRecord(
-        **{
-            **record_old.model_dump(),
-            **updates,
-            "author": modification_args.author,
-            "origin": modification_args.origin,
-        }
-    )
+    record_new = DNSRecord(**{**record_old.model_dump(), **updates})
 
-    # if there are no changes to be made, return
     if record_old == record_new:
         return record_old
 

@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
 
-uv run pytest
+uv run pytest -rs

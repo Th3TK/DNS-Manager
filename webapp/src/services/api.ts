@@ -48,7 +48,7 @@ export const login = (username: string, password: string) =>
         {
             data: new URLSearchParams({ username, password }),
             headers: {
-                "Content-": "application/x-www-form-urlencoded",
+                "Content-Type": "application/x-www-form-urlencoded",
             },
         },
         false,
