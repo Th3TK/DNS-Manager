@@ -11,6 +11,14 @@ import useFetch from "../../../composables/useFetch.ts";
 import { getFilters } from "./filterConfig.ts";
 import TrashControls from "../../controls/TrashControls.vue";
 
+/*
+TODO
+
+Consistency with other tables - allow for selecting and deleting all items across all pages.
+
+This is tricky because TrashTable uses server side pagination, sorting and filtering.
+*/
+
 const { data: users } = useFetch<User[]>("/users");
 
 const table = useTemplateRef<TableExpose<TrashEntry>>("table");

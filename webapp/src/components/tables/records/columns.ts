@@ -8,10 +8,17 @@ import StatusField from "../../data-table/fields/StatusField.vue";
 import TextField from "../../data-table/fields/TextField.vue";
 import { naturalCompare, compareNumbers, compareStatus } from "../../../utils/sorters.ts";
 
-// TODO
-// FIX:
-// "controls" column rendering multiple modals per row (in RecordControls).
-// Should use centralized modals instead.
+/*
+TODO
+
+1. Replace the controls column with a more optimized solution.
+
+Each row receives a controls dropdown which has embeded multiple modals for each action (edit, delete).
+Should open a centrally controlled modal instead.
+
+2. Tests show that using the "render" field slows down this table tremendously. This starts to get visible when user displays more than 25 entries per page.
+
+*/
 
 export const getColumns = (global: boolean, refresh: () => void): DataTableColumns<DNSRecordExtended> => {
     const columns: (DataTableColumn<DNSRecordExtended> | undefined)[] = [

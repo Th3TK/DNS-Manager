@@ -6,6 +6,15 @@ import BooleanField from "../../data-table/fields/BooleanField.vue";
 import BadgeField from "../../data-table/fields/BadgeField.vue";
 import UserControls from "../../controls/UserControls.vue";
 
+/*
+TODO
+
+Replace the controls column with a more optimized solution.
+
+Each row receives a controls dropdown which has embeded multiple modals for each action (edit, delete, change password).
+Should open a centrally controlled modal instead.
+*/
+
 export const getColumns = (refresh: () => void): DataTableColumns<User> => [
     {
         type: "selection",

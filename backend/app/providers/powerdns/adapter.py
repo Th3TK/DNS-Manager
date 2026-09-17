@@ -29,7 +29,7 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
 
     def _send_request(self, method: Literal["GET", "DELETE", "POST", "PUT", "PATCH"], path: str, **kwargs) -> requests.Response:
         """
-        Utility method for sending HTTP requests and handling basic errors.
+        Utility method for sending HTTP requests to PowerDNS API and handling basic errors.
         """
 
         try:
@@ -186,14 +186,6 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         if skip_record_count:
             return list(zones_by_name.values())
 
-        # counting records
-
-        # names = [powerdns_zone.name for powerdns_zone in powerdns_zones]
-
-        # # count records
-        # with ThreadPoolExecutor(max_workers=10) as executor:
-        #     zones = executor.map(self.get_zone, names)
-
         # using query is much faster than sending seperate requests for each zone
         all_records = self.query_records("*")
 
@@ -266,14 +258,22 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
         return self._get_records_properties_from_powerdns_zone(zone)
 
     def query_records(self, name_query: str) -> list[DNSRecordProperties] | None:
-        # PowerDNS' search-data matches both record names and content
-        # we'll have to filter out content matches but it's still faster than fetching all records by quering each zone seperately
+        """
+        IMPORTANT
+        PowerDNS' search-data matches both record names and content
+        we'll have to filter out content matches but it's still faster than fetching all records by quering each zone seperately
+
+        TODO - BEHAVIOR
+        Search-data requires a `max` parameter. Currently it is set to 100_000 - more records would cause a definite timeout
+        in the frontend <-> API communication. If that's not desirable, consider alternatives.
+        """
         response = self._send_request("GET", f"search-data?q={name_query.rstrip('.')}&object_type=record&max=100000")
 
         pattern = re.escape(name_query.rstrip("."))
         pattern = pattern.replace(r"\*", ".*").replace(r"\?", ".")
         pattern = f"^{pattern}{re.escape('.')}$"
 
+        # KEEP
         # DNSRecordProperties has to represent an RRset for consistency with the rest of the application
         # we're grouping contents from records with equal keys (zone_name, name, type)
         record_contents: dict[tuple[str, str, str], list[str]] = {}

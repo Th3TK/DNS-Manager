@@ -70,6 +70,8 @@ class DNSProvider(Protocol):
         `name_query` may contain the following wildcards:
             * - matches any sequence of characters
             ? - matches any single character
+
+        Should be optimized for a `name_query="*"` input. The application uses it to retrieve all records across all zones.
         """
         ...
 

@@ -232,6 +232,13 @@ def create_record(db: Session, creation_args: CreateDNSRecordArgs, is_restoratio
     validate_dns_record_name(creation_args.name, creation_args.zone_name)
     validate_record_content(creation_args.content, creation_args.type)
 
+    """
+    TODO
+
+    Add validation for the CNAME constraint. CNAME records cannot coexist with other record types at the same DNS name.
+    Currently the provider raises errors. For consistency, validation should happen before passing the data to the provider. 
+    """
+
     zone = provider.get_zone(creation_args.zone_name)
 
     if zone is None:
@@ -298,7 +305,7 @@ def modify_record(
     is_watcher_modification: bool = False,
 ) -> DNSRecord:
     """
-    Modifies record properties.
+    Modifies record properties that are present in `modification_args`.
 
     Raises HTTP 400 if record is external (no database metadata found).
     Raises HTTP 404 if zone doesn't exist in the provider.
@@ -310,20 +317,25 @@ def modify_record(
     # to ensure there won't be fake duplicates
     cleanup_record_metadata(db, zone_name)
 
-    # validate query
     validate_dns_record_name(name, zone_name)
 
-    # validate new name
+    """
+    TODO
+
+    Add validation for the CNAME constraint. CNAME records cannot coexist with other record types at the same DNS name.
+    Currently the provider raises errors. For consistency, validation should happen before passing the data to the provider. 
+    """
+
     if modification_args.name:
+        # validate new name
         validate_dns_record_name(modification_args.name, zone_name)
 
-    # validate content
     if modification_args.content:
+        # validate content
         validate_record_content(modification_args.content, modification_args.type or type_)
 
     properties_old = provider.get_record(zone_name, name, type_)
 
-    # check if zone and record exists
     if properties_old is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

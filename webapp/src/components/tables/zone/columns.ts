@@ -7,6 +7,15 @@ import ZoneControls from "../../controls/ZoneControls.vue";
 import { naturalCompare, compareNumbers } from "../../../utils/sorters.ts";
 import ZoneStatusField from "../../data-table/fields/ZoneStatusField.vue";
 
+/*
+TODO
+
+Replace the controls column with a more optimized solution.
+
+Each row receives a controls dropdown which has embeded a modal for zone deletion. That may scale up to 50 modals.
+Should open a centrally controlled modal instead.
+*/
+
 export const getColumns = (refresh: () => void): DataTableColumns<DNSZone> => [
     {
         type: "selection",

@@ -161,6 +161,20 @@ def watcher_sync(db: Session, record_names: list[str], content: str, watcher_nam
         )
 
     record_names_set = set(record_names)
+
+    """
+    TODO
+    
+    Consider better way of synchronizing.
+    
+    Currently the logic is based on the `watcher_name`. Sync overrides all configuration made by watcher with `watcher_name`
+    with new values, removing all previouos records.
+    
+    There is no mechanism preventing multiple watchers from having the same `watcher_name`.
+    
+    Such situation can cause confussion and unexpected removal of many records.
+    """
+
     author = f"watcher:{watcher_name}"
 
     records = get_records(db, zone_name)
