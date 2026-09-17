@@ -1,5 +1,8 @@
 import os
 
+from app.management.dns.validation import validate_dns_name
+from app.models.exceptions import DNSValidationError
+
 
 def get_env(name: str, default: str | None = None, accept_empty: bool = False) -> str:
     value = os.getenv(name, default)
@@ -37,6 +40,20 @@ def get_env_boolean(name: str, default: bool | None = None) -> bool:
         raise ValueError(f"Environment variable {name} must have a boolean value.")
 
     return value.lower() == "true"
+
+
+def get_nameservers_env(name: str) -> list[str]:
+    value = get_env(name).replace(" ", "")
+
+    values = value.split(",")
+
+    for nameserver in values:
+        try:
+            validate_dns_name(nameserver)
+        except DNSValidationError as exc:
+            raise ValueError(f"Environment variable {name} contains invalid DNS names - {nameserver} - {str(exc)}")
+
+    return list({f"{nameserver.rstrip('.')}." for nameserver in values})
 
 
 def get_watcher_managed_zone_env(name: str) -> str | None:

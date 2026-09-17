@@ -1,17 +1,18 @@
 import logging
 from dataclasses import dataclass
 
-from app.utils.env import get_env, get_env_int, get_env_literal, get_watcher_managed_zone_env
+from app.utils.env import get_env, get_env_int, get_env_literal, get_nameservers_env, get_watcher_managed_zone_env
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class EnvConfig:
-    # dns provider selection
+    # dns configuration
     DNS_PROVIDER: str
-    # dns resolver
     DNS_RESOLVER: str
+    NAMESERVERS: list[str]
+    # powerdns
     POWERDNS_API_URL: str
     POWERDNS_API_KEY: str
     POWERDNS_SERVER_ID: str
@@ -35,6 +36,7 @@ def load_env_config() -> EnvConfig:
         return EnvConfig(
             DNS_PROVIDER=get_env_literal("DNS_PROVIDER", {"powerdns"}),
             DNS_RESOLVER=get_env("DNS_RESOLVER"),
+            NAMESERVERS=get_nameservers_env("NAMESERVERS"),
             POWERDNS_API_URL=get_env("POWERDNS_API_URL", "", True),
             POWERDNS_API_KEY=get_env("POWERDNS_API_KEY", "", True),
             POWERDNS_SERVER_ID=get_env("POWERDNS_SERVER_ID", "", True),
@@ -50,7 +52,7 @@ def load_env_config() -> EnvConfig:
             AUTHENTICATION_ALGORITHM="HS256",
         )
     except ValueError as exc:
-        logger.critical("Invalid environment configuration: %s. Exiting.", exc)
+        logger.critical("Invalid environment configuration: %s Exiting.", exc)
         raise SystemExit(1)
 
 

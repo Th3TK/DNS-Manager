@@ -2,7 +2,6 @@ import ipaddress
 import re
 
 from app.models.exceptions import DNSValidationError
-from app.models.record import SupportedDNSRecordTypes
 
 FQDN_BASE_VALID_CHARACTERS = re.compile(r"(?:[a-z0-9_\-]+\.)+")
 QUERY_VALID_CHARACTERS = re.compile(r"(?:[a-z0-9_\-\*\?]+\.)+")
@@ -199,7 +198,7 @@ def validate_txt_record_content(content: str):
     return True
 
 
-def validate_record_content(content: str, type_: SupportedDNSRecordTypes):
+def validate_record_content(content: str, type_: str):
     """
     Raises an error if the provided content value is not valid.
     """
@@ -217,6 +216,8 @@ def validate_record_content(content: str, type_: SupportedDNSRecordTypes):
             validate_srv_record_content(content)
         case "TXT":
             validate_txt_record_content(content)
+        case _:
+            return
 
 
 def validate_search_query(query: str):

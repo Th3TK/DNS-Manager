@@ -122,7 +122,9 @@ onMounted(() => usernameInput.value?.focus());
     width: 400px;
 }
 .header {
-    padding-bottom: var(--spacing-xs);
+    margin-top: var(--spacing-sm) !important;
+    margin-bottom: var(--spacing-lg) !important;
+    font-size: 22px;
 }
 .submitButton {
     width: 100px;

@@ -166,7 +166,7 @@ class PowerDNSAdapter_4_9_17(DNSProvider):
     # -------------------------------------------------------------------------
 
     def create_zone(self, zone_name: str) -> DNSZoneProperties:
-        body = {"name": zone_name, "kind": "Native"}
+        body = {"name": zone_name, "kind": "Native", "nameservers": ENV_CONFIG.NAMESERVERS}
         response = self._send_request("POST", "zones", json=body)
         zone = PowerDNSZone.model_validate(response.json())
 
