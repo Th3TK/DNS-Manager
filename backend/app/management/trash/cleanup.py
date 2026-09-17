@@ -1,6 +1,5 @@
-import asyncio
 import logging
-from asyncio import Task
+import threading
 from datetime import datetime, timedelta, timezone
 
 from app.database.connection import session_factory
@@ -29,31 +28,31 @@ class AutomaticTrashRemoval:
     """
 
     def __init__(self):
-        self._task: Task[None] | None = None
+        self._thread: threading.Thread | None = None
+        self._stop_event = threading.Event()
 
     def start(self) -> None:
-        if self._task is not None and not self._task.done():
+        if self._thread is not None and self._thread.is_alive():
             return
 
-        logging.debug("Starting automatic trash removal.")
-        self._task = asyncio.create_task(self._run())
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run,
+            daemon=True,
+        )
+
+        logger.debug("Starting automatic trash removal.")
+
+        self._thread.start()
 
     def stop(self) -> None:
-        """
-        Stops the automatic trash removal loop.
-        """
+        self._stop_event.set()
 
-        if self._task is not None:
-            self._task.cancel()
-            self._task = None
+        if self._thread is not None:
+            self._thread.join(timeout=1)
+            self._thread = None
 
-    def _schedule(self) -> None:
-        if self._task is not None and not self._task.done():
-            return
-
-        self._task = asyncio.create_task(self._run())
-
-    async def _run(self) -> None:
+    def _run(self) -> None:
         with session_factory() as db:
             # get the next item in queue for deletion
             trash_entry = db.scalar(select(DNSTrashInDB).order_by(DNSTrashInDB.deletion_timestamp.asc()).limit(1))
@@ -71,7 +70,10 @@ class AutomaticTrashRemoval:
         logger.debug("Next automatic deletion scheduled in %s seconds.", delay)
 
         if delay > 0:
-            await asyncio.sleep(delay)
+            self._stop_event.wait(delay)
+
+        if self._stop_event.is_set():
+            return
 
         with session_factory() as db:
             trash_entry_in_db = db.get(DNSTrashInDB, trash_entry.entry_uuid)
@@ -96,8 +98,8 @@ class AutomaticTrashRemoval:
                     object_after=None,
                 )
 
-        self._task = None
-        self._schedule()
+        self._thread = None
+        self.start()
 
 
 automatic_trash_removal = AutomaticTrashRemoval()
