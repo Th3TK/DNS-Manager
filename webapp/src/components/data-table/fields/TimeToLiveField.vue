@@ -24,16 +24,16 @@ const display = computed(() => {
     }
 
     if (seconds < 3600) {
-        const roundedMinutes = Math.floor(seconds / 60);
+        const roundedMinutes = Math.round(seconds / 60);
         return `${roundedMinutes} minute${roundedMinutes !== 1 ? "s" : ""}`;
     }
 
     if (seconds < 86400) {
-        const roundedHours = Math.floor(seconds / 3600);
+        const roundedHours = Math.round(seconds / 3600);
         return `${roundedHours} hour${roundedHours !== 1 ? "s" : ""}`;
     }
 
-    const roundedDays = Math.floor(seconds / 86400);
+    const roundedDays = Math.round(seconds / 86400);
     return `${roundedDays} day${roundedDays !== 1 ? "s" : ""}`;
 });
 

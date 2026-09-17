@@ -53,6 +53,7 @@ export const getColumns = (refresh?: () => void): DataTableColumns<TrashEntry> =
                 deletionTimestamp: new Date(row.deletion_timestamp),
             }),
         sorter: "default",
+        width: 200,
     },
     {
         title: "",
