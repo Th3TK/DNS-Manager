@@ -117,9 +117,8 @@ class AutomaticRecordStatusCheck:
 
         while True:
             try:
-                if self._resolver is None:
-                    # try creating the resolver, raises errors on fail
-                    self._resolver = self._create_resolver()
+                # recreate the resolver, raises errors on fail
+                self._resolver = self._create_resolver()
 
                 logger.debug("Running automatic record status check.")
 
