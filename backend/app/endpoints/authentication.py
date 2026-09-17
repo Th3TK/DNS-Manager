@@ -49,7 +49,7 @@ async def __login__(
         httponly=True,
         secure=ENV_CONFIG.HTTPS_ENABLED,
         samesite="lax",
-        path="/",
+        path="/api/auth",
     )
 
     return True
@@ -78,7 +78,7 @@ async def __refresh_tokens__(
         httponly=True,
         secure=ENV_CONFIG.HTTPS_ENABLED,
         samesite="lax",
-        path="/",
+        path="/api/auth",
     )
 
     return True
@@ -108,5 +108,5 @@ async def __logout__(
         httponly=True,
         secure=ENV_CONFIG.HTTPS_ENABLED,
         samesite="lax",
-        path="/",
+        path="/api/auth",
     )
