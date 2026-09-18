@@ -223,7 +223,7 @@ def delete_zone(db: Session, zone_name: str, logged_in_user: User) -> DNSZoneRem
             actor=logged_in_user.username,
             action=result.internal_records_status,
             affected_object_type=DNSObjectType.RECORD,
-            affected_object_names=[record.name for record in external_records],
+            affected_object_names=[record.name for record in internal_records],
             objects_before=jsonable_encoder(internal_records),
             objects_after=None,
         )

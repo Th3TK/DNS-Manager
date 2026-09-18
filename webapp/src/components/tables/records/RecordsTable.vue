@@ -84,7 +84,7 @@ watch(
         :filter-config="filterConfig"
     >
         <template #title> {{ global ? "Records List" : "Zone Records" }} </template>
-        <template #title-filters> Filtered Zones </template>
+        <template #title-filters> Filtered Records </template>
         <template #description> Double click on a record to view its full details. </template>
         <template #controls>
             <RecordControls
