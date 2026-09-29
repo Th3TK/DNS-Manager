@@ -1,6 +1,6 @@
 # DNS Manager
 
-A easy-to-use web application for managing your DNS server combined with a watcher service automatically generating records for Docker containers with Traefik hostnames.
+A easy-to-use web application for DNS server management, combined with a watcher service enabling automatic record generation for Docker containers with Traefik hostnames.
 
 ## Features
 
@@ -16,7 +16,7 @@ A easy-to-use web application for managing your DNS server combined with a watch
 
 ## Currently supported DNS providers
 
-- PowerDNS
+<img src="https://avatars.githubusercontent.com/u/1282630?s=200&v=4" style="width: 20px; height: 20px; float: left;"/> PowerDNS
 
 ## Instalation & requirements
 
