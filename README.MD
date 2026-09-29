@@ -16,7 +16,7 @@ A easy-to-use web application for DNS server management, combined with a watcher
 
 ## Currently supported DNS providers
 
-<img src="https://avatars.githubusercontent.com/u/1282630?s=200&v=4" style="width: 20px; height: 20px; float: left;"/> PowerDNS
+1. **PowerDNS Authoritative** accessed through HTTP API
 
 ## Instalation & requirements
 
